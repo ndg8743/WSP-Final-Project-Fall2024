@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recreate Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7e0;
+            margin: 0;
+        }
+
+        .bar {
+            background-color: #1d8d3b;
+        }
+
+        .nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        .button {
+            position: relative;
+            padding: 5px 10px;
+            cursor: pointer;
+            color: black;
+            font-weight: bold;
+        }
+
+        #edit {
+            font-weight: normal;
+        }
+
+        .button:hover .drop {
+            display: block;
+        }
+
+        .drop {
+            display: none;
+            position: absolute;
+            top: 100%;
+            background-color: #32a852;
+            padding: 10px;
+            min-width: 150px;
+        }
+
+        .drop a {
+            display: block;
+            padding: 3px 2px;
+            color: black;
+            color: #282b69;
+            text-decoration: none;
+            font-weight: normal;
+            
+        }
+
+        .drop a:hover {
+            background-color: #4caf50;
+            color: black;
+        }
+
+        #edit:focus-within .drop {
+            display: block;
+        }
+
+        #edit:focus .drop,
+        #edit:active .drop {
+            display: block;
+        }
+
+        .main {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .bx {
+            background-color: white;
+            padding: 10px;
+            margin-bottom: 20px;
+            width: 95%;
+            max-width: 1150px;
+        }
+
+        .greenBox {
+            border-left: 5px solid #32a852;
+        }
+
+        .yellowBox {
+            border-left: 5px solid #ffeb3b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bar">
+        <div class="nav">
+            <div class="button">
+                File
+                <div class="drop">
+                    <a href="">New</a>
+                    <a href="">Open</a>
+                    <a href="">Save</a>
+                    <a href="">Print</a>
+                    <a href="">Close</a>
+                </div>
+            </div>
+            <div class="button" id="edit" tabindex="0">
+                Edit
+                <div class="drop">
+                    <a href="">Undo</a>
+                    <a href="">Redo</a>
+                    <a href="">Cut</a>
+                    <a href="">Copy</a>
+                    <a href="">Paste</a>
+                    <a href="">Delete</a>
+                    <a href="">Select All</a>
+                </div>
+            </div>
+            <div class="button">
+                View
+                <div class="drop">
+                    <a href="">Zoom In</a>
+                    <a href="">Zoom Out</a>
+                    <a href="">Actual Size</a>
+                    <a href="">Fit Page</a>
+                    <a href="">Fit Width</a>
+                    <a href="">Fit Height</a>
+                    <a href="">Rotate Left</a>
+                    <a href="">Rotate Right</a>
+                    <a href="">Full Screen</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="bx greenBox">
+            <h2>Instructions</h2>
+            <p>Recreate this page using <b><i>only CSS</i></b>. Do yourself a favor and 1) Do not view the source.
+                Figure it out yourself. 2) Do not search for the solution. Learn CSS until you know enough to do this.
+            </p>
+        </div>
+
+        <div class="bx yellowBox">
+            <h2>Extra Credit</h2>
+            <p>Notice how the Edit menu (besides for not being bold) reacts to clicks. If you click the edit menu, it
+                remains open until you click somewhere else. (This you might need to search for)</p>
+        </div>
+    </div>
+</body>
+
+</html>
