@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To Do List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .box, .input, .button, .content, .field, .control, .columns, .column {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border: none;
+        }
+        .input::placeholder {
+            color: #bbbbbb;
+        }
+        .button.is-info {
+            background-color: #3b82f6;
+        }
+        .button.is-danger {
+            background-color: #ef4444;
+        }
+        .has-text-grey-light {
+            color: #bbbbbb !important;
+        }
+        .section {
+            flex: 1;
+        }
+        .title {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">To Do List</h1>
+            <div id="app" class="columns">
+                <div class="column is-half">
+                    <div class="field has-addons">
+                        <div class="control is-expanded">
+                            <input type="text" class="input" v-model="newTask" @keyup.enter="addTask" placeholder="New task">
+                        </div>
+                        <div class="control">
+                            <a class="button is-info" @click="addTask">Add Task</a>
+                        </div>
+                    </div>
+                    <div class="box">
+                        <div class="content">
+                            <ul>
+                                <li v-for="(task, index) in tasks" :key="index">
+                                    <label class="checkbox">
+                                        <input type="checkbox" v-model="task.completed">
+                                        <span :class="{ 'has-text-grey-light': task.completed }">{{ task.name }}</span>
+                                    </label>
+                                    <a class="button is-danger is-small" @click="deleteTask(index)">Delete</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11/dist/vue.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                newTask: '',
+                tasks: [
+                    { name: 'Learn Vue.js', completed: false },
+                    { name: 'Build a to-do list', completed: true },
+                    { name: 'Learn more about Vue.js', completed: false }
+                ]
+            },
+            methods: {
+                addTask() {
+                    if (this.newTask.trim() === '') {
+                        return;
+                    }
+                    this.tasks.push({
+                        name: this.newTask,
+                        completed: false
+                    });
+                    this.newTask = '';
+                },
+                deleteTask(index) {
+                    this.tasks.splice(index, 1);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
