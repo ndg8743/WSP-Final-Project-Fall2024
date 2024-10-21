@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { RouterLink } from 'vue-router'
+import { RouterLink } from 'vue-router';
 
-const isOpen = ref(false)
+const isOpen = ref(false);
 </script>
 
 <template>
   <nav class="navbar is-info" role="navigation" aria-label="main navigation">
     <div class="container">
       <div class="navbar-brand">
-        <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="30" height="30" />
+        <img alt="App logo" class="logo" src="@/assets/logo.svg" width="30" height="30" />
 
         <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false"
            :class="{ 'is-active': isOpen }" @click="isOpen = !isOpen">
-          <span aria-hidden="true"></span>
           <span aria-hidden="true"></span>
           <span aria-hidden="true"></span>
           <span aria-hidden="true"></span>
@@ -23,20 +22,18 @@ const isOpen = ref(false)
       <div class="navbar-menu" :class="{ 'is-active': isOpen }">
         <div class="navbar-start">
           <RouterLink to="/" class="navbar-item">Home</RouterLink>
-          <RouterLink to="/products" class="navbar-item">Shop</RouterLink>
+          <RouterLink to="/dashboard" class="navbar-item">Dashboard</RouterLink>
+          <RouterLink to="/exercises" class="navbar-item">Exercises</RouterLink>
+          <RouterLink to="/social" class="navbar-item">Friends' Activities</RouterLink>
 
-
+          <!-- Dropdown for more links -->
           <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">
               More
             </a>
-
             <div class="navbar-dropdown">
               <RouterLink to="/about" class="navbar-item">
                 About
-              </RouterLink>
-              <RouterLink to="/jobs" class="navbar-item">
-                Jobs
               </RouterLink>
               <RouterLink to="/contact" class="navbar-item">
                 Contact
@@ -49,15 +46,16 @@ const isOpen = ref(false)
           </div>
         </div>
 
+        <!-- Sign up / Log in buttons -->
         <div class="navbar-end">
           <div class="navbar-item">
             <div class="buttons">
-              <a class="button is-primary">
+              <RouterLink to="/signup" class="button is-primary">
                 <strong>Sign up</strong>
-              </a>
-              <a class="button is-light">
+              </RouterLink>
+              <RouterLink to="/login" class="button is-light">
                 Log in
-              </a>
+              </RouterLink>
             </div>
           </div>
         </div>
@@ -68,8 +66,10 @@ const isOpen = ref(false)
 
 <style scoped>
 .router-link-active {
-
   font-weight: bold;
   border-bottom: 2px solid blue;
+}
+.navbar-burger {
+  cursor: pointer;
 }
 </style>

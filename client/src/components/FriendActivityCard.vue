@@ -10,10 +10,7 @@
   import { defineProps } from 'vue';
   
   const props = defineProps({
-    friend: {
-      type: Object,
-      required: true
-    }
+    friend: Object,
   });
   </script>
   

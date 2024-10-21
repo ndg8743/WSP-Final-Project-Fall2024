@@ -1,26 +1,19 @@
-<script setup lang="ts">
-import { RouterView } from 'vue-router'
-import NavBar from './components/NavBar.vue';
-</script>
-
 <template>
-  <header>
+  <div id="app">
     <NavBar />
-  </header>
-
-  <div class="container">
-    <RouterView />
+    <router-view />
   </div>
 </template>
 
-<style scoped>
-body {
-  background-color: aliceblue;
-}
+<script setup>
+import NavBar from '@/components/NavBar.vue';
+</script>
 
-.container {
-  background-color: white;
-  box-shadow: drop-shadow(0 0 10px rgba(0, 0, 0, 0.8));
-  min-height: 100vh;
+<style>
+#app {
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 0px;
 }
 </style>
