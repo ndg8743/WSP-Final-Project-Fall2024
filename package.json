@@ -1,5 +1,5 @@
 {
-  "name": "2024fall",
+  "name": "wsp-final-project-fall2024",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -7,9 +7,9 @@
     "dev": "nodemon server/index.mjs"
   },
   "dependencies": {
-    "2024fall": "file:",
     "dayjs": "^1.11.13",
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "wsp-final-project-fall2024": "file:"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
