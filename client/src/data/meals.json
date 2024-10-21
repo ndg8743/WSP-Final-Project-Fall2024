@@ -1,0 +1,45 @@
+[
+    {
+      "id": 1,
+      "userId": 1,
+      "name": "Breakfast - Oatmeal",
+      "calories": 300,
+      "date": "2024-10-19"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "name": "Lunch - Chicken Salad",
+      "calories": 450,
+      "date": "2024-10-19"
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "name": "Dinner - Grilled Salmon",
+      "calories": 600,
+      "date": "2024-10-19"
+    },
+    {
+      "id": 4,
+      "userId": 2,
+      "name": "Breakfast - Scrambled Eggs",
+      "calories": 250,
+      "date": "2024-10-20"
+    },
+    {
+      "id": 5,
+      "userId": 2,
+      "name": "Lunch - Caesar Salad",
+      "calories": 400,
+      "date": "2024-10-20"
+    },
+    {
+      "id": 6,
+      "userId": 3,
+      "name": "Dinner - Spaghetti Bolognese",
+      "calories": 700,
+      "date": "2024-10-21"
+    }
+  ]
+  

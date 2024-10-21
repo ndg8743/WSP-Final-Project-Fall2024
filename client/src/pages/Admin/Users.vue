@@ -22,7 +22,6 @@
           </tbody>
         </table>
   
-        <!-- Modal for Editing User -->
         <modal v-if="showModal" @close="closeModal">
           <template #header>
             <p>Edit User</p>

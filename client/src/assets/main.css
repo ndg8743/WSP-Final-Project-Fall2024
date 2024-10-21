@@ -1,0 +1,117 @@
+/* Main dark theme styles */
+body {
+    background-color: #121212 !important; /* Dark background */
+    color: #e0e0e0 !important; /* Light text */
+    font-family: 'Arial', sans-serif !important;
+  }
+  
+  /* Ensure background covers the full page */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Container adjustments */
+  .container {
+    background-color: #1e1e1e !important; /* Dark background for container */
+    color: #e0e0e0 !important; /* Light text for containers */
+    padding: 20px !important;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
+    border-radius: 5px !important;
+    min-height: 100vh; /* Ensure container takes up full height */
+  }
+  
+  /* Navbar dark theme */
+  .navbar {
+    background-color: #1e1e1e !important; /* Dark background for navbar */
+  }
+  
+  .navbar-item, .navbar-link {
+    color: #e0e0e0 !important; /* Light text color */
+  }
+  
+  .navbar-item:hover, .navbar-link:hover {
+    background-color: #333 !important; /* Dark hover effect */
+  }
+  
+  .router-link-active {
+    font-weight: bold !important;
+    border-bottom: 2px solid #00ff99 !important; /* Change to light green */
+  }
+  
+  /* Button styles */
+  .button.is-primary {
+    background-color: #00ff99 !important; /* Original light green for primary buttons */
+    border-color: #00ff99 !important;
+    color: #fff !important;
+  }
+  
+  .button.is-light {
+    background-color: #6c757d !important;
+    color: #fff !important;
+  }
+  
+  /* Forms in dark theme */
+  .input, .textarea, .select select {
+    background-color: #333 !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444 !important;
+  }
+  
+  .input:focus, .textarea:focus, .select select:focus {
+    border-color: #00ff99 !important; /* Light green border on focus */
+    box-shadow: 0 0 0 0.125em rgba(0, 255, 153, 0.25) !important;
+  }
+  
+  /* Box shadow and hover effects */
+  .box {
+    background-color: #1e1e1e !important;
+    border-radius: 5px !important;
+    padding: 20px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
+  }
+  
+  .box:hover {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 1) !important;
+  }
+  
+  /* Table in dark theme */
+  .table {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+  }
+  
+  .table th {
+    background-color: #333 !important;
+    color: #e0e0e0 !important;
+  }
+  
+  .table td {
+    background-color: #2b2b2b !important;
+    color: #e0e0e0 !important;
+  }
+  
+  /* Scrollbar customization for dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: #444 !important;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #555 !important;
+  }
+  
+  /* Footer (if applicable) */
+  .footer {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+    padding: 20px !important;
+    text-align: center !important;
+  }
+  

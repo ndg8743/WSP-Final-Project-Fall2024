@@ -1,26 +1,36 @@
 <script setup lang="ts">
-import type { Product } from '@/models/exercise';
+import type { User } from '@/models/user';
 
 defineProps<{
-    product: Product
-}>()
+  user: User
+}>();
 </script>
 
 <template>
-    <div class="box">
-        <div class="box-image">
-            <img :src="product.thumbnail" alt="product.name" />
-        </div>
-        <div class="box-content">
-            <h3>{{ product.title }}</h3>
-            <p>{{ product.description }}</p>
-            <p>{{ product.price }}</p>
-        </div>
+  <div class="box">
+    <div class="box-content">
+      <h3>{{ user.name }}</h3>
+      <p>Email: {{ user.email }}</p>
+      <p>Role: {{ user.role }}</p>
+      <h4>Friends:</h4>
+      <ul>
+        <li v-for="friend in user.friends" :key="friend">
+          Friend ID: {{ friend }}
+        </li>
+      </ul>
     </div>
+  </div>
 </template>
 
 <style scoped>
 h3 {
-    font-weight: bold;
+  font-weight: bold;
+}
+.box-content {
+  padding: 10px;
+}
+ul {
+  list-style-type: none;
+  padding: 0;
 }
 </style>

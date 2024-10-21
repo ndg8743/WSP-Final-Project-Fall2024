@@ -9,7 +9,10 @@ const isOpen = ref(false);
   <nav class="navbar is-info" role="navigation" aria-label="main navigation">
     <div class="container">
       <div class="navbar-brand">
-        <img alt="App logo" class="logo" src="@/assets/logo.svg" width="30" height="30" />
+        <!-- Vue logo with adjusted alignment and padding -->
+        <RouterLink to="/">
+          <img alt="App logo" class="logo" src="@/assets/logo.svg" width="30" height="30" />
+        </RouterLink>
 
         <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false"
            :class="{ 'is-active': isOpen }" @click="isOpen = !isOpen">
@@ -21,27 +24,28 @@ const isOpen = ref(false);
 
       <div class="navbar-menu" :class="{ 'is-active': isOpen }">
         <div class="navbar-start">
-          <RouterLink to="/" class="navbar-item">Home</RouterLink>
           <RouterLink to="/dashboard" class="navbar-item">Dashboard</RouterLink>
           <RouterLink to="/exercises" class="navbar-item">Exercises</RouterLink>
-          <RouterLink to="/social" class="navbar-item">Friends' Activities</RouterLink>
+          <RouterLink to="/social" class="navbar-item">Social</RouterLink>
+          <RouterLink to="/meal-log" class="navbar-item">Meal Log</RouterLink>
+          <RouterLink to="/statistics" class="navbar-item">Statistics</RouterLink>
 
-          <!-- Dropdown for more links -->
+          <!-- Dropdown for additional links -->
           <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">
               More
             </a>
             <div class="navbar-dropdown">
-              <RouterLink to="/about" class="navbar-item">
-                About
+              <RouterLink to="/profile" class="navbar-item">
+                Profile
               </RouterLink>
               <RouterLink to="/contact" class="navbar-item">
                 Contact
               </RouterLink>
               <hr class="navbar-divider">
-              <a class="navbar-item">
-                Report an issue
-              </a>
+              <RouterLink to="/admin" class="navbar-item">
+                Admin
+              </RouterLink>
             </div>
           </div>
         </div>
@@ -71,5 +75,11 @@ const isOpen = ref(false);
 }
 .navbar-burger {
   cursor: pointer;
+}
+
+.logo {
+  margin-right: 10px;
+  margin-bottom: -20px;
+  padding: 1px;
 }
 </style>

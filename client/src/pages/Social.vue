@@ -1,7 +1,7 @@
 <template>
     <section class="section">
       <div class="container">
-        <h1 class="title">Friends' Activities</h1>
+        <h1 class="title">Social</h1>
         <FriendActivityCard
           v-for="friend in friends"
           :key="friend.id"

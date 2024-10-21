@@ -1,39 +1,18 @@
-import data from '../data/products.json'
-import type { DataListEnvelope } from './user'
+import data from '../data/exercises.json';
+import type { DataListEnvelope } from './user';
 
-export function getAll(): DataListEnvelope<Product> {
+export function getAll(): DataListEnvelope<Exercise> {
   return {
-    data: data.items,
-    total: data.total
-  }
+    data: data,
+    total: data.length
+  };
 }
 
-interface Review {
-  rating: number
-  comment: string
-  date: string
-  reviewerName: string
-  reviewerEmail: string
-}
-
-export interface Product {
-  id: number
-  title: string
-  description: string
-  category: string
-  price: number
-  rating: number
-  tags: string[]
-  brand?: string
-  weight: number
-  dimensions: {
-    width: number
-    height: number
-    depth: number
-  }
-  reviews: Review[]
-  returnPolicy: string
-  minimumOrderQuantity: number
-  images: string[]
-  thumbnail: string
+export interface Exercise {
+  id: number;
+  userId: number;
+  name: string;
+  duration: number;
+  caloriesBurned: number;
+  date: string; 
 }
