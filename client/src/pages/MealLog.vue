@@ -4,6 +4,7 @@
       <h1 class="title">Meal Log</h1>
 
       <form @submit.prevent="addMeal">
+        <!-- Form for adding meals -->
         <div class="field">
           <label class="label">Meal Name</label>
           <div class="control">
@@ -47,34 +48,40 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import MealCard from '@/components/MealCard.vue';
+import { getAll, Meal } from '@/models/meals'; // Import meals from the meals.ts
 
-const meals = ref([]);
+// Initialize the meals array with data from meals.json
+const meals = ref<Meal[]>(getAll().data);
 
 const newMeal = ref({
   name: '',
   calories: 0,
-  date: ''
+  date: '',
+  id: 0 // Default ID for a new meal
 });
 
 const addMeal = () => {
   if (newMeal.value.name && newMeal.value.calories && newMeal.value.date) {
     meals.value.push({
       ...newMeal.value,
-      id: Date.now() 
+      id: Date.now() // Assign a new ID for each meal
     });
     resetForm();
   }
 };
 
-const editMeal = (meal) => {
-  console.log("Editing meal:", meal); 
+const editMeal = (meal: Meal) => {
+  const index = meals.value.findIndex(m => m.id === meal.id);
+  if (index !== -1) {
+    newMeal.value = { ...meal }; // Populate the form with the selected meal for editing
+  }
 };
 
-const deleteMeal = (mealId) => {
-  meals.value = meals.value.filter((meal) => meal.id !== mealId);
+const deleteMeal = (mealId: number) => {
+  meals.value = meals.value.filter(meal => meal.id !== mealId);
 };
 
 const resetForm = () => {

@@ -3,8 +3,8 @@ import type { DataListEnvelope } from './user';
 
 export function getAll(): DataListEnvelope<Exercise> {
   return {
-    data: data,
-    total: data.length
+    data: data.exercises,
+    total: data.total,
   };
 }
 
@@ -14,5 +14,5 @@ export interface Exercise {
   name: string;
   duration: number;
   caloriesBurned: number;
-  date: string; 
+  date: string;
 }

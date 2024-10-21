@@ -9,7 +9,7 @@ const isOpen = ref(false);
   <nav class="navbar is-info" role="navigation" aria-label="main navigation">
     <div class="container">
       <div class="navbar-brand">
-        <!-- Vue logo with adjusted alignment and padding -->
+
         <RouterLink to="/">
           <img alt="App logo" class="logo" src="@/assets/logo.svg" width="30" height="30" />
         </RouterLink>
@@ -27,10 +27,10 @@ const isOpen = ref(false);
           <RouterLink to="/dashboard" class="navbar-item">Dashboard</RouterLink>
           <RouterLink to="/exercises" class="navbar-item">Exercises</RouterLink>
           <RouterLink to="/social" class="navbar-item">Social</RouterLink>
-          <RouterLink to="/meal-log" class="navbar-item">Meal Log</RouterLink>
+          <RouterLink to="/meallog" class="navbar-item">Meal Log</RouterLink>
           <RouterLink to="/statistics" class="navbar-item">Statistics</RouterLink>
 
-          <!-- Dropdown for additional links -->
+   
           <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">
               More
@@ -50,7 +50,6 @@ const isOpen = ref(false);
           </div>
         </div>
 
-        <!-- Sign up / Log in buttons -->
         <div class="navbar-end">
           <div class="navbar-item">
             <div class="buttons">
