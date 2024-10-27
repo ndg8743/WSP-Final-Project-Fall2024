@@ -5,7 +5,7 @@ import MealCard from '@/components/MealCard.vue';
 // @ts-ignore
 import Modal from '@/components/Modal.vue';
 import { getAll } from '@/models/meals';
-import type { Meal } from '@/models/meals';
+import type { Meal } from '@/models/meals.js';
 
 const meals = ref<Meal[]>(getAll().data);
 const filterDate = ref('');

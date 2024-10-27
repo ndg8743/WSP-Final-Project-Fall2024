@@ -4,8 +4,8 @@ import { ref } from 'vue';
 import ExerciseCard from '@/components/ExerciseCard.vue';
 // @ts-ignore
 import Modal from '@/components/Modal.vue';
-import { getAll } from '@/models/exercise';
-import type { Exercise } from '@/models/exercise';
+import { getAll } from '@/models/exercise.js';
+import type { Exercise } from '@/models/exercise.js';
 
 const exercises = ref<Exercise[]>(getAll().data);
 const filterDate = ref('');

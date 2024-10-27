@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Meal } from '@/models/meals';
+import type { Meal } from '@/models/meals.js';
 import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps<{
