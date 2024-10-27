@@ -1,3 +1,38 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+ <script setup>
+import { ref } from 'vue';
+import UserManagement from '@/components/UserManagement.vue';
+import Modal from '@/components/Modal.vue';
+
+// Mock user data
+const users = ref([
+  { id: 1, name: 'John Doe', email: 'john.doe@example.com', role: 'Admin' },
+  { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', role: 'User' },
+]);
+
+const currentUser = ref(null);
+const showModal = ref(false);
+
+const handleEdit = (user) => {
+  currentUser.value = { ...user };
+  showModal.value = true;
+};
+
+const handleDelete = (id) => {
+  users.value = users.value.filter(u => u.id !== id);
+};
+
+const saveUser = () => {
+  const index = users.value.findIndex(u => u.id === currentUser.value.id);
+  users.value.splice(index, 1, { ...currentUser.value });
+  closeModal();
+};
+
+const closeModal = () => {
+  showModal.value = false;
+};
+</script>
+
 <template>
     <section class="section">
       <div class="container">
@@ -52,40 +87,6 @@
       </div>
     </section>
   </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  import UserManagement from '@/components/UserManagement.vue';
-  import Modal from '@/components/Modal.vue';
-  
-  // Mock user data
-  const users = ref([
-    { id: 1, name: 'John Doe', email: 'john.doe@example.com', role: 'Admin' },
-    { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', role: 'User' },
-  ]);
-  
-  const currentUser = ref(null);
-  const showModal = ref(false);
-  
-  const handleEdit = (user) => {
-    currentUser.value = { ...user };
-    showModal.value = true;
-  };
-  
-  const handleDelete = (id) => {
-    users.value = users.value.filter(u => u.id !== id);
-  };
-  
-  const saveUser = () => {
-    const index = users.value.findIndex(u => u.id === currentUser.value.id);
-    users.value.splice(index, 1, { ...currentUser.value });
-    closeModal();
-  };
-  
-  const closeModal = () => {
-    showModal.value = false;
-  };
-  </script>
   
   <style scoped>
   .section {

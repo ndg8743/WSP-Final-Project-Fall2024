@@ -1,12 +1,4 @@
-<template>
-    <div class="box">
-      <h2 class="subtitle">{{ friend.name }}'s Recent Activity</h2>
-      <p>{{ friend.exercise }}</p>
-      <p><strong>Calories Burned:</strong> {{ friend.calories }} kcal</p>
-    </div>
-  </template>
-  
-  <script setup>
+<script setup>
   import { defineProps } from 'vue';
   
   const props = defineProps({
@@ -16,6 +8,14 @@
     }
   });
   </script>
+
+<template>
+    <div class="box">
+      <h2 class="subtitle">{{ friend.name }}'s Recent Activity</h2>
+      <p>{{ friend.exercise }}</p>
+      <p><strong>Calories Burned:</strong> {{ friend.calories }} kcal</p>
+    </div>
+  </template>
   
   <style scoped>
   .box {

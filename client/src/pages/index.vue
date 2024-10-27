@@ -1,3 +1,7 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+<script setup>
+  </script>
+
 <template>
     <section class="section">
       <div class="container">
@@ -11,17 +15,12 @@
       </div>
     </section>
   </template>
-  
-  <script setup>
-//logic?
-  </script>
-  
-  <style scoped>
-  .container {
-    text-align: center;
-  }
-  .buttons {
-    margin-top: 20px;
-  }
-  </style>
-  
+
+<style scoped>
+.container {
+  text-align: center;
+}
+.buttons {
+  margin-top: 20px;
+}
+</style>

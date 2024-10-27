@@ -1,3 +1,11 @@
+<script setup>
+import { defineProps } from 'vue';
+
+const props = defineProps({
+  friend: Object,
+});
+</script>
+
 <template>
     <div class="box">
       <h2 class="subtitle">{{ friend.name }}'s Recent Activity</h2>
@@ -5,15 +13,7 @@
       <p><strong>Calories Burned:</strong> {{ friend.calories }} kcal</p>
     </div>
   </template>
-  
-  <script setup>
-  import { defineProps } from 'vue';
-  
-  const props = defineProps({
-    friend: Object,
-  });
-  </script>
-  
+
   <style scoped>
   .box {
     margin-bottom: 15px;

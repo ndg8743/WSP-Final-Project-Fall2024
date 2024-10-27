@@ -1,3 +1,16 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+<script setup>
+import { ref } from 'vue';
+
+const username = ref('');
+const password = ref('');
+
+const login = () => {
+  console.log(`Username: ${username.value}, Password: ${password.value}`);
+  // Add your logic for login 
+};
+</script>
+
 <template>
     <section class="section">
       <div class="container">
@@ -18,22 +31,11 @@
       </div>
     </section>
   </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  
-  const username = ref('');
-  const password = ref('');
-  
-  const login = () => {
-    console.log(`Username: ${username.value}, Password: ${password.value}`);
-    // Add your logic for login 
-  };
-  </script>
-  
-  <style scoped>
-  .section {
-    padding-top: 2rem;
-  }
-  </style>
+
+<style scoped>
+.section {
+  padding-top: 2rem;
+}
+</style>
+
   

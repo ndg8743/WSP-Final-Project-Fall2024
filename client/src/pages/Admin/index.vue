@@ -1,3 +1,12 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+ <script setup>
+import { ref } from 'vue';
+
+// Mock data for dashboard stats
+const totalUsers = ref(50);
+const lastSettingsUpdate = ref('2024-10-19');
+</script>
+
 <template>
     <section class="section">
       <div class="container">
@@ -19,14 +28,6 @@
       </div>
     </section>
   </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  
-  // Mock data for dashboard stats
-  const totalUsers = ref(50);
-  const lastSettingsUpdate = ref('2024-10-19');
-  </script>
   
   <style scoped>
   .section {

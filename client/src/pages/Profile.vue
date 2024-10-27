@@ -1,3 +1,21 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+<script setup>
+import { ref } from 'vue';
+
+const avatar = ref('');
+
+const uploadImage = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      avatar.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+</script>
+
 <template>
     <div class="field">
       <label class="label">Upload Avatar</label>
@@ -9,27 +27,9 @@
       </figure>
     </div>
   </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  
-  const avatar = ref('');
-  
-  const uploadImage = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        avatar.value = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  </script>
-  
-  <style scoped>
-  .image {
-    margin-top: 10px;
-  }
-  </style>
-  
+
+<style scoped>
+.image {
+  margin-top: 10px;
+}
+</style>

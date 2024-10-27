@@ -1,3 +1,13 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+<script setup>
+import { ref } from 'vue';
+import ProgressBar from '@/components/ProgressBar.vue';
+
+// Mock food data
+const completedExercises = ref(50);
+const caloriesBurned = ref(2500);
+</script>
+
 <template>
     <section class="section">
       <div class="container">
@@ -14,18 +24,8 @@
     </section>
   </template>
   
-  <script setup>
-  import { ref } from 'vue';
-  import ProgressBar from '@/components/ProgressBar.vue';
-  
-  // Mock food data
-  const completedExercises = ref(50);
-  const caloriesBurned = ref(2500);
-  </script>
-  
-  <style scoped>
-  .section {
-    padding-top: 2rem;
-  }
-  </style>
-  
+<style scoped>
+.section {
+  padding-top: 2rem;
+}
+</style>

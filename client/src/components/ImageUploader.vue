@@ -1,3 +1,34 @@
+<script setup>
+import { ref, defineProps, defineEmits } from 'vue';
+
+// Props to customize the label and receive the image
+const props = defineProps({
+  label: {
+    type: String,
+    default: 'Upload Image'
+  },
+  image: {
+    type: String,
+    default: ''
+  }
+});
+
+const emit = defineEmits(['update:image']);
+const imageSrc = ref(props.image);
+
+const uploadImage = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imageSrc.value = e.target.result;
+      emit('update:image', imageSrc.value); 
+    };
+    reader.readAsDataURL(file);
+  }
+};
+</script>
+
 <template>
     <div class="field">
       <label class="label">{{ label }}</label>
@@ -9,37 +40,6 @@
       </figure>
     </div>
   </template>
-  
-  <script setup>
-  import { ref, defineProps, defineEmits } from 'vue';
-  
-  // Props to customize the label and receive the image
-  const props = defineProps({
-    label: {
-      type: String,
-      default: 'Upload Image'
-    },
-    image: {
-      type: String,
-      default: ''
-    }
-  });
-  
-  const emit = defineEmits(['update:image']);
-  const imageSrc = ref(props.image);
-  
-  const uploadImage = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        imageSrc.value = e.target.result;
-        emit('update:image', imageSrc.value); 
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  </script>
   
   <style scoped>
   .image {

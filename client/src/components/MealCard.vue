@@ -1,33 +1,39 @@
-<template>
-  <div class="box">
-    <h2 class="subtitle">{{ meal.name }}</h2>
-    <p><strong>Calories:</strong> {{ meal.calories }} kcal</p>
-    <p><strong>Date:</strong> {{ meal.date }}</p>
-    <button class="button is-small is-info" @click="editMeal">Edit</button>
-    <button class="button is-small is-danger" @click="deleteMeal">Delete</button>
-  </div>
-</template>
-
-<script setup>
+<script setup lang="ts">
+import type { Meal } from '@/models/meals';
 import { defineProps, defineEmits } from 'vue';
 
-const props = defineProps({
-  meal: Object,
-});
+const props = defineProps<{
+  meal: Meal;
+}>();
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits<{
+  (e: 'edit', meal: Meal): void;
+  (e: 'delete', mealId: number): void;
+}>();
 
-const editMeal = () => {
+const handleEdit = () => {
   emit('edit', props.meal);
 };
 
-const deleteMeal = () => {
+const handleDelete = () => {
   emit('delete', props.meal.id);
 };
 </script>
 
+<template>
+  <div class="box">
+    <h3>{{ meal.name }}</h3>
+    <p>Calories: {{ meal.calories }} kcal</p>
+    <p>Date: {{ meal.date }}</p>
+    <button class="button is-info" @click="handleEdit">Edit</button>
+    <button class="button is-danger" @click="handleDelete">Delete</button>
+  </div>
+</template>
+
 <style scoped>
-.button {
-  margin-right: 5px;
+.box {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #ccc;
 }
 </style>

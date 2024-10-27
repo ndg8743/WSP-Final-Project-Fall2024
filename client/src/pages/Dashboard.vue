@@ -1,3 +1,13 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+<script setup>
+import { ref } from 'vue';
+import ProgressBar from '@/components/ProgressBar.vue';
+
+const lastExercise = ref('Running - 30 minutes');
+const totalExercises = ref(25);
+const completedExercises = ref(50);
+</script>
+
 <template>
     <section class="section">
       <div class="container">
@@ -14,19 +24,9 @@
       </div>
     </section>
   </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  import ProgressBar from '@/components/ProgressBar.vue';
-  
-  const lastExercise = ref('Running - 30 minutes');
-  const totalExercises = ref(25);
-  const completedExercises = ref(50);
-  </script>
-  
-  <style scoped>
-  .section {
-    padding-top: 2rem;
-  }
-  </style>
-  
+
+<style scoped>
+.section {
+  padding-top: 2rem;
+}
+</style>

@@ -1,3 +1,11 @@
+<script setup lang="ts">
+import type { Exercise } from '@/models/exercise';
+
+defineProps<{
+  exercise: Exercise;
+}>();
+</script>
+
 <template>
   <div class="box">
     <h3>{{ exercise.name }}</h3>
@@ -7,14 +15,6 @@
     <button class="button is-danger" @click="$emit('delete', exercise.id)">Delete</button>
   </div>
 </template>
-
-<script setup lang="ts">
-import type { Exercise } from '@/models/exercise';
-
-defineProps<{
-  exercise: Exercise;
-}>();
-</script>
 
 <style scoped>
 .box {

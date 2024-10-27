@@ -1,3 +1,9 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+<script setup>
+defineEmits(['close']);
+</script>
+
+
 <template>
   <div class="modal is-active">
     <div class="modal-background" @click="$emit('close')"></div>
@@ -17,10 +23,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-defineEmits(['close']);
-</script>
 
 <style scoped>
 .modal-card-head,
