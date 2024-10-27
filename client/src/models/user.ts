@@ -15,5 +15,6 @@ export interface User {
   email: string;
   role: 'user' | 'admin';
   friends: number[];
+  image: string;
 }
 
