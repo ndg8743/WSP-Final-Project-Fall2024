@@ -13,8 +13,8 @@ const isOpen = ref(false);
           <img alt="App logo" class="logo" src="@/assets/logo.svg" width="30" height="30" />
         </RouterLink>
 
-        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false"
-           :class="{ 'is-active': isOpen }" @click="isOpen = !isOpen">
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" :class="{ 'is-active': isOpen }"
+          @click="isOpen = !isOpen">
           <span aria-hidden="true"></span>
           <span aria-hidden="true"></span>
           <span aria-hidden="true"></span>
@@ -38,6 +38,10 @@ const isOpen = ref(false);
           <RouterLink to="/social" class="navbar-item">
             <span class="icon"><i class="fas fa-users"></i></span>
             Social
+          </RouterLink>
+          <RouterLink to="/search" class="navbar-item">
+            <span class="icon"><i class="fas fa-search"></i></span>
+            Search
           </RouterLink>
           <RouterLink to="/statistics" class="navbar-item">
             <span class="icon"><i class="fas fa-chart-line"></i></span>
@@ -91,6 +95,7 @@ const isOpen = ref(false);
   font-weight: bold;
   border-bottom: 2px solid blue;
 }
+
 .navbar-burger {
   cursor: pointer;
 }
@@ -103,16 +108,19 @@ const isOpen = ref(false);
 
 /* Add specific margin for icons within buttons */
 .buttons .icon i {
-  margin-right: 30px; /* Space between icon and text */
+  margin-right: 30px;
+  /* Space between icon and text */
 
 }
 
 /* Increase button size */
 .buttons .button {
-  font-size: 1.1rem; /* Adjust font size */
-  padding: 0.75rem 1.5rem; /* Increase padding */
-  margin-right: 10px; /* Add margin between buttons */
+  font-size: 1.1rem;
+  /* Adjust font size */
+  padding: 0.75rem 1.5rem;
+  /* Increase padding */
+  margin-right: 10px;
+  /* Add margin between buttons */
   width: 150px;
 }
-
 </style>

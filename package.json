@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "build": "npm run build -w client",
     "start": "node server/index.mjs",
     "dev": "nodemon server/index.mjs"
   },
@@ -13,5 +14,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
-  }
+  },
+  "workspaces": [
+    "client"
+  ]
 }

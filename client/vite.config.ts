@@ -5,7 +5,6 @@ import vueJsx from '@vitejs/plugin-vue-jsx';
 import vueDevTools from 'vite-plugin-vue-devtools';
 import VueRouter from 'unplugin-vue-router/vite';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     VueRouter({
@@ -19,5 +18,8 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  define: {
+    'import.meta.env.BASE_URL': JSON.stringify('/') // Define BASE_URL or set to your actual base path if needed
   }
 });

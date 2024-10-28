@@ -1,32 +1,38 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup>
-import { ref, onMounted } from 'vue';
-import ProgressBar from '@/components/ProgressBar.vue';
-import exercisesData from '@/data/exercises.json';
+import { ref, onMounted } from 'vue'
+import ProgressBar from '@/components/ProgressBar.vue'
+import exercisesData from '@/data/exercises.json'
 
-const currentUserId = 1; // Replace with dynamic user ID as needed
+// Retrieve the current user from session
+const session = localStorage.getItem('session')
+const currentUser = session ? JSON.parse(session) : null
 
 // User-specific data
-const lastExercise = ref('');
-const totalExercises = ref(0);
-const completedExercises = ref(0);
+const lastExercise = ref('')
+const totalExercises = ref(0)
+const completedExercises = ref(0)
 
 onMounted(() => {
-  // Fetch the exercises for the current user
-  const userExercises = exercisesData.exercises
-    .filter(exercise => exercise.userId === currentUserId)
-    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date for the latest exercise
+  if (currentUser) {
+    const currentUserId = currentUser.id
 
-  // Set the last exercise, total exercises, and completed exercises
-  if (userExercises.length > 0) {
-    const recentExercise = userExercises[0];
-    lastExercise.value = `${recentExercise.name} - ${recentExercise.duration} minutes`;
-  } else {
-    lastExercise.value = 'No recent exercise';
+    // Fetch the exercises for the current user
+    const userExercises = exercisesData.exercises
+      .filter(exercise => exercise.userId === currentUserId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date for the latest exercise
+
+    // Set the last exercise, total exercises, and completed exercises
+    if (userExercises.length > 0) {
+      const recentExercise = userExercises[0]
+      lastExercise.value = `${recentExercise.name} - ${recentExercise.duration} minutes`
+    } else {
+      lastExercise.value = 'No recent exercise'
+    }
+    totalExercises.value = userExercises.length
+    completedExercises.value = Math.min(userExercises.length, 100) // Example: limit to 100 for progress bar
   }
-  totalExercises.value = userExercises.length;
-  completedExercises.value = Math.min(userExercises.length, 100); // Example: limit to 100 for progress bar
-});
+})
 </script>
 
 <template>

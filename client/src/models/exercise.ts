@@ -1,5 +1,5 @@
 import data from '../data/exercises.json';
-import type { DataListEnvelope } from './user';
+import type { DataListEnvelope } from './user.js';
 
 export function getAll(): DataListEnvelope<Exercise> {
   return {
