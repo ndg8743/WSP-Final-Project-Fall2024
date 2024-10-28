@@ -19,7 +19,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  define: {
-    'import.meta.env.BASE_URL': JSON.stringify('/') // Define BASE_URL or set to your actual base path if needed
-  }
+  //define: {
+  //  'import.meta.env.BASE_URL': JSON.stringify('/') // Define BASE_URL or set to your actual base path if needed
+ // }
 });

@@ -23,6 +23,9 @@ app.get('*', (req, res) => {
 const server = createServer(app);
 
 // Start the server
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+//server.listen(PORT, '0.0.0.0', () => {
+ // console.log(`Server is running on http://localhost:${PORT}`);
+ // starts a simple http server locally on port 3000
+server.listen(PORT, '127.0.0.1', () => {
+  console.log('Listening on 127.0.0.1:3000');
 });
