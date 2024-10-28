@@ -11,7 +11,7 @@ onMounted(() => {
   const session = localStorage.getItem('session')
   if (session) {
     currentUser.value = JSON.parse(session)
-    avatar.value = currentUser.value.image // Set avatar to the user's current image
+    avatar.value = currentUser.value?.image || '' // Set avatar to the user's current image if available
   }
 })
 
