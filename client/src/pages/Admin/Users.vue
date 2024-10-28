@@ -1,4 +1,4 @@
-<!-- UserManagementPage.vue -->
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import UserManagement from '@/components/UserManagement.vue'
