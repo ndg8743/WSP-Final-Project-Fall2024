@@ -1,56 +1,69 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue'
 // @ts-ignore
-import MealCard from '@/components/MealCard.vue';
+import MealCard from '@/components/MealCard.vue'
 // @ts-ignore
-import Modal from '@/components/Modal.vue';
-import { getAll } from '@/models/meals';
-import type { Meal } from '@/models/meals.js';
+import Modal from '@/components/Modal.vue'
+import { getAll } from '@/models/meals'
+import type { Meal } from '@/models/meals.js'
 
-const meals = ref<Meal[]>(getAll().data);
-const filterDate = ref('');
-const filteredMeals = ref([...meals.value]);
-const currentMeal = ref<Meal | null>(null);
-const showModal = ref(false);
-const isAddingMeal = ref(false); // Flag for add mode
+// Retrieve the current user from the session
+const session = localStorage.getItem('session')
+const currentUser = session ? JSON.parse(session) : null
 
+const meals = ref<Meal[]>([])
+const filterDate = ref('')
+const filteredMeals = ref<Meal[]>([])
+const currentMeal = ref<Meal | null>(null)
+const showModal = ref(false)
+const isAddingMeal = ref(false) // Flag for add mode
+
+// Filter meals based on the selected date
 const filterMeals = () => {
   filteredMeals.value = filterDate.value
     ? meals.value.filter(meal => meal.date === filterDate.value)
-    : [...meals.value];
-};
+    : [...meals.value]
+}
 
 const openAddMeal = () => {
-  currentMeal.value = { id: Date.now(), name: '', calories: 0, date: '', userId: 0 };
-  isAddingMeal.value = true;
-  showModal.value = true;
-};
+  currentMeal.value = { id: Date.now(), name: '', calories: 0, date: '', userId: currentUser.id }
+  isAddingMeal.value = true
+  showModal.value = true
+}
 
 const handleEdit = (meal: Meal) => {
-  currentMeal.value = { ...meal };
-  isAddingMeal.value = false;
-  showModal.value = true;
-};
+  currentMeal.value = { ...meal }
+  isAddingMeal.value = false
+  showModal.value = true
+}
 
 const handleDelete = (id: number) => {
-  meals.value = meals.value.filter(meal => meal.id !== id);
-  filterMeals();
-};
+  meals.value = meals.value.filter(meal => meal.id !== id)
+  filterMeals()
+}
 
 const saveMeal = () => {
   if (isAddingMeal.value) {
-    meals.value.push({ ...currentMeal.value! });
+    meals.value.push({ ...currentMeal.value! })
   } else {
-    const index = meals.value.findIndex(meal => meal.id === currentMeal.value!.id);
-    if (index !== -1) meals.value.splice(index, 1, { ...currentMeal.value! });
+    const index = meals.value.findIndex(meal => meal.id === currentMeal.value!.id)
+    if (index !== -1) meals.value.splice(index, 1, { ...currentMeal.value! })
   }
-  closeModal();
-  filterMeals();
-};
+  closeModal()
+  filterMeals()
+}
 
 const closeModal = () => {
-  showModal.value = false;
-};
+  showModal.value = false
+}
+
+// Load current user's meals on component mount
+onMounted(() => {
+  if (currentUser) {
+    meals.value = getAll().data.filter((meal: Meal) => meal.userId === currentUser.id)
+    filterMeals() // Initialize filteredMeals based on the loaded data
+  }
+})
 </script>
 
 <template>
@@ -58,8 +71,8 @@ const closeModal = () => {
     <div class="container">
       <h1 class="title">Meal Log</h1>
       <button class="button is-primary" @click="openAddMeal">Add New Meal</button>
-      <br>
-      <br>
+      <br />
+      <br />
       <div class="field">
         <label class="label">Filter by Date</label>
         <input type="date" class="input" v-model="filterDate" @change="filterMeals" />

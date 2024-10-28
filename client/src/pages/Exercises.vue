@@ -1,65 +1,75 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref } from 'vue';
-import ExerciseCard from '@/components/ExerciseCard.vue';
+import { ref, onMounted } from 'vue'
+import ExerciseCard from '@/components/ExerciseCard.vue'
 // @ts-ignore
-import Modal from '@/components/Modal.vue';
-import { getAll } from '@/models/exercise.js';
-import type { Exercise } from '@/models/exercise.js';
+import Modal from '@/components/Modal.vue'
+import { getAll } from '@/models/exercise.js'
+import type { Exercise } from '@/models/exercise.js'
 
-// Initialize exercises from getAll()
-const exercises = ref<Exercise[]>(getAll().data);
-const filterDate = ref('');
-const filteredExercises = ref([...exercises.value]);
-const currentExercise = ref<Exercise | null>(null);
-const showModal = ref(false);
-const isAddingExercise = ref(false);
+// Retrieve the current user from session
+const session = localStorage.getItem('session')
+const currentUser = session ? JSON.parse(session) : null
+
+const exercises = ref<Exercise[]>([])
+const filterDate = ref('')
+const filteredExercises = ref<Exercise[]>([])
+const currentExercise = ref<Exercise | null>(null)
+const showModal = ref(false)
+const isAddingExercise = ref(false)
 
 const filterExercises = () => {
   filteredExercises.value = filterDate.value
     ? exercises.value.filter(exercise => exercise.date === filterDate.value)
-    : [...exercises.value];
-};
+    : [...exercises.value]
+}
 
 const openAddExercise = () => {
-  // Set default values for a new exercise
-  currentExercise.value = { 
-    id: Date.now(), 
-    name: '', 
-    duration: 0, 
-    caloriesBurned: 0, 
-    date: new Date().toISOString().split('T')[0], // Set date to current date
-    userId: 0 
-  };
-  isAddingExercise.value = true;
-  showModal.value = true;
-};
+  currentExercise.value = {
+    id: Date.now(),
+    name: '',
+    duration: 0,
+    caloriesBurned: 0,
+    date: new Date().toISOString().split('T')[0],
+    userId: currentUser ? currentUser.id : 0 // Set userId to current logged-in user
+  }
+  isAddingExercise.value = true
+  showModal.value = true
+}
 
 const handleEdit = (exercise: Exercise) => {
-  currentExercise.value = { ...exercise };
-  isAddingExercise.value = false;
-  showModal.value = true;
-};
+  currentExercise.value = { ...exercise }
+  isAddingExercise.value = false
+  showModal.value = true
+}
 
 const handleDelete = (id: number) => {
-  exercises.value = exercises.value.filter(exercise => exercise.id !== id);
-  filterExercises();
-};
+  exercises.value = exercises.value.filter(exercise => exercise.id !== id)
+  filterExercises()
+}
 
 const saveExercise = () => {
   if (isAddingExercise.value) {
-    exercises.value.push({ ...currentExercise.value! });
+    exercises.value.push({ ...currentExercise.value! })
   } else {
-    const index = exercises.value.findIndex(exercise => exercise.id === currentExercise.value!.id);
-    if (index !== -1) exercises.value.splice(index, 1, { ...currentExercise.value! });
+    const index = exercises.value.findIndex(exercise => exercise.id === currentExercise.value!.id)
+    if (index !== -1) exercises.value.splice(index, 1, { ...currentExercise.value! })
   }
-  closeModal();
-  filterExercises();
-};
+  closeModal()
+  filterExercises()
+}
 
 const closeModal = () => {
-  showModal.value = false;
-};
+  showModal.value = false
+}
+
+// Load current user's exercises on component mount
+onMounted(() => {
+  if (currentUser) {
+    exercises.value = getAll().data.filter((exercise: Exercise) => exercise.userId === currentUser.id)
+    filterExercises() // Initialize filteredExercises based on the loaded data
+  }
+})
 </script>
 
 <template>
@@ -67,8 +77,8 @@ const closeModal = () => {
     <div class="container">
       <h1 class="title">Exercises</h1>
       <button class="button is-primary" @click="openAddExercise">Add New Exercise</button>
-      <br>
-      <br>
+      <br />
+      <br />
       <div class="field">
         <label class="label">Filter by Date</label>
         <input type="date" class="input" v-model="filterDate" @change="filterExercises" />

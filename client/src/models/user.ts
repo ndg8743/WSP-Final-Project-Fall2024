@@ -13,9 +13,13 @@ export type User = {
   id: number;
   name: string;
   email: string;
-  //role: 'admin' | 'user';
+  role: 'admin' | 'user';
   friends: number[];
   image: string;
   password: string;
 };
 
+export interface Session {
+  user: User
+  token?: string 
+}
