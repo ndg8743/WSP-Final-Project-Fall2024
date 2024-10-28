@@ -1,9 +1,21 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue';
 import 'bulma/css/bulma.css'; 
 import './assets/main.css';    
+
+const applyDefaultTheme = () => {
+  const savedTheme = localStorage.getItem('theme') || 'dark'
+  document.documentElement.classList.add(savedTheme)
+}
+
+onMounted(() => {
+  applyDefaultTheme() // Apply dark theme by default on first load
+})
+
 </script>
+
 
 <template>
   <header>
