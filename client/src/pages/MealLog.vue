@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 // @ts-ignore
@@ -70,21 +71,26 @@ onMounted(() => {
   <section class="section">
     <div class="container">
       <h1 class="title">Meal Log</h1>
-      <button class="button is-primary" @click="openAddMeal">Add New Meal</button>
-      <br />
-      <br />
-      <div class="field">
-        <label class="label">Filter by Date</label>
-        <input type="date" class="input" v-model="filterDate" @change="filterMeals" />
+      <div v-if="currentUser">
+        <button class="button is-primary" @click="openAddMeal">Add New Meal</button>
+        <br />
+        <br />
+        <div class="field">
+          <label class="label">Filter by Date</label>
+          <input type="date" class="input" v-model="filterDate" @change="filterMeals" />
+        </div>
+        <div>
+          <MealCard
+            v-for="meal in filteredMeals"
+            :key="meal.id"
+            :meal="meal"
+            @edit="handleEdit"
+            @delete="handleDelete"
+          />
+        </div>
       </div>
-      <div>
-        <MealCard
-          v-for="meal in filteredMeals"
-          :key="meal.id"
-          :meal="meal"
-          @edit="handleEdit"
-          @delete="handleDelete"
-        />
+      <div v-else>
+        <p class="notification is-danger">Please log in to view and manage your meal log.</p>
       </div>
     </div>
   </section>
@@ -118,5 +124,8 @@ onMounted(() => {
 <style scoped>
 .section {
   padding-top: 2rem;
+}
+.notification {
+  margin-top: 1rem;
 }
 </style>

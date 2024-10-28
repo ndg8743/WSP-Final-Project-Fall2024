@@ -76,21 +76,26 @@ onMounted(() => {
   <section class="section">
     <div class="container">
       <h1 class="title">Exercises</h1>
-      <button class="button is-primary" @click="openAddExercise">Add New Exercise</button>
-      <br />
-      <br />
-      <div class="field">
-        <label class="label">Filter by Date</label>
-        <input type="date" class="input" v-model="filterDate" @change="filterExercises" />
+      <div v-if="currentUser">
+        <button class="button is-primary" @click="openAddExercise">Add New Exercise</button>
+        <br />
+        <br />
+        <div class="field">
+          <label class="label">Filter by Date</label>
+          <input type="date" class="input" v-model="filterDate" @change="filterExercises" />
+        </div>
+        <div>
+          <ExerciseCard
+            v-for="exercise in filteredExercises"
+            :key="exercise.id"
+            :exercise="exercise"
+            @edit="handleEdit"
+            @delete="handleDelete"
+          />
+        </div>
       </div>
-      <div>
-        <ExerciseCard
-          v-for="exercise in filteredExercises"
-          :key="exercise.id"
-          :exercise="exercise"
-          @edit="handleEdit"
-          @delete="handleDelete"
-        />
+      <div v-else>
+        <p class="notification is-danger">Please log in to view and manage exercises.</p>
       </div>
     </div>
   </section>
@@ -128,5 +133,8 @@ onMounted(() => {
 <style scoped>
 .section {
   padding-top: 2rem;
+}
+.notification {
+  margin-top: 1rem;
 }
 </style>

@@ -58,7 +58,7 @@ onMounted(() => {
         return {
           id: user.id,
           name: user.name,
-          image: user.image, // Use image from users.json
+          image: user.image,
           exercise: recentActivity.name,
           caloriesBurned: recentActivity.caloriesBurned,
           lastMeal: lastMeal.name,
@@ -74,11 +74,16 @@ onMounted(() => {
   <section class="section">
     <div class="container">
       <h1 class="title">Social</h1>
-      <FriendActivityCard
-        v-for="friend in friendsActivities"
-        :key="friend.id"
-        :friend="friend"
-      />
+      <div v-if="currentUser">
+        <FriendActivityCard
+          v-for="friend in friendsActivities"
+          :key="friend.id"
+          :friend="friend"
+        />
+      </div>
+      <div v-else>
+        <p class="notification is-danger">Please log in to view social activities.</p>
+      </div>
     </div>
   </section>
 </template>
@@ -86,5 +91,8 @@ onMounted(() => {
 <style scoped>
 .section {
   padding-top: 2rem;
+}
+.notification {
+  margin-top: 1rem;
 }
 </style>

@@ -101,9 +101,10 @@ const isOpen = ref(false);
 }
 
 .logo {
-  margin-right: 10px;
-  margin-bottom: -20px;
-  padding: 1px;
+
+  margin-bottom: -35px;
+  padding: 5px;
+  width: 40px;
 }
 
 /* Add specific margin for icons within buttons */

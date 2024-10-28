@@ -1,117 +1,98 @@
-/* Main dark theme styles */
-body {
-    background-color: #121212 !important; /* Dark background */
-    color: #e0e0e0 !important; /* Light text */
-    font-family: 'Arial', sans-serif !important;
-  }
-  
-  /* Ensure background covers the full page */
-  html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  
-  /* Container adjustments */
-  .container {
-    background-color: #1e1e1e !important; /* Dark background for container */
-    color: #e0e0e0 !important; /* Light text for containers */
-    padding: 20px !important;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
-    border-radius: 5px !important;
-    min-height: 100vh; /* Ensure container takes up full height */
-  }
-  
-  /* Navbar dark theme */
-  .navbar {
-    background-color: #1e1e1e !important; /* Dark background for navbar */
-  }
-  
-  .navbar-item, .navbar-link {
-    color: #e0e0e0 !important; /* Light text color */
-  }
-  
-  .navbar-item:hover, .navbar-link:hover {
-    background-color: #333 !important; /* Dark hover effect */
-  }
-  
-  .router-link-active {
-    font-weight: bold !important;
-    border-bottom: 2px solid #00ff99 !important; /* Change to light green */
-  }
-  
-  /* Button styles */
-  .button.is-primary {
-    background-color: #00ff99 !important; /* Original light green for primary buttons */
-    border-color: #00ff99 !important;
-    color: #fff !important;
-  }
-  
-  .button.is-light {
-    background-color: #6c757d !important;
-    color: #fff !important;
-  }
-  
-  /* Forms in dark theme */
-  .input, .textarea, .select select {
-    background-color: #333 !important;
-    color: #e0e0e0 !important;
-    border: 1px solid #444 !important;
-  }
-  
-  .input:focus, .textarea:focus, .select select:focus {
-    border-color: #00ff99 !important; /* Light green border on focus */
-    box-shadow: 0 0 0 0.125em rgba(0, 255, 153, 0.25) !important;
-  }
-  
-  /* Box shadow and hover effects */
-  .box {
-    background-color: #1e1e1e !important;
-    border-radius: 5px !important;
-    padding: 20px !important;
-    margin-bottom: 20px !important;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
-  }
-  
-  .box:hover {
-    box-shadow: 0 0 15px rgba(0, 0, 0, 1) !important;
-  }
-  
-  /* Table in dark theme */
-  .table {
-    background-color: #1e1e1e !important;
-    color: #e0e0e0 !important;
-  }
-  
-  .table th {
-    background-color: #333 !important;
-    color: #e0e0e0 !important;
-  }
-  
-  .table td {
-    background-color: #2b2b2b !important;
-    color: #e0e0e0 !important;
-  }
-  
-  /* Scrollbar customization for dark theme */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background-color: #444 !important;
-    border-radius: 10px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: #555 !important;
-  }
-  
-  /* Footer (if applicable) */
-  .footer {
-    background-color: #1e1e1e !important;
-    color: #e0e0e0 !important;
-    padding: 20px !important;
-    text-align: center !important;
-  }
-  
+/* Light theme */
+html.light body {
+  background-color: #f8f9fa !important;
+  color: #212529 !important;
+}
+
+html.light .container, html.light .box, html.light .navbar, html.light .card, html.light .progress-bar, html.light .field input, html.light .field select {
+  background-color: white !important;
+  color: #212529 !important;
+  border-color: #ddd !important;
+}
+
+html.light .button.is-primary {
+  background-color: #3273dc !important; /* Default Bulma primary color */
+  color: #fff !important;
+}
+
+html.light .button.is-danger {
+  background-color: #90263b !important; /* Bulma danger color */
+  color: #fff !important;
+}
+
+/* Dark theme */
+html.dark body {
+  background-color: #121212 !important;
+  color: #e0e0e0 !important;
+}
+
+html.dark .container, html.dark .box, html.dark .navbar, html.dark .card, html.dark .field input, html.dark .field select, html.dark .progress-bar {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0 !important;
+  border-color: #333 !important;
+}
+
+html.dark .navbar-item, html.dark .navbar-link, html.dark .field label {
+  color: #e0e0e0 !important;
+}
+
+html.dark .navbar-item:hover, html.dark .navbar-link:hover {
+  background-color: #333 !important;
+}
+
+html.dark .button.is-primary {
+  background-color: #00ff99 !important; /* Light green for primary buttons */
+  color: #fff !important;
+}
+
+html.dark .button.is-danger {
+  background-color: #0821ff !important; /* Keep danger color for contrast */
+  color: #fff !important;
+}
+
+/* Adjust cards and exercise/social lists */
+html.dark .card, html.dark .exercise-card, html.dark .social-card {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #333 !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
+  padding: 15px !important;
+  border-radius: 8px !important;
+}
+
+html.dark .exercise-card .field input, html.dark .social-card .field input {
+  background-color: #333 !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #444 !important;
+}
+
+html.dark .exercise-card button, html.dark .social-card button {
+  color: #e0e0e0 !important;
+}
+
+/* Adjust text and headings for better readability in dark mode */
+html.dark h1, html.dark h2, html.dark h3, html.dark .title, html.dark .subtitle {
+  color: #e0e0e0 !important;
+}
+
+/* Input fields and filters */
+html.dark .input, html.dark .textarea, html.dark .select select {
+  background-color: #333 !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #444 !important;
+}
+
+html.dark .input:focus, html.dark .textarea:focus, html.dark .select select:focus {
+  border-color: #00ff99 !important;
+  box-shadow: 0 0 0 0.125em rgba(0, 255, 153, 0.25) !important;
+}
+
+/* Social cards specific styles */
+html.dark .social-card {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0 !important;
+  padding: 15px !important;
+  margin-bottom: 10px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
+}

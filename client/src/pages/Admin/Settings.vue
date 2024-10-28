@@ -1,21 +1,33 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup>
-  import { ref } from 'vue';
+import { ref, watch } from 'vue'
 
-  // Mock settings data
-  const settings = ref({
-    theme: 'light',
-    emailNotifications: true
-  });
+const settings = ref({
+  theme: localStorage.getItem('theme') || 'dark',
+  emailNotifications: true
+})
 
-  const saveMessage = ref('');
+const saveMessage = ref('')
 
-  const saveSettings = () => {
-    // Simulate a save process
-    saveMessage.value = 'Settings have been successfully saved!';
-  };
+const saveSettings = () => {
+  localStorage.setItem('theme', settings.value.theme)
+  applyTheme()
+  saveMessage.value = 'Settings have been successfully saved!'
+}
+
+const applyTheme = () => {
+  document.documentElement.classList.remove('light', 'dark')
+  document.documentElement.classList.add(settings.value.theme)
+}
+
+watch(
+  () => settings.value.theme,
+  () => applyTheme(),
+  { immediate: true }
+)
 </script>
-  
+
+
 <template>
   <section class="section">
     <div class="container">
@@ -26,8 +38,8 @@
         <div class="control">
           <div class="select">
             <select v-model="settings.theme">
-              <option value="light">Light</option>
               <option value="dark">Dark</option>
+              <option value="light">Light</option>
             </select>
           </div>
         </div>
