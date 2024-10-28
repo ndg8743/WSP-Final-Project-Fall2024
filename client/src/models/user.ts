@@ -9,13 +9,13 @@ export interface DataListEnvelope<T> extends DataEnvelope<T[]> {
   error?: string
 }
 
-export interface User {
+export type User = {
   id: number;
   name: string;
   email: string;
-  role: 'user' | 'admin';
+  //role: 'admin' | 'user';
   friends: number[];
-  password: string;
   image: string;
-}
+  password: string;
+};
 

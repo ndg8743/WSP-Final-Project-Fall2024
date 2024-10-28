@@ -7,6 +7,7 @@ import Modal from '@/components/Modal.vue';
 import { getAll } from '@/models/exercise.js';
 import type { Exercise } from '@/models/exercise.js';
 
+// Initialize exercises from getAll()
 const exercises = ref<Exercise[]>(getAll().data);
 const filterDate = ref('');
 const filteredExercises = ref([...exercises.value]);
@@ -21,7 +22,15 @@ const filterExercises = () => {
 };
 
 const openAddExercise = () => {
-  currentExercise.value = { id: Date.now(), name: '', duration: 0, caloriesBurned: 0, date: '', userId: 0 };
+  // Set default values for a new exercise
+  currentExercise.value = { 
+    id: Date.now(), 
+    name: '', 
+    duration: 0, 
+    caloriesBurned: 0, 
+    date: new Date().toISOString().split('T')[0], // Set date to current date
+    userId: 0 
+  };
   isAddingExercise.value = true;
   showModal.value = true;
 };
@@ -93,6 +102,10 @@ const closeModal = () => {
         <div class="field">
           <label class="label">Calories Burned</label>
           <input class="input" type="number" v-model="currentExercise.caloriesBurned" />
+        </div>
+        <div class="field">
+          <label class="label">Date</label>
+          <input class="input" type="date" v-model="currentExercise.date" />
         </div>
       </template>
     </template>

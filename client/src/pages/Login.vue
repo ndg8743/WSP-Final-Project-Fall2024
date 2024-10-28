@@ -1,20 +1,24 @@
 <!-- eslint-disable vue/multi-word-component-names -->
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import usersData from '@/data/users.json';
 import { useRouter } from 'vue-router';
+import { useAuth } from '@/models/auth';
 
 const loginIdentifier = ref('');
 const password = ref('');
 const loginError = ref('');
 const router = useRouter();
 
+// Import login function from useAuth
+const { loginUser } = useAuth();
+
 const login = () => {
   const user = usersData.find(
     u => (u.email === loginIdentifier.value || u.name === loginIdentifier.value) && u.password === password.value
   );
   if (user) {
-    localStorage.setItem('loggedInUser', JSON.stringify(user));
+    loginUser(user); // Call loginUser to set logged-in user in the auth state
     router.push('/dashboard');
   } else {
     loginError.value = 'Invalid email, username, or password';
