@@ -10,7 +10,9 @@
   "dependencies": {
     "dayjs": "^1.11.13",
     "express": "^4.21.0",
-    "wsp-final-project-fall2024": "file:"
+    "wsp-final-project-fall2024": "file:",
+    "dotdev": "^1.0.0",
+    "supabase": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"

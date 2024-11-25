@@ -1,0 +1,166 @@
+{"exercises":
+
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "name": "Running",
+    "duration": 30,
+    "caloriesBurned": 300,
+    "date": "2024-10-01"
+  },
+  {
+    "id": 2,
+    "userId": 1,
+    "name": "Swimming",
+    "duration": 45,
+    "caloriesBurned": 400,
+    "date": "2024-10-02"
+  },
+  {
+    "id": 3,
+    "userId": 2,
+    "name": "Cycling",
+    "duration": 60,
+    "caloriesBurned": 500,
+    "date": "2024-10-03"
+  },
+  {
+    "id": 4,
+    "userId": 2,
+    "name": "Yoga",
+    "duration": 30,
+    "caloriesBurned": 150,
+    "date": "2024-10-04"
+  },
+  {
+    "id": 5,
+    "userId": 3,
+    "name": "Weightlifting",
+    "duration": 40,
+    "caloriesBurned": 350,
+    "date": "2024-10-05"
+  },
+  {
+    "id": 6,
+    "userId": 3,
+    "name": "Basketball",
+    "duration": 60,
+    "caloriesBurned": 450,
+    "date": "2024-10-06"
+  },
+  {
+    "id": 7,
+    "userId": 4,
+    "name": "Running",
+    "duration": 50,
+    "caloriesBurned": 500,
+    "date": "2024-10-07"
+  },
+  {
+    "id": 8,
+    "userId": 4,
+    "name": "Hiking",
+    "duration": 120,
+    "caloriesBurned": 600,
+    "date": "2024-10-08"
+  },
+  {
+    "id": 9,
+    "userId": 5,
+    "name": "Tennis",
+    "duration": 90,
+    "caloriesBurned": 700,
+    "date": "2024-10-09"
+  },
+  {
+    "id": 10,
+    "userId": 5,
+    "name": "Rowing",
+    "duration": 60,
+    "caloriesBurned": 600,
+    "date": "2024-10-10"
+  },
+  {
+    "id": 11,
+    "userId": 6,
+    "name": "Pilates",
+    "duration": 45,
+    "caloriesBurned": 300,
+    "date": "2024-10-11"
+  },
+  {
+    "id": 12,
+    "userId": 6,
+    "name": "Boxing",
+    "duration": 30,
+    "caloriesBurned": 350,
+    "date": "2024-10-12"
+  },
+  {
+    "id": 13,
+    "userId": 7,
+    "name": "Football",
+    "duration": 90,
+    "caloriesBurned": 800,
+    "date": "2024-10-13"
+  },
+  {
+    "id": 14,
+    "userId": 7,
+    "name": "Zumba",
+    "duration": 60,
+    "caloriesBurned": 500,
+    "date": "2024-10-14"
+  },
+  {
+    "id": 15,
+    "userId": 8,
+    "name": "Running",
+    "duration": 35,
+    "caloriesBurned": 330,
+    "date": "2024-10-15"
+  },
+  {
+    "id": 16,
+    "userId": 8,
+    "name": "Squash",
+    "duration": 50,
+    "caloriesBurned": 400,
+    "date": "2024-10-16"
+  },
+  {
+    "id": 17,
+    "userId": 9,
+    "name": "Rowing",
+    "duration": 60,
+    "caloriesBurned": 650,
+    "date": "2024-10-17"
+  },
+  {
+    "id": 18,
+    "userId": 9,
+    "name": "Basketball",
+    "duration": 60,
+    "caloriesBurned": 450,
+    "date": "2024-10-18"
+  },
+  {
+    "id": 19,
+    "userId": 10,
+    "name": "Weightlifting",
+    "duration": 55,
+    "caloriesBurned": 500,
+    "date": "2024-10-19"
+  },
+  {
+    "id": 20,
+    "userId": 10,
+    "name": "Swimming",
+    "duration": 70,
+    "caloriesBurned": 700,
+    "date": "2024-10-20"
+  }
+],
+ "total": 20
+}
