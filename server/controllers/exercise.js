@@ -1,7 +1,7 @@
 const express = require('express');
 const model = require('../model/exercise');
 const app = express.Router();
-
+//filter for diff users
 app.get("/", (req, res, next) => {
     model.getAll()
         .then((x) => res.send(x))

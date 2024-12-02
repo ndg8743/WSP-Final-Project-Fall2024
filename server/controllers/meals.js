@@ -1,7 +1,7 @@
 const express = require('express');
 const model = require('../model/meals');
 const app = express.Router();
-
+//filter commands for diff users
 app.get("/", (req, res, next) => {
     model.getAll()
         .then((x) => res.send(x))

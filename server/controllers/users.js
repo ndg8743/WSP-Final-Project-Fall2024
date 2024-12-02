@@ -1,7 +1,7 @@
 const express = require('express');
 const model = require('../model/user');
 const app = express.Router();
-
+//modify for diff users and filter for social
 app.get("/", (req, res, next) => {
     model.getAll()
         .then((x) => res.send(x))
