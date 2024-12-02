@@ -22,5 +22,5 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "node_modules/vite/client"
-  ]
+, "src/models/supabase.js"  ]
 }
