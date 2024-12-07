@@ -2,10 +2,16 @@ const express = require("express");
 const { createServer } = require("http");
 const path = require("path");
 const cors = require("cors");
-const exerciseController = require(path.join(__dirname, "controllers", "exercise.js"));
-const mealsController = require(path.join(__dirname, "controllers", "meals.js"));
-const userController = require(path.join(__dirname, "controllers", "user.js"));
-const { parseToken } = require(path.join(__dirname, "middleware", "verifyJWT.js"));
+const exerciseController = require(
+  path.join(__dirname, "controllers", "exercise.js")
+);
+const mealsController = require(
+  path.join(__dirname, "controllers", "meals.js")
+);
+const userController = require(path.join(__dirname, "controllers", "users.js"));
+const { parseToken } = require(
+  path.join(__dirname, "middleware", "verifyJWT.js")
+);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
