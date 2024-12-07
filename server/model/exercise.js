@@ -1,45 +1,111 @@
-import data from '../data/exercises.json';
-import type { DataListEnvelope } from './user.js';
+const data = require("../data/exercises.json");
+const { getConnection } = require("./supabase");
+const conn = getConnection();
 
-export function getAll(): DataListEnvelope<Exercise> {
+/**
+ * @template T
+ * @typedef {import("../../client/src/models/dataEnvelope").DataEnvelope} DataEnvelope
+ * @typedef {import("../../client/src/models/dataEnvelope").DataListEnvelope} DataListEnvelope
+ */
+/**
+ * @typedef {import("../../client/src/models/exercise").Exercise} Exercise
+ */
+
+/**
+ * Get all exercises
+ * @returns {Promise<DataListEnvelope<Exercise>>}
+ */
+async function getAll() {
+  const { data, error, count } = await conn
+    .from("exercises")
+    .select("*", { count: "estimated" });
   return {
-    data: data.exercises,
-    total: data.exercises.length,
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+    total: count,
   };
 }
 
-export function get(id: number): Exercise | undefined {
-  return data.exercises.find(exercise => exercise.id === id);
+/**
+ * Get an exercise by id
+ * @param {number} id
+ * @returns {Promise<DataEnvelope<Exercise>>}
+ */
+async function get(id) {
+  const { data, error } = await conn
+    .from("exercises")
+    .select("*")
+    .eq("id", id)
+    .single();
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+  };
 }
 
-export function add(exercise: Exercise): Exercise {
-  exercise.id = data.exercises.reduce((prev, x) => (x.id > prev ? x.id : prev), 0) + 1;
-  data.exercises.push(exercise);
-  return exercise;
+/**
+ * Add a new exercise
+ * @param {Exercise} exercise
+ * @returns {Promise<DataEnvelope<Exercise>>}
+ */
+async function add(exercise) {
+  const { data, error } = await conn
+    .from("exercises")
+    .insert([exercise])
+    .select("*")
+    .single();
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+  };
 }
 
-export function update(id: number, exercise: Partial<Exercise>): Exercise | undefined {
-  const exerciseToUpdate = get(id);
-  if (exerciseToUpdate) {
-    Object.assign(exerciseToUpdate, exercise);
-  }
-  return exerciseToUpdate;
+/**
+ * Update an exercise
+ * @param {number} id
+ * @param {Exercise} exercise
+ * @returns {Promise<DataEnvelope<Exercise>>}
+ */
+async function update(id, exercise) {
+  const { data, error } = await conn
+    .from("exercises")
+    .update(exercise)
+    .eq("id", id)
+    .select("*")
+    .single();
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+  };
 }
 
-export function remove(id: number): boolean {
-  const index = data.exercises.findIndex(exercise => exercise.id === id);
-  if (index !== -1) {
-    data.exercises.splice(index, 1);
-    return true;
-  }
-  return false;
+/**
+ * Remove an exercise
+ * @param {number} id
+ * @returns {Promise<DataEnvelope<number>>}
+ */
+async function remove(id) {
+  const { data, error } = await conn
+    .from("exercises")
+    .delete()
+    .eq("id", id)
+    .select("*")
+    .single();
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+  };
 }
 
-export interface Exercise {
-  id: number;
-  userId: number;
-  name: string;
-  duration: number;
-  caloriesBurned: number;
-  date: string;
-}
+module.exports = {
+  getAll,
+  get,
+  add,
+  update,
+  remove,
+};

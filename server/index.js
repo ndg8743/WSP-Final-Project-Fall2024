@@ -1,31 +1,48 @@
-// server/index.mjs
-import express from 'express';
-import { createServer } from 'node:http';
-import { resolve, join } from 'node:path';
+// server/index.js
+const express = require('express');
+const { createServer } = require('node:http');
+const { resolve, join } = require('node:path');
+const userController = require('./controllers/users');
+const mealController = require('./controllers/meals');
+const exerciseController = require('./controllers/exercise');
+const verifyJWT = require('./middleware/verifyJWT');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from the 'dist' directory
-app.use(express.static(resolve('dist')));
-
-// Example API route (you can add more as needed)
-app.get('/api/example', (req, res) => {
-  res.json({ message: 'Hello from the API!' });
+// Middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "*");
+  res.header("Access-Control-Allow-Headers", "*");
+  next();
 });
 
-// Fallback to index.html for SPA routing
-app.get('*', (req, res) => {
-  res.sendFile(join(resolve('dist'), 'index.html'));
+app.use(express.json());
+app.use(express.static(resolve('dist')));
+
+// Controllers
+app.get("/", (req, res, next) => {
+  res.send("Hello World");
+})
+  .use(verifyJWT)
+  .use("/api/v1/users", userController)
+  .use("/api/v1/meals", mealController)
+  .use("/api/v1/exercises", exerciseController)
+  .get("*", (req, res, next) => {
+    res.sendFile(join(resolve('dist'), 'index.html'));
+  });
+
+// Error Handling
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(err.status ?? 500).send(err);
 });
 
 // Create HTTP server with Express app
 const server = createServer(app);
 
 // Start the server
-//server.listen(PORT, '0.0.0.0', () => {
- // console.log(`Server is running on http://localhost:${PORT}`);
- // starts a simple http server locally on port 3000
 server.listen(PORT, '127.0.0.1', () => {
   console.log('Listening on 127.0.0.1:3000');
 });

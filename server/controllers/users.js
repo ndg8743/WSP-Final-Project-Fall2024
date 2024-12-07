@@ -1,30 +1,31 @@
 const express = require('express');
 const model = require('../model/user');
+const verifyJWT = require('../middleware/verifyJWT');
 const app = express.Router();
-//modify for diff users and filter for social
-app.get("/", (req, res, next) => {
+
+app.get("/", verifyJWT, (req, res, next) => {
     model.getAll()
         .then((x) => res.send(x))
         .catch(next);
 })
-.get("/:id", (req, res, next) => {
+.get("/:id", verifyJWT, (req, res, next) => {
     const id = req.params.id;
     model.get(+id)
         .then((x) => res.send(x))
         .catch(next);
 })
-.post("/", (req, res, next) => {
+.post("/", verifyJWT, (req, res, next) => {
     model.add(req.body)
         .then((x) => res.send(x))
         .catch(next);
 })
-.patch("/:id", (req, res, next) => {
+.patch("/:id", verifyJWT, (req, res, next) => {
     const id = req.params.id;
     model.update(+id, req.body)
         .then((x) => res.send(x))
         .catch(next);
 })
-.delete("/:id", (req, res, next) => {
+.delete("/:id", verifyJWT, (req, res, next) => {
     const id = req.params.id;
     model.remove(+id)
         .then((x) => res.send(x))

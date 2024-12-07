@@ -8,19 +8,17 @@ const data = require("../data/users.json");
  */
 /**
  * @typedef {import("../../client/src/models/user").User} User
- * @property {string} role
- * @property {number[]} friends
- * @property {string} image
- * @property {string} password
  */
+
 /**
  * Get all users
- * @returns {Promise<DataEnvelope<User>>}
+ * @returns {Promise<DataListEnvelope<User>>}
  */
 async function getAll() {
   return {
     isSuccess: true,
     data: data.users,
+    total: data.users.length,
   };
 }
 
@@ -88,10 +86,31 @@ async function remove(id) {
   return { isSuccess: true, message: "Item deleted", data: id };
 }
 
+/**
+ * Login a user
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<DataEnvelope<User>>}
+ */
+async function login(email, password) {
+  const user = data.users.find((user) => user.email === email && user.password === password);
+  if (!user) {
+    return {
+      isSuccess: false,
+      message: "Invalid email or password",
+    };
+  }
+  return {
+    isSuccess: true,
+    data: user,
+  };
+}
+
 module.exports = {
   getAll,
   get,
   add,
   update,
   remove,
+  login,
 };
