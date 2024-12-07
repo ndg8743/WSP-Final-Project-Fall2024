@@ -1,16 +1,33 @@
-import { api } from './myFetch.ts';
-import type { DataListEnvelope } from './user.js';
-
-export async function getAll(): Promise<DataListEnvelope<Exercise>> {
-  const response = await api<DataListEnvelope<Exercise>>('exercises');
-  return response;
-}
+import { api } from './myFetch'
+import type { DataListEnvelope, DataEnvelope } from './dataEnvelope'
 
 export interface Exercise {
-  id: number;
-  userId: number;
-  name: string;
-  duration: number;
-  caloriesBurned: number;
-  date: string;
+  id: number
+  name: string
+  duration: number // Duration in minutes
+  calories: number
+  date: string // ISO string
+}
+
+export async function getExercises(): Promise<DataListEnvelope<Exercise>> {
+  return api<DataListEnvelope<Exercise>>('exercises');
+}
+
+export async function getExerciseById(id: number): Promise<DataEnvelope<Exercise>> {
+  return api<DataEnvelope<Exercise>>(`exercises/${id}`);
+}
+
+export async function addExercise(exercise: Exercise): Promise<DataEnvelope<Exercise>> {
+  return api<DataEnvelope<Exercise>>('exercises', exercise, 'POST');
+}
+
+export async function updateExercise(
+  id: number,
+  exercise: Exercise
+): Promise<DataEnvelope<Exercise>> {
+  return api<DataEnvelope<Exercise>>(`exercises/${id}`, exercise, 'PATCH');
+}
+
+export async function deleteExercise(id: number): Promise<void> {
+  return api<void>(`exercises/${id}`, null, 'DELETE');
 }

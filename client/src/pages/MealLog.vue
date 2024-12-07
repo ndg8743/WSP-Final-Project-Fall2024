@@ -5,8 +5,8 @@ import { ref, onMounted } from 'vue'
 import MealCard from '@/components/MealCard.vue'
 // @ts-ignore
 import Modal from '@/components/Modal.vue'
-import { getAll } from '@/models/meals'
-import type { Meal } from '@/models/meals.js'
+import { getAllMeals, addMeal, updateMeal, deleteMeal } from '@/models/meal';
+import type { Meal } from '@/models/meal';
 
 // Retrieve the current user from the session
 const session = localStorage.getItem('session')

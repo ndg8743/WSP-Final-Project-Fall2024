@@ -1,14 +1,29 @@
-import { api } from './myFetch.ts';
-
-export async function getAll(): Promise<{ data: Meal[]; total: number }> {
-  const response = await api<{ data: Meal[]; total: number }>('meals');
-  return response;
-}
+import { api } from './myFetch'
+import type { DataListEnvelope, DataEnvelope } from './dataEnvelope'
 
 export interface Meal {
-  id: number;
-  userId: number;
-  name: string;
-  calories: number;
-  date: string;
+  id: number
+  name: string
+  calories: number
+  date: string // ISO string
+}
+
+export async function getMeals(): Promise<DataListEnvelope<Meal>> {
+  return api<DataListEnvelope<Meal>>('meals');
+}
+
+export async function getMealById(id: number): Promise<DataEnvelope<Meal>> {
+  return api<DataEnvelope<Meal>>(`meals/${id}`);
+}
+
+export async function addMeal(meal: Meal): Promise<DataEnvelope<Meal>> {
+  return api<DataEnvelope<Meal>>('meals', meal, 'POST');
+}
+
+export async function updateMeal(id: number, meal: Meal): Promise<DataEnvelope<Meal>> {
+  return api<DataEnvelope<Meal>>(`meals/${id}`, meal, 'PATCH');
+}
+
+export async function deleteMeal(id: number): Promise<void> {
+  return api<void>(`meals/${id}`, null, 'DELETE');
 }

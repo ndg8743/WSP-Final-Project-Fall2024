@@ -1,25 +1,29 @@
-export interface DataEnvelope<T> {
-  data: T
-  error?: string
-}
+import { api } from './myFetch';
+import type { DataListEnvelope, DataEnvelope } from './dataEnvelope';
 
-export interface DataListEnvelope<T> extends DataEnvelope<T[]> {
-  data: T[]
-  total: number
-  error?: string
-}
-
-export type User = {
+export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'admin' | 'user';
-  friends: number[];
-  image: string;
-  password: string;
-};
+  role: 'user' | 'admin'; // Define roles as needed
+}
 
-export interface Session {
-  user: User
-  token?: string 
+export async function getUsers(): Promise<DataListEnvelope<User>> {
+  return api<DataListEnvelope<User>>('users');
+}
+
+export async function getUserById(id: number): Promise<DataEnvelope<User>> {
+  return api<DataEnvelope<User>>(`users/${id}`);
+}
+
+export async function addUser(user: User): Promise<DataEnvelope<User>> {
+  return api<DataEnvelope<User>>('users', user, 'POST');
+}
+
+export async function updateUser(id: number, user: User): Promise<DataEnvelope<User>> {
+  return api<DataEnvelope<User>>(`users/${id}`, user, 'PATCH');
+}
+
+export async function deleteUser(id: number): Promise<void> {
+  return api<void>(`users/${id}`, null, 'DELETE');
 }

@@ -4,8 +4,8 @@ import { ref, onMounted } from 'vue'
 import ExerciseCard from '@/components/ExerciseCard.vue'
 // @ts-ignore
 import Modal from '@/components/Modal.vue'
-import { getAll } from '@/models/exercise.js'
-import type { Exercise } from '@/models/exercise.js'
+import { getAll, addExercise, updateExercise, deleteExercise } from '@/models/exercise';
+import type { Exercise } from '@/models/exercise';
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')

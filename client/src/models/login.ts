@@ -1,8 +1,9 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-const router = useRouter()
 const isLoggedIn = ref(false)
+const router = useRouter()
+
 export function getLogin() {
   onMounted(() => {
     const session = localStorage.getItem('session')
@@ -17,8 +18,9 @@ export function getLogin() {
     router.push('/')
   }
 
-  const login = () => {
-    isLoggedIn.value = true
+  const login = (user: { token: string }) => {
+    localStorage.setItem('session', JSON.stringify(user)); // Store the session token
+    isLoggedIn.value = true;
   }
 
   return { isLoggedIn, logout, login }

@@ -1,9 +1,9 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import usersData from '@/data/users.json'
 import { useRouter, RouterLink } from 'vue-router'
-import { getLogin } from '@/models/login' // Import getLogin
+import { getLogin } from '@/models/login'
+import { myFetch } from '@/models/myFetch' 
 
 const loginIdentifier = ref('')
 const password = ref('')
