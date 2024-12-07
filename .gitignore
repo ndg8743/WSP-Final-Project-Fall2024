@@ -200,4 +200,15 @@ dist/
 npm-debug.log
 yarn-error.log
 
+# IDE and Editor Specific
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Vite Specific
+.vite/
+*.local
+
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,node,vuejs,macos

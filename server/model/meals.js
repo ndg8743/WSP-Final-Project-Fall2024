@@ -1,43 +1,111 @@
-import data from '../data/meals.json';
+const data = require("../data/meals.json");
+const { getConnection } = require("./supabase");
+const conn = getConnection();
 
-export async function getAll(): Promise<{ data: Meal[]; total: number }> {
+/**
+ * @template T
+ * @typedef {import("../../client/src/models/dataEnvelope").DataEnvelope} DataEnvelope
+ * @typedef {import("../../client/src/models/dataEnvelope").DataListEnvelope} DataListEnvelope
+ */
+/**
+ * @typedef {import("../../client/src/models/meals").Meal} Meal
+ */
+
+/**
+ * Get all meals
+ * @returns {Promise<DataListEnvelope<Meal>>}
+ */
+async function getAll() {
+  const { data, error, count } = await conn
+    .from("meals")
+    .select("*", { count: "estimated" });
   return {
+    isSuccess: !error,
+    message: error?.message,
     data: data,
-    total: data.length,
+    total: count,
   };
 }
 
-export async function get(id: number): Promise<Meal | undefined> {
-  return data.find(meal => meal.id === id);
+/**
+ * Get a meal by id
+ * @param {number} id
+ * @returns {Promise<DataEnvelope<Meal>>}
+ */
+async function get(id) {
+  const { data, error } = await conn
+    .from("meals")
+    .select("*")
+    .eq("id", id)
+    .single();
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+  };
 }
 
-export async function add(meal: Meal): Promise<Meal> {
-  meal.id = data.reduce((prev, x) => (x.id > prev ? x.id : prev), 0) + 1;
-  data.push(meal);
-  return meal;
+/**
+ * Add a new meal
+ * @param {Meal} meal
+ * @returns {Promise<DataEnvelope<Meal>>}
+ */
+async function add(meal) {
+  const { data, error } = await conn
+    .from("meals")
+    .insert([meal])
+    .select("*")
+    .single();
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+  };
 }
 
-export async function update(id: number, meal: Partial<Meal>): Promise<Meal | undefined> {
-  const mealToUpdate = await get(id);
-  if (mealToUpdate) {
-    Object.assign(mealToUpdate, meal);
-  }
-  return mealToUpdate;
+/**
+ * Update a meal
+ * @param {number} id
+ * @param {Meal} meal
+ * @returns {Promise<DataEnvelope<Meal>>}
+ */
+async function update(id, meal) {
+  const { data, error } = await conn
+    .from("meals")
+    .update(meal)
+    .eq("id", id)
+    .select("*")
+    .single();
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+  };
 }
 
-export async function remove(id: number): Promise<boolean> {
-  const index = data.findIndex(meal => meal.id === id);
-  if (index !== -1) {
-    data.splice(index, 1);
-    return true;
-  }
-  return false;
+/**
+ * Remove a meal
+ * @param {number} id
+ * @returns {Promise<DataEnvelope<number>>}
+ */
+async function remove(id) {
+  const { data, error } = await conn
+    .from("meals")
+    .delete()
+    .eq("id", id)
+    .select("*")
+    .single();
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data,
+  };
 }
 
-export interface Meal {
-  id: number;
-  userId: number;
-  name: string;
-  calories: number;
-  date: string;
-}
+module.exports = {
+  getAll,
+  get,
+  add,
+  update,
+  remove,
+};

@@ -1,31 +1,38 @@
-// server/index.mjs
-import express from 'express';
-import { createServer } from 'node:http';
-import { resolve, join } from 'node:path';
+const express = require("express");
+const { createServer } = require("http");
+const path = require("path");
+const cors = require("cors");
+const exerciseController = require(path.join(__dirname, "controllers", "exercise.js"));
+const mealsController = require(path.join(__dirname, "controllers", "meals.js"));
+const userController = require(path.join(__dirname, "controllers", "user.js"));
+const { parseToken } = require(path.join(__dirname, "middleware", "verifyJWT.js"));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from the 'dist' directory
-app.use(express.static(resolve('dist')));
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(parseToken); // Parse token and attach user to the request
 
-// Example API route (you can add more as needed)
-app.get('/api/example', (req, res) => {
-  res.json({ message: 'Hello from the API!' });
+// API Routes
+app.use("/api/exercises", exerciseController);
+app.use("/api/meals", mealsController);
+app.use("/api/users", userController);
+
+// Serve static files for SPA
+app.use(express.static(path.resolve("dist")));
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve("dist/index.html"));
 });
 
-// Fallback to index.html for SPA routing
-app.get('*', (req, res) => {
-  res.sendFile(join(resolve('dist'), 'index.html'));
+// Error Handling
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(err.status || 500).json({ error: err.message || "Server Error" });
 });
 
-// Create HTTP server with Express app
 const server = createServer(app);
-
-// Start the server
-//server.listen(PORT, '0.0.0.0', () => {
- // console.log(`Server is running on http://localhost:${PORT}`);
- // starts a simple http server locally on port 3000
-server.listen(PORT, '127.0.0.1', () => {
-  console.log('Listening on 127.0.0.1:3000');
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });

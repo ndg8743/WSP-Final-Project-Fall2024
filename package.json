@@ -4,18 +4,21 @@
   "description": "",
   "scripts": {
     "build": "npm run build -w client",
-    "start": "node server/index.mjs",
-    "dev": "nodemon server/index.mjs"
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js --watch server"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.47.2",
+    "cors": "^2.8.5",
     "dayjs": "^1.11.13",
+    "dotenv": "^16.4.7",
     "express": "^4.21.0",
-    "wsp-final-project-fall2024": "file:",
-    "dotdev": "^1.0.0",
-    "supabase": "^1.0.0"
+    "jsonwebtoken": "^9.0.2",
+    "wsp-final-project-fall2024": "file:"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "supabase": "^2.0.0"
   },
   "workspaces": [
     "client"

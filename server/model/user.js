@@ -1,40 +1,42 @@
-/** @type {{ users: User[] }} */
-const data = require("../data/users.json");
+const { getConnection } = require('./supabase');
+const conn = getConnection();
 
 /**
- * @template T
- * @typedef {import("../../client/src/models/dataEnvelope").DataEnvelope} DataEnvelope
- * @typedef {import("../../client/src/models/dataEnvelope").DataListEnvelope} DataListEnvelope
- */
-/**
- * @typedef {import("../../client/src/models/user").User} User
- * @property {string} role
- * @property {number[]} friends
- * @property {string} image
- * @property {string} password
- */
-/**
- * Get all users
- * @returns {Promise<DataEnvelope<User>>}
+ * Get all users (Admin-only operation)
+ * @returns {Promise<DataListEnvelope<User>>}
  */
 async function getAll() {
-  return {
-    isSuccess: true,
-    data: data.users,
-  };
+    const { data, error, count } = await conn
+        .from("users")
+        .select("*", { count: "exact" });
+
+    if (error) throw new Error(error.message);
+
+    return {
+        isSuccess: true,
+        data: data,
+        total: count,
+    };
 }
 
 /**
- * Get a user by id
+ * Get a user by ID
  * @param {number} id
  * @returns {Promise<DataEnvelope<User>>}
  */
 async function get(id) {
-  const item = data.users.find((user) => user.id == id);
-  return {
-    isSuccess: !!item,
-    data: item,
-  };
+    const { data, error } = await conn
+        .from("users")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error) throw new Error(error.message);
+
+    return {
+        isSuccess: true,
+        data: data,
+    };
 }
 
 /**
@@ -43,16 +45,18 @@ async function get(id) {
  * @returns {Promise<DataEnvelope<User>>}
  */
 async function add(user) {
-  user.id = data.users.reduce((prev, x) => (x.id > prev ? x.id : prev), 0) + 1;
-  user.role = user.role || 'user';
-  user.friends = user.friends || [];
-  user.image = user.image || '';
-  user.password = user.password || '';
-  data.users.push(user);
-  return {
-    isSuccess: true,
-    data: user,
-  };
+    const { data, error } = await conn
+        .from("users")
+        .insert([user])
+        .select("*")
+        .single();
+
+    if (error) throw new Error(error.message);
+
+    return {
+        isSuccess: true,
+        data: data,
+    };
 }
 
 /**
@@ -62,36 +66,74 @@ async function add(user) {
  * @returns {Promise<DataEnvelope<User>>}
  */
 async function update(id, user) {
-  const userToUpdate = await get(id);
-  Object.assign(userToUpdate.data, user);
-  return {
-    isSuccess: true,
-    data: userToUpdate.data,
-  };
+    const { data, error } = await conn
+        .from("users")
+        .update(user)
+        .eq("id", id)
+        .select("*")
+        .single();
+
+    if (error) throw new Error(error.message);
+
+    return {
+        isSuccess: true,
+        data: data,
+    };
 }
 
 /**
- * Remove a user
+ * Remove a user (Admin-only operation)
  * @param {number} id
  * @returns {Promise<DataEnvelope<number>>}
  */
 async function remove(id) {
-  const itemIndex = data.users.findIndex((user) => user.id == id);
-  if (itemIndex === -1)
-    throw {
-      isSuccess: false,
-      message: "Item not found",
-      data: id,
-      status: 404,
+    const { data, error } = await conn
+        .from("users")
+        .delete()
+        .eq("id", id)
+        .select("*")
+        .single();
+
+    if (error) throw new Error(error.message);
+
+    return {
+        isSuccess: true,
+        data: data,
     };
-  data.users.splice(itemIndex, 1);
-  return { isSuccess: true, message: "Item deleted", data: id };
+}
+
+/**
+ * Login a user
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<DataEnvelope<User>>}
+ */
+async function login(email, password) {
+    const { data, error } = await conn
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .eq("password", password)
+        .single();
+
+    if (error) {
+        return {
+            isSuccess: false,
+            message: "Invalid email or password",
+        };
+    }
+
+    return {
+        isSuccess: true,
+        data: data,
+    };
 }
 
 module.exports = {
-  getAll,
-  get,
-  add,
-  update,
-  remove,
+    getAll,
+    get,
+    add,
+    update,
+    remove,
+    login,
 };
