@@ -1,10 +1,8 @@
-import data from '../data/meals.json';
+import { api } from './myFetch.ts';
 
-export function getAll(): { data: Meal[]; total: number } {
-  return {
-    data: data,
-    total: data.length,
-  };
+export async function getAll(): Promise<{ data: Meal[]; total: number }> {
+  const response = await api<{ data: Meal[]; total: number }>('meals');
+  return response;
 }
 
 export interface Meal {

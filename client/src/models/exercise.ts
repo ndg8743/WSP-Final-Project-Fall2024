@@ -1,11 +1,9 @@
-import data from '../data/exercises.json';
+import { api } from './myFetch.ts';
 import type { DataListEnvelope } from './user.js';
 
-export function getAll(): DataListEnvelope<Exercise> {
-  return {
-    data: data.exercises,
-    total: data.total,
-  };
+export async function getAll(): Promise<DataListEnvelope<Exercise>> {
+  const response = await api<DataListEnvelope<Exercise>>('exercises');
+  return response;
 }
 
 export interface Exercise {
