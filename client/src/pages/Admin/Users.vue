@@ -3,10 +3,10 @@
 import { ref, onMounted } from 'vue'
 import UserManagement from '@/components/UserManagement.vue'
 import Modal from '@/components/Modal.vue'
-import usersData from '@/data/users.json'
+import { api } from '@/models/myFetch'
 
 // Load users from users.json
-const users = ref([...usersData]) // Editable user list
+const users = ref([]) // Editable user list
 const currentUser = ref(null)
 const showModal = ref(false)
 const isAdmin = ref(false) // Flag to check if the user is an admin
@@ -16,9 +16,11 @@ const isAddingUser = ref(false) // Flag for add mode
 const session = localStorage.getItem('session')
 const loggedInUser = session ? JSON.parse(session) : null
 
-onMounted(() => {
+onMounted(async () => {
   if (loggedInUser && loggedInUser.role === 'admin') {
     isAdmin.value = true
+    const usersFromApi = await api('users')
+    users.value = usersFromApi
   } else {
     isAdmin.value = false
   }
@@ -26,13 +28,14 @@ onMounted(() => {
 
 // Handle editing a user
 const handleEdit = (user) => {
-  currentUser.value = { ...user }
+  currentUser.value = { ...user, friends: user.friends || [] } // Ensure friends list is included
   isAddingUser.value = false
   showModal.value = true
 }
 
 // Handle deleting a user
-const handleDelete = (id) => {
+const handleDelete = async (id) => {
+  await api('users/' + id, {}, 'DELETE')
   users.value = users.value.filter(u => u.id !== id)
 }
 
@@ -44,10 +47,12 @@ const handleAddUser = () => {
 }
 
 // Save user updates or add new user
-const saveUser = () => {
+const saveUser = async () => {
   if (isAddingUser.value) {
+    await api('users', currentUser.value, 'POST')
     users.value.push({ ...currentUser.value })
   } else {
+    await api(`users/${currentUser.value.id}`, currentUser.value, 'PUT')
     const index = users.value.findIndex(u => u.id === currentUser.value.id)
     if (index !== -1) users.value.splice(index, 1, { ...currentUser.value })
   }

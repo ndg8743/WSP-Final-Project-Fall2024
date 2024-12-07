@@ -20,7 +20,6 @@ async function parseToken(req, res, next) {
   next();
 }
 
-
 /**
  * Middleware to require a logged-in user.
  */

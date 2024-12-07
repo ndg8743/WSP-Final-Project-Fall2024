@@ -2,7 +2,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'
-import exercisesData from '@/data/exercises.json'
+import { api } from '@/models/myFetch'
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
@@ -19,14 +19,12 @@ const exerciseGoal = ref(localStorage.getItem('exerciseGoal') ? parseInt(localSt
 const caloriesGoal = ref(localStorage.getItem('caloriesGoal') ? parseInt(localStorage.getItem('caloriesGoal')) : 5000)
 const combinedProgress = ref(0) // Combined progress percentage
 
-onMounted(() => {
+onMounted(async () => {
   if (currentUser) {
     const currentUserId = currentUser.id
 
-    // Fetch the exercises for the current user
-    const userExercises = exercisesData.exercises
-      .filter(exercise => exercise.userId === currentUserId)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date for the latest exercise
+    // Fetch the exercises for the current user from the backend
+    const userExercises = await api('exercises', { userId: currentUserId })
 
     // Set the last exercise, total exercises, completed exercises, and calories burned
     if (userExercises.length > 0) {

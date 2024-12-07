@@ -2,7 +2,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'
-import exercisesData from '@/data/exercises.json'
+import { api } from '@/models/myFetch'
 
 // User-specific stats and goals
 const completedExercises = ref(0)
@@ -15,12 +15,12 @@ const session = localStorage.getItem('session')
 const currentUser = session ? JSON.parse(session) : null
 
 // Fetch and calculate user stats
-onMounted(() => {
+onMounted(async () => {
   if (currentUser) {
     const currentUserId = currentUser.id
 
-    // Fetch exercises for the current user
-    const userExercises = exercisesData.exercises.filter(exercise => exercise.userId === currentUserId)
+    // Fetch exercises for the current user from the backend
+    const userExercises = await api('exercises', { userId: currentUserId })
 
     // Set the total completed exercises and total calories burned
     completedExercises.value = userExercises.length
@@ -75,6 +75,7 @@ const saveGoals = () => {
 .section {
   padding-top: 2rem;
 }
+
 .notification {
   margin-top: 1rem;
 }

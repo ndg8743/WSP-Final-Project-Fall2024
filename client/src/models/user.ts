@@ -1,11 +1,12 @@
-import { api } from './myFetch';
-import type { DataListEnvelope, DataEnvelope } from './dataEnvelope';
+import { api } from './myFetch'
+import type { DataListEnvelope, DataEnvelope } from './dataEnvelope'
 
 export interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: 'user' | 'admin'; // Define roles as needed
+  id: number
+  name: string
+  email: string
+  role: 'user' | 'admin'
+  image?: string // Add image property
 }
 
 export async function getUsers(): Promise<DataListEnvelope<User>> {
@@ -26,4 +27,12 @@ export async function updateUser(id: number, user: User): Promise<DataEnvelope<U
 
 export async function deleteUser(id: number): Promise<void> {
   return api<void>(`users/${id}`, null, 'DELETE');
+}
+
+export async function addFriend(userId: number, friendId: number): Promise<DataEnvelope<User>> {
+  return api<DataEnvelope<User>>(`users/${userId}/friends/${friendId}`, {}, 'POST');
+}
+
+export async function removeFriend(userId: number, friendId: number): Promise<DataEnvelope<User>> {
+  return api<DataEnvelope<User>>(`users/${userId}/friends/${friendId}`, {}, 'DELETE');
 }

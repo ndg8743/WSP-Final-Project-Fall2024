@@ -129,6 +129,50 @@ async function login(email, password) {
     };
 }
 
+/**
+ * Add a friend to a user's friend list
+ * @param {number} userId
+ * @param {number} friendId
+ * @returns {Promise<DataEnvelope<User>>}
+ */
+async function addFriend(userId, friendId) {
+    const { data, error } = await conn
+        .from("users")
+        .update({ friends: conn.raw('array_append(friends, ?)', [friendId]) })
+        .eq("id", userId)
+        .select("*")
+        .single();
+
+    if (error) throw new Error(error.message);
+
+    return {
+        isSuccess: true,
+        data: data,
+    };
+}
+
+/**
+ * Remove a friend from a user's friend list
+ * @param {number} userId
+ * @param {number} friendId
+ * @returns {Promise<DataEnvelope<User>>}
+ */
+async function removeFriend(userId, friendId) {
+    const { data, error } = await conn
+        .from("users")
+        .update({ friends: conn.raw('array_remove(friends, ?)', [friendId]) })
+        .eq("id", userId)
+        .select("*")
+        .single();
+
+    if (error) throw new Error(error.message);
+
+    return {
+        isSuccess: true,
+        data: data,
+    };
+}
+
 module.exports = {
     getAll,
     get,
@@ -136,4 +180,6 @@ module.exports = {
     update,
     remove,
     login,
+    addFriend,
+    removeFriend,
 };

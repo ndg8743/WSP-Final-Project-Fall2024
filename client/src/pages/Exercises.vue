@@ -2,10 +2,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import ExerciseCard from '@/components/ExerciseCard.vue'
-// @ts-ignore
 import Modal from '@/components/Modal.vue'
-import { getAll, addExercise, updateExercise, deleteExercise } from '@/models/exercise';
-import type { Exercise } from '@/models/exercise';
+import { api } from '@/models/myFetch'
+import type { Exercise } from '@/models/exercise.ts'
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
@@ -29,9 +28,9 @@ const openAddExercise = () => {
     id: Date.now(),
     name: '',
     duration: 0,
-    caloriesBurned: 0,
+    calories: 0, // Ensure the Exercise interface is correctly defined
     date: new Date().toISOString().split('T')[0],
-    userId: currentUser ? currentUser.id : 0 // Set userId to current logged-in user
+    userId: currentUser ? currentUser.id : 0 // Ensure the Exercise interface is correctly defined
   }
   isAddingExercise.value = true
   showModal.value = true
@@ -43,15 +42,18 @@ const handleEdit = (exercise: Exercise) => {
   showModal.value = true
 }
 
-const handleDelete = (id: number) => {
+const handleDelete = async (id: number) => {
+  await api('exercises/' + id, {}, 'DELETE')
   exercises.value = exercises.value.filter(exercise => exercise.id !== id)
   filterExercises()
 }
 
-const saveExercise = () => {
+const saveExercise = async () => {
   if (isAddingExercise.value) {
+    await api('exercises', currentExercise.value, 'POST')
     exercises.value.push({ ...currentExercise.value! })
   } else {
+    await api('exercises/' + currentExercise.value!.id, currentExercise.value, 'PUT')
     const index = exercises.value.findIndex(exercise => exercise.id === currentExercise.value!.id)
     if (index !== -1) exercises.value.splice(index, 1, { ...currentExercise.value! })
   }
@@ -64,9 +66,10 @@ const closeModal = () => {
 }
 
 // Load current user's exercises on component mount
-onMounted(() => {
+onMounted(async () => {
   if (currentUser) {
-    exercises.value = getAll().data.filter((exercise: Exercise) => exercise.userId === currentUser.id)
+    const userExercises = await api('exercises', { userId: currentUser.id })
+    exercises.value = userExercises as Exercise[] // Add type assertion
     filterExercises() // Initialize filteredExercises based on the loaded data
   }
 })
@@ -116,7 +119,7 @@ onMounted(() => {
         </div>
         <div class="field">
           <label class="label">Calories Burned</label>
-          <input class="input" type="number" v-model="currentExercise.caloriesBurned" />
+          <input class="input" type="number" v-model="currentExercise.calories" />
         </div>
         <div class="field">
           <label class="label">Date</label>

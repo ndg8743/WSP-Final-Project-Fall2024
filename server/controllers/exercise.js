@@ -21,7 +21,7 @@ app.get("/:id", requireUser, async (req, res, next) => {
     }
 });
 
-app.post("/", requireAdmin, async (req, res, next) => {
+app.post("/", requireUser, async (req, res, next) => {
     try {
         const newExercise = await model.add(req.body);
         res.status(201).json(newExercise);
@@ -30,7 +30,7 @@ app.post("/", requireAdmin, async (req, res, next) => {
     }
 });
 
-app.patch("/:id", requireAdmin, async (req, res, next) => {
+app.patch("/:id", requireUser, async (req, res, next) => {
     try {
         const updatedExercise = await model.update(+req.params.id, req.body);
         res.status(200).json(updatedExercise);
@@ -39,7 +39,7 @@ app.patch("/:id", requireAdmin, async (req, res, next) => {
     }
 });
 
-app.delete("/:id", requireAdmin, async (req, res, next) => {
+app.delete("/:id", requireUser, async (req, res, next) => {
     try {
         const deletedExercise = await model.remove(+req.params.id);
         res.status(200).json(deletedExercise);

@@ -5,8 +5,8 @@ import { ref, onMounted } from 'vue'
 import MealCard from '@/components/MealCard.vue'
 // @ts-ignore
 import Modal from '@/components/Modal.vue'
-import { getAllMeals, addMeal, updateMeal, deleteMeal } from '@/models/meal';
-import type { Meal } from '@/models/meal';
+import { getMeals, addMeal, updateMeal, deleteMeal } from '@/models/meals'
+import type { Meal } from '@/models/meals.ts'
 
 // Retrieve the current user from the session
 const session = localStorage.getItem('session')
@@ -59,9 +59,10 @@ const closeModal = () => {
 }
 
 // Load current user's meals on component mount
-onMounted(() => {
+onMounted(async () => {
   if (currentUser) {
-    meals.value = getAll().data.filter((meal: Meal) => meal.userId === currentUser.id)
+    const mealsResponse = await getMeals()
+    meals.value = mealsResponse.data.filter((meal: Meal) => meal.userId === currentUser.id)
     filterMeals() // Initialize filteredMeals based on the loaded data
   }
 })

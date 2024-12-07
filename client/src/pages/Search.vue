@@ -1,7 +1,9 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import usersData from '@/data/users.json'
+import { ref, computed, onMounted } from 'vue'
+import { api } from '@/models/myFetch'
+
+const usersData = ref<{ id: number, name: string, email: string }[]>([])
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
@@ -12,22 +14,46 @@ const friends = ref(currentUser ? currentUser.friends : []) // Initialize friend
 
 // Filtered users based on search query
 const filteredUsers = computed(() => {
-  return usersData.filter(user =>
+  return usersData.value.filter(user =>
     user.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
 
+// Fetch users data from the backend
+onMounted(async () => {
+  if (currentUser) {
+    const users = await api('users')
+    usersData.value.splice(0, usersData.value.length, ...users as any[]) // Add type assertion
+  }
+})
+
 // Add a user to the friend list
-const addFriend = (userId: number) => {
+const addFriend = async (userId: number) => {
   if (currentUser && !friends.value.includes(userId)) {
-    friends.value.push(userId) // Add user ID to the current user's friend list
-    localStorage.setItem('session', JSON.stringify({ ...currentUser, friends: friends.value })) // Update session
-    const user = usersData.find(user => user.id === userId)
+    friends.value.push(userId); // Add user ID to the current user's friend list
+    await api(`users/${currentUser.id}/friends/${userId}`, {}, 'POST');
+    localStorage.setItem('session', JSON.stringify({ ...currentUser, friends: friends.value })); // Update session
+    const user = usersData.value.find(user => user.id === userId);
     if (user) {
-      alert(`${user.name} has been added to your friends.`)
+      alert(`${user.name} has been added to your friends.`);
     }
   } else if (friends.value.includes(userId)) {
-    alert("This user is already your friend.")
+    alert("This user is already your friend.");
+  }
+}
+
+// Remove a user from the friend list
+const removeFriend = async (userId: number) => {
+  if (currentUser && friends.value.includes(userId)) {
+    friends.value = friends.value.filter((id: number) => id !== userId); // Remove user ID from the current user's friend list
+    await api(`users/${currentUser.id}/friends/${userId}`, {}, 'DELETE');
+    localStorage.setItem('session', JSON.stringify({ ...currentUser, friends: friends.value })); // Update session
+    const user = usersData.value.find(user => user.id === userId);
+    if (user) {
+      alert(`${user.name} has been removed from your friends.`);
+    }
+  } else {
+    alert("This user is not in your friend list.");
   }
 }
 </script>

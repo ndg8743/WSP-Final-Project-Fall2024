@@ -7,6 +7,7 @@ export interface Exercise {
   duration: number // Duration in minutes
   calories: number
   date: string // ISO string
+  userId: number // Add userId property
 }
 
 export async function getExercises(): Promise<DataListEnvelope<Exercise>> {

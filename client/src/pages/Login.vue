@@ -3,14 +3,16 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { getLogin } from '@/models/login'
-import { myFetch } from '@/models/myFetch' 
+import { api } from '@/models/myFetch'
 
 const loginIdentifier = ref('')
 const password = ref('')
 const loginError = ref('')
-const isLoggedIn = ref(false) // Track login state
+const isLoggedIn = ref(false)
 const router = useRouter()
-const { login, logout } = getLogin() // Destructure login and logout from getLogin
+const { login, logout } = getLogin()
+
+const usersData = ref<any[]>([]) // Add this line
 
 // Check if the user is already logged in
 onMounted(() => {
@@ -18,20 +20,23 @@ onMounted(() => {
   isLoggedIn.value = !!session
 })
 
-const handleLogin = () => {
+const handleLogin = async () => {
   const normalizedLoginIdentifier = loginIdentifier.value.toLowerCase()
-  const normalizedPassword = password.value // Password typically remains case-sensitive
+  const normalizedPassword = password.value
 
-  const user = usersData.find(
-    u =>
+  const users = await api('users')
+  usersData.value = users as any[] // Add type assertion
+
+  const user = usersData.value.find(
+    (u: any) =>
       (u.email.toLowerCase() === normalizedLoginIdentifier || u.name.toLowerCase() === normalizedLoginIdentifier) &&
       u.password === normalizedPassword
   )
-  
+
   if (user) {
-    localStorage.setItem('session', JSON.stringify(user)) // Store user in session
-    login() // Call login to update auth state
-    isLoggedIn.value = true // Update login state
+    localStorage.setItem('session', JSON.stringify(user))
+    login(user) // Pass the user object
+    isLoggedIn.value = true
     router.push('/dashboard')
   } else {
     loginError.value = 'Invalid email, username, or password'
@@ -39,7 +44,7 @@ const handleLogin = () => {
 }
 
 const handleLogout = () => {
-  logout() // Call logout to clear session and auth state
+  logout()
   isLoggedIn.value = false
 }
 </script>
@@ -52,21 +57,11 @@ const handleLogout = () => {
       <div v-if="!isLoggedIn">
         <div class="field">
           <label class="label">Email or Username</label>
-          <input
-            class="input"
-            type="text"
-            placeholder="Enter your email or username"
-            v-model="loginIdentifier"
-          />
+          <input class="input" type="text" placeholder="Enter your email or username" v-model="loginIdentifier" />
         </div>
         <div class="field">
           <label class="label">Password</label>
-          <input
-            class="input"
-            type="password"
-            placeholder="Enter your password"
-            v-model="password"
-          />
+          <input class="input" type="password" placeholder="Enter your password" v-model="password" />
         </div>
         <button class="button is-primary" @click="handleLogin">Login</button>
       </div>

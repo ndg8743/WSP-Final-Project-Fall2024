@@ -6,6 +6,7 @@ export interface Meal {
   name: string
   calories: number
   date: string // ISO string
+  userId: number // Add userId property
 }
 
 export async function getMeals(): Promise<DataListEnvelope<Meal>> {

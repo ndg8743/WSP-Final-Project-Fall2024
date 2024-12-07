@@ -14,7 +14,7 @@ defineProps<{
       <p>Role: {{ user.role }}</p>
       <h4>Friends:</h4>
       <ul>
-        <li v-for="friend in user.friend_id" :key="friend">
+        <li v-for="friend in user.friends" :key="friend">
           Friend ID: {{ friend }}
         </li>
       </ul>
