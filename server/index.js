@@ -2,19 +2,31 @@ const express = require("express");
 const { createServer } = require("http");
 const path = require("path");
 const cors = require("cors");
-const exerciseController = require(path.join(__dirname, "controllers", "exercise.js"));
-const mealsController = require(path.join(__dirname, "controllers", "meals.js"));
+const exerciseController = require(
+  path.join(__dirname, "controllers", "exercise.js")
+);
+const mealsController = require(
+  path.join(__dirname, "controllers", "meals.js")
+);
 const userController = require(path.join(__dirname, "controllers", "users.js"));
-const { parseToken } = require(path.join(__dirname, "middleware", "verifyJWT.js"));
+const { parseToken } = require(
+  path.join(__dirname, "middleware", "verifyJWT.js")
+);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const API_PREFIX = "/api/v1";
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(parseToken); // Parse token and attach user to the request
+
+// Debugging middleware
+app.use((req, res, next) => {
+  console.log(`Received ${req.method} request for ${req.url}`);
+  next();
+});
 
 // API Routes
 app.use(`${API_PREFIX}/exercises`, exerciseController);
@@ -24,6 +36,7 @@ app.use(`${API_PREFIX}/users`, userController);
 // Serve static files for SPA
 app.use(express.static(path.resolve("dist")));
 app.get("*", (req, res) => {
+  console.log("Serving SPA");
   res.sendFile(path.resolve("client/index.html"));
 });
 

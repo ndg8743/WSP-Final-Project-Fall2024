@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+const { verifyToken } = require("../model/user");
 /**
  * Parse and verify the token, and attach the user payload to the request object.
  */
@@ -9,7 +9,7 @@ async function parseToken(req, res, next) {
     return next(); // Continue without a token
   }
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = await verifyToken(token);
     if (payload) {
       req.user = payload; // Attach user payload to request
     }

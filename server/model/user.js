@@ -1,5 +1,6 @@
 const { getConnection } = require('./supabase');
 const conn = getConnection();
+const jwt = require("jsonwebtoken");
 
 /**
  * Get all users (Admin-only operation)
@@ -8,12 +9,11 @@ const conn = getConnection();
 async function getAll() {
     const { data, error, count } = await conn
         .from("users")
-        .select("*", { count: "exact" });
-
-    if (error) throw new Error(error.message);
+        .select("*", { count: "estimated" });
 
     return {
-        isSuccess: true,
+        isSuccess: !error,
+        message: error?.message,
         data: data,
         total: count,
     };
@@ -25,14 +25,19 @@ async function getAll() {
  * @returns {Promise<DataEnvelope<User>>}
  */
 async function get(id) {
+    console.log(`Fetching user with ID: ${id}`);
     const { data, error } = await conn
         .from("users")
         .select("*")
         .eq("id", id)
         .single();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+        console.error(`Error fetching user with ID ${id}: ${error.message}`);
+        throw new Error(error.message);
+    }
 
+    console.log(`Successfully fetched user with ID: ${id}`);
     return {
         isSuccess: true,
         data: data,
@@ -48,13 +53,11 @@ async function add(user) {
     const { data, error } = await conn
         .from("users")
         .insert([user])
-        .select("*")
         .single();
 
-    if (error) throw new Error(error.message);
-
     return {
-        isSuccess: true,
+        isSuccess: !error,
+        message: error?.message,
         data: data,
     };
 }
@@ -109,6 +112,7 @@ async function remove(id) {
  * @returns {Promise<DataEnvelope<User>>}
  */
 async function login(email, password) {
+    console.log(`Attempting login for email: ${email}`);
     const { data, error } = await conn
         .from("users")
         .select("*")
@@ -117,15 +121,21 @@ async function login(email, password) {
         .single();
 
     if (error) {
+        console.error(`Login error for email ${email}: ${error.message}`);
         return {
             isSuccess: false,
-            message: "Invalid email or password",
+            message: error.message,
+            data: null,
+            token: null
         };
     }
 
+    const token = await createToken(data, 3600000);
+    console.log(`Login successful for email: ${email}`);
     return {
         isSuccess: true,
-        data: data,
+        message: "Login successful",
+        data: { user: data, token: token }
     };
 }
 
@@ -173,6 +183,30 @@ async function removeFriend(userId, friendId) {
     };
 }
 
+async function createToken(user, expiresIn) {
+    return new Promise((resolve, reject) => {
+        jwt.sign({ userid: user.id, email: user.email }, process.env.JWT_SECRET ?? "", { expiresIn }, (err, token) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(token);
+            }
+        });
+    });
+}
+
+async function verifyToken(token) {
+    return new Promise((resolve, reject) => {
+        jwt.verify(token, process.env.JWT_SECRET ?? "", (err, user) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(user);
+            }
+        });
+    });
+}
+
 module.exports = {
     getAll,
     get,
@@ -182,4 +216,6 @@ module.exports = {
     login,
     addFriend,
     removeFriend,
+    createToken,
+    verifyToken,
 };

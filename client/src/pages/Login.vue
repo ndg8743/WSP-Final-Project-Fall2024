@@ -12,34 +12,21 @@ const isLoggedIn = ref(false)
 const router = useRouter()
 const { login, logout } = getLogin()
 
-const usersData = ref<any[]>([]) // Add this line
-
-// Check if the user is already logged in
 onMounted(() => {
   const session = localStorage.getItem('session')
   isLoggedIn.value = !!session
 })
 
 const handleLogin = async () => {
-  const normalizedLoginIdentifier = loginIdentifier.value.toLowerCase()
-  const normalizedPassword = password.value
+  const response = await api('users/login', { email: loginIdentifier.value, password: password.value }, 'POST')
 
-  const users = await api('users')
-  usersData.value = users as any[] // Add type assertion
-
-  const user = usersData.value.find(
-    (u: any) =>
-      (u.email.toLowerCase() === normalizedLoginIdentifier || u.name.toLowerCase() === normalizedLoginIdentifier) &&
-      u.password === normalizedPassword
-  )
-
-  if (user) {
-    localStorage.setItem('session', JSON.stringify(user))
-    login(user) // Pass the user object
+  if (response.isSuccess) {
+    localStorage.setItem('session', JSON.stringify(response.data))
+    login(response.data) // Pass the user object
     isLoggedIn.value = true
     router.push('/dashboard')
   } else {
-    loginError.value = 'Invalid email, username, or password'
+    loginError.value = response.message
   }
 }
 
