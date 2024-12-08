@@ -1,221 +1,192 @@
-const { getConnection } = require('./supabase');
+const { getConnection } = require("./supabase");
 const conn = getConnection();
 const jwt = require("jsonwebtoken");
 
-/**
- * Get all users (Admin-only operation)
- * @returns {Promise<DataListEnvelope<User>>}
- */
 async function getAll() {
+  try {
     const { data, error, count } = await conn
-        .from("users")
-        .select("*", { count: "estimated" });
+      .from("users")
+      .select("*", { count: "estimated" });
 
     return {
-        isSuccess: !error,
-        message: error?.message,
-        data: data,
-        total: count,
+      isSuccess: !error,
+      message: error?.message,
+      data: data || [],
+      total: count || 0,
     };
+  } catch (err) {
+    console.error("Unexpected error in getAll:", err);
+    throw err;
+  }
 }
 
-/**
- * Get a user by ID
- * @param {number} id
- * @returns {Promise<DataEnvelope<User>>}
- */
 async function get(id) {
-    console.log(`Fetching user with ID: ${id}`);
+  try {
     const { data, error } = await conn
-        .from("users")
-        .select("*")
-        .eq("id", id)
-        .single();
+      .from("users")
+      .select("*")
+      .eq("userid", id)
+      .single();
 
-    if (error) {
-        console.error(`Error fetching user with ID ${id}: ${error.message}`);
-        throw new Error(error.message);
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error(`Unexpected error fetching user with ID ${id}:`, err);
+    throw err;
+  }
+}
+
+async function login(identifier, password) {
+  try {
+    console.log(`Attempting login for identifier: ${identifier}`);
+
+    const { data, error } = await conn
+      .from("Users") // Ensure this matches your table name
+      .select("*")
+      .or(`name.eq.${identifier},email.eq.${identifier}`)
+      .single();
+
+    console.log("Query result:", data, "Error:", error);
+
+    if (error || !data) {
+      console.error(`Login failed for identifier: ${identifier}`);
+      return {
+        isSuccess: false,
+        message: "Invalid username/email or password",
+        data: null,
+        token: null,
+      };
     }
 
-    console.log(`Successfully fetched user with ID: ${id}`);
-    return {
-        isSuccess: true,
-        data: data,
-    };
-}
-
-/**
- * Add a new user
- * @param {User} user
- * @returns {Promise<DataEnvelope<User>>}
- */
-async function add(user) {
-    const { data, error } = await conn
-        .from("users")
-        .insert([user])
-        .single();
-
-    return {
-        isSuccess: !error,
-        message: error?.message,
-        data: data,
-    };
-}
-
-/**
- * Update a user
- * @param {number} id
- * @param {User} user
- * @returns {Promise<DataEnvelope<User>>}
- */
-async function update(id, user) {
-    const { data, error } = await conn
-        .from("users")
-        .update(user)
-        .eq("id", id)
-        .select("*")
-        .single();
-
-    if (error) throw new Error(error.message);
-
-    return {
-        isSuccess: true,
-        data: data,
-    };
-}
-
-/**
- * Remove a user (Admin-only operation)
- * @param {number} id
- * @returns {Promise<DataEnvelope<number>>}
- */
-async function remove(id) {
-    const { data, error } = await conn
-        .from("users")
-        .delete()
-        .eq("id", id)
-        .select("*")
-        .single();
-
-    if (error) throw new Error(error.message);
-
-    return {
-        isSuccess: true,
-        data: data,
-    };
-}
-
-/**
- * Login a user
- * @param {string} email
- * @param {string} password
- * @returns {Promise<DataEnvelope<User>>}
- */
-async function login(email, password) {
-    console.log(`Attempting login for email: ${email}`);
-    const { data, error } = await conn
-        .from("users")
-        .select("*")
-        .eq("email", email)
-        .eq("password", password)
-        .single();
-
-    if (error) {
-        console.error(`Login error for email ${email}: ${error.message}`);
-        return {
-            isSuccess: false,
-            message: error.message,
-            data: null,
-            token: null
-        };
+    if (data.password !== password) {
+      return {
+        isSuccess: false,
+        message: "Invalid username/email or password",
+        data: null,
+        token: null,
+      };
     }
 
     const token = await createToken(data, 3600000);
-    console.log(`Login successful for email: ${email}`);
+    console.log(`Login successful for identifier: ${identifier}`);
     return {
-        isSuccess: true,
-        message: "Login successful",
-        data: { user: data, token: token }
+      isSuccess: true,
+      message: "Login successful",
+      data: { user: data, token },
     };
+  } catch (err) {
+    console.error("Unexpected error during login:", err);
+    throw err;
+  }
 }
 
-/**
- * Add a friend to a user's friend list
- * @param {number} userId
- * @param {number} friendId
- * @returns {Promise<DataEnvelope<User>>}
- */
-async function addFriend(userId, friendId) {
+async function add(user) {
+  try {
     const { data, error } = await conn
-        .from("users")
-        .update({ friends: conn.raw('array_append(friends, ?)', [friendId]) })
-        .eq("id", userId)
-        .select("*")
-        .single();
-
-    if (error) throw new Error(error.message);
+      .from("users")
+      .insert([
+        {
+          firstname: user.firstname,
+          lastname: user.lastname,
+          email: user.email,
+          username: user.username,
+          password: user.password, // Store plaintext password (not recommended)
+          isadmin: user.isadmin || false,
+          bio: user.bio || "",
+        },
+      ])
+      .single();
 
     return {
-        isSuccess: true,
-        data: data,
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
     };
+  } catch (err) {
+    console.error("Unexpected error in add:", err);
+    throw err;
+  }
 }
 
-/**
- * Remove a friend from a user's friend list
- * @param {number} userId
- * @param {number} friendId
- * @returns {Promise<DataEnvelope<User>>}
- */
-async function removeFriend(userId, friendId) {
+async function update(id, user) {
+  try {
     const { data, error } = await conn
-        .from("users")
-        .update({ friends: conn.raw('array_remove(friends, ?)', [friendId]) })
-        .eq("id", userId)
-        .select("*")
-        .single();
-
-    if (error) throw new Error(error.message);
+      .from("users")
+      .update({
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        username: user.username,
+        bio: user.bio || "",
+      })
+      .eq("userid", id)
+      .select("*")
+      .single();
 
     return {
-        isSuccess: true,
-        data: data,
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
     };
+  } catch (err) {
+    console.error("Unexpected error in update:", err);
+    throw err;
+  }
+}
+
+async function remove(id) {
+  try {
+    const { data, error } = await conn
+      .from("users")
+      .delete()
+      .eq("userid", id)
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error("Unexpected error in remove:", err);
+    throw err;
+  }
 }
 
 async function createToken(user, expiresIn) {
-    return new Promise((resolve, reject) => {
-        jwt.sign({ userid: user.id, email: user.email }, process.env.JWT_SECRET ?? "", { expiresIn }, (err, token) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(token);
-            }
-        });
-    });
+  return new Promise((resolve, reject) => {
+    jwt.sign(
+      { userid: user.userid, email: user.email },
+      process.env.JWT_SECRET || "",
+      { expiresIn },
+      (err, token) => {
+        if (err) reject(err);
+        else resolve(token);
+      }
+    );
+  });
 }
 
 async function verifyToken(token) {
-    return new Promise((resolve, reject) => {
-        jwt.verify(token, process.env.JWT_SECRET ?? "", (err, user) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(user);
-            }
-        });
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.JWT_SECRET || "", (err, user) => {
+      if (err) reject(err);
+      else resolve(user);
     });
+  });
 }
 
 module.exports = {
-    getAll,
-    get,
-    add,
-    update,
-    remove,
-    login,
-    addFriend,
-    removeFriend,
-    createToken,
-    verifyToken,
+  getAll,
+  get,
+  login,
+  add,
+  update,
+  remove,
+  createToken,
+  verifyToken,
 };
