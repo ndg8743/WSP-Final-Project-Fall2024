@@ -25,21 +25,22 @@ onMounted(() => {
 
 // Handle the login process
 const handleLogin = async () => {
-  loginError.value = ''; // Clear previous errors
-  try {
-    console.log('Sending login request...');
-    const response = await api('users/login', { identifier: loginIdentifier.value, password: password.value }, 'POST');
+  if (!loginIdentifier.value || !password.value) {
+    loginError.value = 'Please enter both username/email and password.';
+    return;
+  }
 
+  try {
+    console.log('Triggering handleLogin once...');
+    const response = await api('users/login', { identifier: loginIdentifier.value, password: password.value }, 'POST');
     console.log('Login response:', response);
 
     if (response.isSuccess) {
-      // Store session and log the user in
       localStorage.setItem('session', JSON.stringify(response.data));
-      login(response.data); // Update login state
+      login(response.data);
       isLoggedIn.value = true;
-      router.push('/dashboard'); // Redirect to dashboard after login
+      router.push('/dashboard');
     } else {
-      // Display error if login fails
       loginError.value = response.message || 'Invalid username or password.';
     }
   } catch (error) {

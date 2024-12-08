@@ -35,28 +35,26 @@ app
       next(error);
     }
   })
+  
+  .post("/login", async (req, res) => {
+  console.log("Received POST request for /api/v1/users/login");
+  try {
+    const { identifier, password } = req.body;
+    console.log("Login attempt with identifier:", identifier);
 
-  .post("/login", async (req, res, next) => {
-    try {
-      const { name, password } = req.body; // Accept `name` instead of `email`
-      if (!name || !password) {
-        return res.status(400).json({
-          isSuccess: false,
-          message: "Username/email and password are required",
-        });
-      }
+    const response = await model.login(identifier, password);
+    console.log("Login result:", response);
 
-      const response = await model.login(name, password);
-      if (response.isSuccess) {
-        res.status(200).json(response);
-      } else {
-        res.status(401).json({ isSuccess: false, message: response.message });
-      }
-    } catch (error) {
-      console.error("Error during login:", error);
-      next(error);
+    if (response.isSuccess) {
+      res.status(200).json(response);
+    } else {
+      res.status(401).json(response);
     }
-  })
+  } catch (error) {
+    console.error("Error during login process:", error);
+    res.status(500).json({ message: "Server error during login." });
+  }
+})
   
   .patch("/:id", async (req, res, next) => {
     try {

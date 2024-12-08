@@ -42,9 +42,8 @@ async function get(id) {
 async function login(identifier, password) {
   try {
     console.log(`Attempting login for identifier: ${identifier}`);
-
     const { data, error } = await conn
-      .from("Users") // Ensure this matches your table name
+      .from("Users")
       .select("*")
       .or(`name.eq.${identifier},email.eq.${identifier}`)
       .single();
@@ -52,10 +51,9 @@ async function login(identifier, password) {
     console.log("Query result:", data, "Error:", error);
 
     if (error || !data) {
-      console.error(`Login failed for identifier: ${identifier}`);
       return {
         isSuccess: false,
-        message: "Invalid username/email or password",
+        message: "Invalid username or password.",
         data: null,
         token: null,
       };
@@ -64,17 +62,16 @@ async function login(identifier, password) {
     if (data.password !== password) {
       return {
         isSuccess: false,
-        message: "Invalid username/email or password",
+        message: "Invalid username or password.",
         data: null,
         token: null,
       };
     }
 
     const token = await createToken(data, 3600000);
-    console.log(`Login successful for identifier: ${identifier}`);
     return {
       isSuccess: true,
-      message: "Login successful",
+      message: "Login successful.",
       data: { user: data, token },
     };
   } catch (err) {
