@@ -1,5 +1,5 @@
 const express = require("express");
-const model = require("../model/user");
+const model = require("../models/user");
 const { requireUser, requireAdmin } = require("../middleware/verifyJWT");
 const app = express.Router();
 
