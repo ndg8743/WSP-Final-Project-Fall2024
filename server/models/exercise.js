@@ -1,48 +1,49 @@
-const data = require("../data/exercises.json");
 const { getConnection } = require("./supabase");
 const conn = getConnection();
-
-/**
- * @template T
- * @typedef {import("../../client/src/models/dataEnvelope").DataEnvelope} DataEnvelope
- * @typedef {import("../../client/src/models/dataEnvelope").DataListEnvelope} DataListEnvelope
- */
-/**
- * @typedef {import("../../client/src/models/exercise").Exercise} Exercise
- */
 
 /**
  * Get all exercises
  * @returns {Promise<DataListEnvelope<Exercise>>}
  */
 async function getAll() {
-  const { data, error, count } = await conn
-    .from("exercises")
-    .select("*", { count: "estimated" });
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-    total: count,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Exercises") // Ensure correct table name (case-sensitive)
+      .select("*");
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || [],
+    };
+  } catch (err) {
+    console.error("Error in getAll:", err);
+    throw err;
+  }
 }
 
 /**
- * Get an exercise by id
+ * Get an exercise by ID
  * @param {number} id
  * @returns {Promise<DataEnvelope<Exercise>>}
  */
 async function get(id) {
-  const { data, error } = await conn
-    .from("exercises")
-    .select("*")
-    .eq("id", id)
-    .single();
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Exercises")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error(`Error in get for exercise ID ${id}:`, err);
+    throw err;
+  }
 }
 
 /**
@@ -51,16 +52,22 @@ async function get(id) {
  * @returns {Promise<DataEnvelope<Exercise>>}
  */
 async function add(exercise) {
-  const { data, error } = await conn
-    .from("exercises")
-    .insert([exercise])
-    .select("*")
-    .single();
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Exercises")
+      .insert([exercise])
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error("Error in add:", err);
+    throw err;
+  }
 }
 
 /**
@@ -70,17 +77,23 @@ async function add(exercise) {
  * @returns {Promise<DataEnvelope<Exercise>>}
  */
 async function update(id, exercise) {
-  const { data, error } = await conn
-    .from("exercises")
-    .update(exercise)
-    .eq("id", id)
-    .select("*")
-    .single();
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Exercises")
+      .update(exercise)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error(`Error in update for exercise ID ${id}:`, err);
+    throw err;
+  }
 }
 
 /**
@@ -89,17 +102,23 @@ async function update(id, exercise) {
  * @returns {Promise<DataEnvelope<number>>}
  */
 async function remove(id) {
-  const { data, error } = await conn
-    .from("exercises")
-    .delete()
-    .eq("id", id)
-    .select("*")
-    .single();
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Exercises")
+      .delete()
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error(`Error in remove for exercise ID ${id}:`, err);
+    throw err;
+  }
 }
 
 module.exports = {

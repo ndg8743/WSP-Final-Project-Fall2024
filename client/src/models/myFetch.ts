@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api/v1/'
+export const API_URL = 'http://localhost:3001/api/v1/' // Corrected port to 3001
 
 export function rest<T>(url: string, data?: any, method?: string): Promise<T> {
   const session = localStorage.getItem('session')
@@ -8,10 +8,20 @@ export function rest<T>(url: string, data?: any, method?: string): Promise<T> {
     method: method ?? (data ? 'POST' : 'GET'),
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : ''
+      Authorization: token ? `Bearer ${token}` : '' // Ensure the token is passed
     },
     body: data ? JSON.stringify(data) : undefined
-  }).then((x) => x.json())
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      return res.json()
+    })
+    .catch((err) => {
+      console.error(`Error fetching ${url}:`, err)
+      throw err
+    })
 }
 
 export function api<T>(url: string, data?: any, method?: string): Promise<T> {

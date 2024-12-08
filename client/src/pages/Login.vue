@@ -1,39 +1,59 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
-import { getLogin } from '@/models/login'
-import { api } from '@/models/myFetch'
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { getLogin } from '@/models/login';
+import { api } from '@/models/myFetch';
 
-const loginIdentifier = ref('')
-const password = ref('')
-const loginError = ref('')
-const isLoggedIn = ref(false)
-const router = useRouter()
-const { login, logout } = getLogin()
+// State for login
+const loginIdentifier = ref('');
+const password = ref('');
+const loginError = ref('');
+const isLoggedIn = ref(false);
 
+// Router for navigation
+const router = useRouter();
+
+// Import login/logout functions
+const { login, logout } = getLogin();
+
+// Check if the user is already logged in
 onMounted(() => {
-  const session = localStorage.getItem('session')
-  isLoggedIn.value = !!session
-})
+  const session = localStorage.getItem('session');
+  isLoggedIn.value = !!session;
+});
 
+// Handle the login process
 const handleLogin = async () => {
-  const response = await api('users/login', { email: loginIdentifier.value, password: password.value }, 'POST')
+  loginError.value = ''; // Clear previous errors
+  try {
+    console.log('Sending login request...');
+    const response = await api('users/login', { identifier: loginIdentifier.value, password: password.value }, 'POST');
 
-  if (response.isSuccess) {
-    localStorage.setItem('session', JSON.stringify(response.data))
-    login(response.data) // Pass the user object
-    isLoggedIn.value = true
-    router.push('/dashboard')
-  } else {
-    loginError.value = response.message
+    console.log('Login response:', response);
+
+    if (response.isSuccess) {
+      // Store session and log the user in
+      localStorage.setItem('session', JSON.stringify(response.data));
+      login(response.data); // Update login state
+      isLoggedIn.value = true;
+      router.push('/dashboard'); // Redirect to dashboard after login
+    } else {
+      // Display error if login fails
+      loginError.value = response.message || 'Invalid username or password.';
+    }
+  } catch (error) {
+    console.error('Error during login:', error);
+    loginError.value = 'An unexpected error occurred. Please try again later.';
   }
-}
+};
 
+// Handle the logout process
 const handleLogout = () => {
-  logout()
-  isLoggedIn.value = false
-}
+  logout();
+  isLoggedIn.value = false;
+  router.push('/'); // Redirect to home page after logout
+};
 </script>
 
 <template>
@@ -54,7 +74,7 @@ const handleLogout = () => {
       </div>
       <div v-else>
         <p>You are already logged in.</p>
-        <RouterLink to="/" class="button is-danger" @click="handleLogout">Logout</RouterLink>
+        <button class="button is-danger" @click="handleLogout">Logout</button>
       </div>
     </div>
   </section>

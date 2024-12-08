@@ -5,30 +5,30 @@ export interface Exercise {
   id: number
   name: string
   duration: number // Duration in minutes
-  calories: number
+  calories_burned: number // Match backend property name
   date: string // ISO string
-  userId: number // Add userId property
+  user_id: number // Match backend property name
 }
 
 export async function getExercises(): Promise<DataListEnvelope<Exercise>> {
-  return api<DataListEnvelope<Exercise>>('exercises');
+  return api<DataListEnvelope<Exercise>>('exercises')
 }
 
 export async function getExerciseById(id: number): Promise<DataEnvelope<Exercise>> {
-  return api<DataEnvelope<Exercise>>(`exercises/${id}`);
+  return api<DataEnvelope<Exercise>>(`exercises/${id}`)
 }
 
 export async function addExercise(exercise: Exercise): Promise<DataEnvelope<Exercise>> {
-  return api<DataEnvelope<Exercise>>('exercises', exercise, 'POST');
+  return api<DataEnvelope<Exercise>>('exercises', exercise, 'POST')
 }
 
 export async function updateExercise(
   id: number,
   exercise: Exercise
 ): Promise<DataEnvelope<Exercise>> {
-  return api<DataEnvelope<Exercise>>(`exercises/${id}`, exercise, 'PATCH');
+  return api<DataEnvelope<Exercise>>(`exercises/${id}`, exercise, 'PATCH')
 }
 
 export async function deleteExercise(id: number): Promise<void> {
-  return api<void>(`exercises/${id}`, null, 'DELETE');
+  return api<void>(`exercises/${id}`, null, 'DELETE')
 }

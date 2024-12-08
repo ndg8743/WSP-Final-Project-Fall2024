@@ -1,48 +1,50 @@
-const data = require("../data/meals.json");
 const { getConnection } = require("./supabase");
 const conn = getConnection();
-
-/**
- * @template T
- * @typedef {import("../../client/src/models/dataEnvelope").DataEnvelope} DataEnvelope
- * @typedef {import("../../client/src/models/dataEnvelope").DataListEnvelope} DataListEnvelope
- */
-/**
- * @typedef {import("../../client/src/models/meals").Meal} Meal
- */
 
 /**
  * Get all meals
  * @returns {Promise<DataListEnvelope<Meal>>}
  */
 async function getAll() {
-  const { data, error, count } = await conn
-    .from("meals")
-    .select("*", { count: "estimated" });
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-    total: count,
-  };
+  try {
+    const { data, error, count } = await conn
+      .from("Meals") // Ensure correct table name (case-sensitive)
+      .select("*", { count: "estimated" });
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || [],
+      total: count || 0,
+    };
+  } catch (err) {
+    console.error("Error in getAll:", err);
+    throw err;
+  }
 }
 
 /**
- * Get a meal by id
+ * Get a meal by ID
  * @param {number} id
  * @returns {Promise<DataEnvelope<Meal>>}
  */
 async function get(id) {
-  const { data, error } = await conn
-    .from("meals")
-    .select("*")
-    .eq("id", id)
-    .single();
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Meals")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error(`Error in get for meal ID ${id}:`, err);
+    throw err;
+  }
 }
 
 /**
@@ -51,16 +53,22 @@ async function get(id) {
  * @returns {Promise<DataEnvelope<Meal>>}
  */
 async function add(meal) {
-  const { data, error } = await conn
-    .from("meals")
-    .insert([meal])
-    .select("*")
-    .single();
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Meals")
+      .insert([meal])
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error("Error in add:", err);
+    throw err;
+  }
 }
 
 /**
@@ -70,17 +78,23 @@ async function add(meal) {
  * @returns {Promise<DataEnvelope<Meal>>}
  */
 async function update(id, meal) {
-  const { data, error } = await conn
-    .from("meals")
-    .update(meal)
-    .eq("id", id)
-    .select("*")
-    .single();
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Meals")
+      .update(meal)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error(`Error in update for meal ID ${id}:`, err);
+    throw err;
+  }
 }
 
 /**
@@ -89,17 +103,23 @@ async function update(id, meal) {
  * @returns {Promise<DataEnvelope<number>>}
  */
 async function remove(id) {
-  const { data, error } = await conn
-    .from("meals")
-    .delete()
-    .eq("id", id)
-    .select("*")
-    .single();
-  return {
-    isSuccess: !error,
-    message: error?.message,
-    data: data,
-  };
+  try {
+    const { data, error } = await conn
+      .from("Meals")
+      .delete()
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error(`Error in remove for meal ID ${id}:`, err);
+    throw err;
+  }
 }
 
 module.exports = {
