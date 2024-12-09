@@ -5,58 +5,70 @@ import UserManagement from '@/components/UserManagement.vue'
 import Modal from '@/components/Modal.vue'
 import { api } from '@/models/myFetch'
 
-// Load users from users.json
-const users = ref([]) // Editable user list
+const users = ref([]) 
 const currentUser = ref(null)
 const showModal = ref(false)
-const isAdmin = ref(false) // Flag to check if the user is an admin
-const isAddingUser = ref(false) // Flag for add mode
+const isAdmin = ref(false)
+const isAddingUser = ref(false)
+const loading = ref(true)
+const error = ref('')
 
-// Retrieve the current user from localStorage session
 const session = localStorage.getItem('session')
-const loggedInUser = session ? JSON.parse(session) : null
+const loggedInUser = session ? JSON.parse(session).users : null
 
 onMounted(async () => {
-  if (loggedInUser && loggedInUser.role === 'admin') {
-    isAdmin.value = true
-    const usersFromApi = await api('users')
-    users.value = usersFromApi
-  } else {
-    isAdmin.value = false
+  try {
+    if (loggedInUser && loggedInUser.role === 'admin') {
+      isAdmin.value = true
+      const usersFromApi = await api('users')
+      users.value = usersFromApi.data || []
+    } else {
+      isAdmin.value = false
+      router.push('/'); // Redirect non-admin users to home page
+    }
+  } catch (err) {
+    console.error('Error fetching users:', err)
+    error.value = 'Failed to load user data. Please try again later.'
+  } finally {
+    loading.value = false
   }
 })
 
-// Handle editing a user
 const handleEdit = (user) => {
-  currentUser.value = { ...user, friends: user.friends || [] } // Ensure friends list is included
+  currentUser.value = { ...user, friends: user.friends || [] }
   isAddingUser.value = false
   showModal.value = true
 }
 
-// Handle deleting a user
 const handleDelete = async (id) => {
-  await api('users/' + id, {}, 'DELETE')
-  users.value = users.value.filter(u => u.id !== id)
+  try {
+    await api('users/' + id, {}, 'DELETE')
+    users.value = users.value.filter((u) => u.id !== id)
+  } catch (err) {
+    console.error('Error deleting user:', err)
+  }
 }
 
-// Handle adding a new user
 const handleAddUser = () => {
-  currentUser.value = { id: Date.now(), name: '', email: '', role: 'User' }
+  currentUser.value = { id: null, name: '', email: '', role: 'User' }
   isAddingUser.value = true
   showModal.value = true
 }
 
-// Save user updates or add new user
 const saveUser = async () => {
-  if (isAddingUser.value) {
-    await api('users', currentUser.value, 'POST')
-    users.value.push({ ...currentUser.value })
-  } else {
-    await api(`users/${currentUser.value.id}`, currentUser.value, 'PUT')
-    const index = users.value.findIndex(u => u.id === currentUser.value.id)
-    if (index !== -1) users.value.splice(index, 1, { ...currentUser.value })
+  try {
+    if (isAddingUser.value) {
+      const response = await api('users', currentUser.value, 'POST')
+      users.value.push(response.data)
+    } else {
+      const response = await api(`users/${currentUser.value.id}`, currentUser.value, 'PATCH')
+      const index = users.value.findIndex((u) => u.id === currentUser.value.id)
+      if (index !== -1) users.value.splice(index, 1, response.data)
+    }
+    closeModal()
+  } catch (err) {
+    console.error('Error saving user:', err)
   }
-  closeModal()
 }
 
 const closeModal = () => {
@@ -65,7 +77,7 @@ const closeModal = () => {
 </script>
 
 <template>
-  <section v-if="isAdmin" class="section">
+  <section v-if="isAdmin && !loading" class="section">
     <div class="container">
       <h1 class="title">User Management</h1>
       <button class="button is-primary" @click="handleAddUser">Add New User</button>
@@ -79,13 +91,8 @@ const closeModal = () => {
           </tr>
         </thead>
         <tbody>
-          <UserManagement
-            v-for="user in users"
-            :key="user.id"
-            :user="user"
-            @edit-user="handleEdit"
-            @delete-user="handleDelete"
-          />
+          <UserManagement v-for="user in users" :key="user.id" :user="user" @edit-user="handleEdit"
+            @delete-user="handleDelete" />
         </tbody>
       </table>
 
@@ -119,6 +126,12 @@ const closeModal = () => {
     </div>
   </section>
 
+  <section v-else-if="loading" class="section">
+    <div class="container">
+      <h1 class="title">Loading...</h1>
+    </div>
+  </section>
+
   <section v-else class="section">
     <div class="container">
       <h1 class="title">Access Denied</h1>
@@ -131,6 +144,7 @@ const closeModal = () => {
 .section {
   padding-top: 2rem;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }

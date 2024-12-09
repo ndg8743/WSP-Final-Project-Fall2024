@@ -16,6 +16,7 @@
       "@/*": ["src/*"]
     },
     "allowImportingTsExtensions": true,
+    "noEmit": true,
     "isolatedModules": true
   },
   "include": [
@@ -23,8 +24,7 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "node_modules/vite/client",
-    "src/models/supabase.js"
+    "src/models/supabase.ts"
   ],
   "exclude": ["node_modules"]
 }

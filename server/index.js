@@ -3,7 +3,7 @@ const { createServer } = require("http");
 const path = require("path");
 const cors = require("cors");
 const exerciseController = require(
-  path.join(__dirname, "controllers", "exercise.js")
+  path.join(__dirname, "controllers", "exercises.js")
 );
 const mealsController = require(
   path.join(__dirname, "controllers", "meals.js")

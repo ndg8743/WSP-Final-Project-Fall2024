@@ -19,29 +19,37 @@ const { login, logout } = getLogin();
 
 // Check if the user is already logged in
 onMounted(() => {
+  console.log('Checking login status');
   const session = localStorage.getItem('session');
   isLoggedIn.value = !!session;
+  if (isLoggedIn.value) {
+    console.log('User is already logged in');
+  }
 });
 
 // Handle the login process
 const handleLogin = async () => {
+  console.log('Attempting login with identifier:', loginIdentifier.value);
   if (!loginIdentifier.value || !password.value) {
     loginError.value = 'Please enter both username/email and password.';
     return;
   }
 
   try {
-    console.log('Triggering handleLogin once...');
     const response = await api('users/login', { identifier: loginIdentifier.value, password: password.value }, 'POST');
-    console.log('Login response:', response);
-
     if (response.isSuccess) {
       localStorage.setItem('session', JSON.stringify(response.data));
       login(response.data);
       isLoggedIn.value = true;
-      router.push('/dashboard');
+      console.log('Login successful:', response.data);
+      if (response.data.user.role === 'admin') {
+        router.push('/admin/users');
+      } else {
+        router.push('/dashboard');
+      }
     } else {
       loginError.value = response.message || 'Invalid username or password.';
+      console.log('Login failed:', loginError.value);
     }
   } catch (error) {
     console.error('Error during login:', error);
@@ -51,9 +59,11 @@ const handleLogin = async () => {
 
 // Handle the logout process
 const handleLogout = () => {
+  console.log('Logging out');
   logout();
   isLoggedIn.value = false;
   router.push('/'); // Redirect to home page after logout
+  console.log('Logout successful');
 };
 </script>
 

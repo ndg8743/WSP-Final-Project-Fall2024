@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 import ExerciseCard from '@/components/ExerciseCard.vue'
 import Modal from '@/components/Modal.vue'
 import { api } from '@/models/myFetch'
-import type { Exercise } from '@/models/exercise.ts'
+import type { Exercise } from '@/models/exercises'
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
@@ -88,13 +88,8 @@ onMounted(async () => {
           <input type="date" class="input" v-model="filterDate" @change="filterExercises" />
         </div>
         <div>
-          <ExerciseCard
-            v-for="exercise in filteredExercises"
-            :key="exercise.id"
-            :exercise="exercise"
-            @edit="handleEdit"
-            @delete="handleDelete"
-          />
+          <ExerciseCard v-for="exercise in filteredExercises" :key="exercise.id" :exercise="exercise" @edit="handleEdit"
+            @delete="handleDelete" />
         </div>
       </div>
       <div v-else>
@@ -137,6 +132,7 @@ onMounted(async () => {
 .section {
   padding-top: 2rem;
 }
+
 .notification {
   margin-top: 1rem;
 }

@@ -1,14 +1,18 @@
-export const API_URL = 'http://localhost:3001/api/v1/' // Corrected port to 3001
+import { reactive } from 'vue'
+
+export const API_URL = 'http://localhost:3001/api/v1/'
+
+const session = reactive({
+  token: JSON.parse(localStorage.getItem('session') || '{}').token || null
+})
 
 export function rest<T>(url: string, data?: any, method?: string): Promise<T> {
-  const session = localStorage.getItem('session')
-  const token = session ? JSON.parse(session).token : null
-
+  console.log(`Request: ${method ?? (data ? 'POST' : 'GET')} ${url}`, data)
   return fetch(url, {
     method: method ?? (data ? 'POST' : 'GET'),
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '' // Ensure the token is passed
+      Authorization: session.token ? `Bearer ${session.token}` : ''
     },
     body: data ? JSON.stringify(data) : undefined
   })
@@ -17,6 +21,10 @@ export function rest<T>(url: string, data?: any, method?: string): Promise<T> {
         throw new Error(`HTTP error! status: ${res.status}`)
       }
       return res.json()
+    })
+    .then((data) => {
+      console.log(`Response from ${url}:`, data)
+      return data
     })
     .catch((err) => {
       console.error(`Error fetching ${url}:`, err)

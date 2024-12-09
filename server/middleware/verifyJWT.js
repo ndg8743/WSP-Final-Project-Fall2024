@@ -1,4 +1,4 @@
-const { verifyToken } = require("../models/user");
+const { verifyToken } = require("../models/users");
 /**
  * Parse and verify the token, and attach the user payload to the request object.
  */

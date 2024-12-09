@@ -1,19 +1,29 @@
 <script setup>
 import { defineProps } from 'vue';
-import defaultUserImage from '@/assets/User.jpg'; // Import default image
+import defaultUserImage from '@/assets/User.jpg';
 
 const props = defineProps({
   friend: {
     type: Object,
     required: true,
+    default: () => ({
+      name: "Unknown Friend",
+      image: "/assets/User.jpg",
+      exercise: "No recent activity",
+      caloriesBurned: 0,
+      lastMeal: "No meal recorded",
+      mealCalories: 0,
+    }),
   },
 });
+
+// Debugging prop values
+console.log('FriendActivityCard props:', props);
 </script>
 
 <template>
-  <div class="box">
+  <div class="box" v-if="friend">
     <div class="user-info">
-      <!-- Display user's image if available, otherwise show default User.jpg -->
       <div class="user-image">
         <img :src="friend.image || defaultUserImage" alt="User image" />
       </div>
@@ -30,15 +40,18 @@ const props = defineProps({
 .box {
   margin-bottom: 15px;
 }
+
 .user-info {
   display: flex;
   align-items: center;
 }
+
 .user-image {
   width: 50px;
   height: 50px;
   margin-right: 15px;
 }
+
 .user-image img {
   width: 100%;
   height: 100%;

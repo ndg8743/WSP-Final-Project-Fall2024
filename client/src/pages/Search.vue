@@ -22,13 +22,16 @@ const filteredUsers = computed(() => {
 // Fetch users data from the backend
 onMounted(async () => {
   if (currentUser) {
+    console.log('Fetching users data');
     const users = await api('users')
     usersData.value.splice(0, usersData.value.length, ...users as any[]) // Add type assertion
+    console.log('Users data fetched:', usersData.value);
   }
 })
 
 // Add a user to the friend list
 const addFriend = async (userId: number) => {
+  console.log('Adding friend with id:', userId);
   if (currentUser && !friends.value.includes(userId)) {
     friends.value.push(userId); // Add user ID to the current user's friend list
     await api(`users/${currentUser.id}/friends/${userId}`, {}, 'POST');
@@ -44,6 +47,7 @@ const addFriend = async (userId: number) => {
 
 // Remove a user from the friend list
 const removeFriend = async (userId: number) => {
+  console.log('Removing friend with id:', userId);
   if (currentUser && friends.value.includes(userId)) {
     friends.value = friends.value.filter((id: number) => id !== userId); // Remove user ID from the current user's friend list
     await api(`users/${currentUser.id}/friends/${userId}`, {}, 'DELETE');

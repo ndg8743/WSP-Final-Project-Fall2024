@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getLogin } from '@/models/login' // Import getLogin
-import { api } from '@/models/myFetch' // Update the import statement for myFetch
+import { getLogin } from '@/models/login'
+import { api } from '@/models/myFetch'
 
 const name = ref('')
 const email = ref('')
 const password = ref('')
 const signupError = ref('')
 const router = useRouter()
-const { login } = getLogin() // Destructure login from getLogin
+const { login } = getLogin()
 
 const handleSignup = async () => {
   const existingUser = await api('users', { email: email.value }, 'POST')
@@ -24,7 +24,7 @@ const handleSignup = async () => {
       role: 'user',
       friends: [],
       image: 'User.jpg',
-      token: 'dummy-token' // Add a token property
+      token: 'dummy-token'
     }
     await api('users', newUser, 'POST')
     localStorage.setItem('session', JSON.stringify(newUser))

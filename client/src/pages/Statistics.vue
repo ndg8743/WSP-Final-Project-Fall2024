@@ -17,6 +17,7 @@ const currentUser = session ? JSON.parse(session) : null
 // Fetch and calculate user stats
 onMounted(async () => {
   if (currentUser) {
+    console.log('Fetching user stats for:', currentUser.id);
     const currentUserId = currentUser.id
 
     // Fetch exercises for the current user from the backend
@@ -25,6 +26,7 @@ onMounted(async () => {
     // Set the total completed exercises and total calories burned
     completedExercises.value = userExercises.length
     caloriesBurned.value = userExercises.reduce((total, exercise) => total + exercise.caloriesBurned, 0)
+    console.log('User stats fetched:', { completedExercises: completedExercises.value, caloriesBurned: caloriesBurned.value });
   }
 })
 

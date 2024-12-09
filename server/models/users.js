@@ -28,6 +28,12 @@ async function get(id) {
       .eq("userid", id)
       .single();
 
+    if (data) {
+      // Normalize the user object
+      data.image = data.image || "/assets/User.jpg";
+      data.friends = data.friends || [];
+    }
+
     return {
       isSuccess: !error,
       message: error?.message,
@@ -83,14 +89,14 @@ async function login(identifier, password) {
 async function add(users) {
   try {
     const { data, error } = await conn
-      .from("users")
+      .from("Users")
       .insert([
         {
           firstname: users.firstname,
           lastname: users.lastname,
           email: users.email,
           username: users.username,
-          password: users.password, // Store plaintext password (not recommended)
+          password: users.password,
           isadmin: users.isadmin || false,
           bio: users.bio || "",
         },
@@ -108,16 +114,16 @@ async function add(users) {
   }
 }
 
-async function update(id, user) {
+async function update(id, users) {
   try {
     const { data, error } = await conn
-      .from("users")
+      .from("Users")
       .update({
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-        username: user.username,
-        bio: user.bio || "",
+        firstname: users.firstname,
+        lastname: users.lastname,
+        email: users.email,
+        username: users.username,
+        bio: users.bio || "",
       })
       .eq("userid", id)
       .select("*")
@@ -137,7 +143,7 @@ async function update(id, user) {
 async function remove(id) {
   try {
     const { data, error } = await conn
-      .from("users")
+      .from("Users")
       .delete()
       .eq("userid", id)
       .select("*")
@@ -154,10 +160,10 @@ async function remove(id) {
   }
 }
 
-async function createToken(user, expiresIn) {
+async function createToken(users, expiresIn) {
   return new Promise((resolve, reject) => {
     jwt.sign(
-      { userid: user.userid, email: user.email },
+      { userid: users.userid, email: users.email },
       process.env.JWT_SECRET || "",
       { expiresIn },
       (err, token) => {
@@ -170,9 +176,9 @@ async function createToken(user, expiresIn) {
 
 async function verifyToken(token) {
   return new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.JWT_SECRET || "", (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET || "", (err, users) => {
       if (err) reject(err);
-      else resolve(user);
+      else resolve(users);
     });
   });
 }

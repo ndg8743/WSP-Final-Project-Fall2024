@@ -1,27 +1,41 @@
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { type DataEnvelope } from '../models/dataEnvelope'
+import { type Users } from '../models/users'
 
-const isLoggedIn = ref(false)
+const session = reactive({
+  users: JSON.parse(localStorage.getItem('session') || '{}').users || null,
+  token: JSON.parse(localStorage.getItem('session') || '{}').token || null
+})
+
+const isLoggedIn = ref(!!session.users)
 const router = useRouter()
 
 export function getLogin() {
   onMounted(() => {
-    const session = localStorage.getItem('session')
-    if (session) {
+    const storedSession = localStorage.getItem('session')
+    if (storedSession) {
+      const parsedSession = JSON.parse(storedSession)
+      session.users = parsedSession.users
+      session.token = parsedSession.token
       isLoggedIn.value = true
     }
   })
 
   const logout = () => {
     localStorage.removeItem('session')
+    session.users = null
+    session.token = null
     isLoggedIn.value = false
     router.push('/')
   }
 
-  const login = (user: { token: string; user: any }) => {
-    localStorage.setItem('session', JSON.stringify(user)) // Store the session token and user
+  const login = (users: { token: string; users: any }) => {
+    localStorage.setItem('session', JSON.stringify(users))
+    session.users = users.users
+    session.token = users.token
     isLoggedIn.value = true
   }
 
-  return { isLoggedIn, logout, login }
+  return { isLoggedIn, session, logout, login }
 }

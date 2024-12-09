@@ -1,14 +1,10 @@
 const { getConnection } = require("./supabase");
 const conn = getConnection();
 
-/**
- * Get all meals
- * @returns {Promise<DataListEnvelope<Meal>>}
- */
 async function getAll() {
   try {
     const { data, error, count } = await conn
-      .from("Meals") // Ensure correct table name (case-sensitive)
+      .from("Meals")
       .select("*", { count: "estimated" });
 
     return {
@@ -18,16 +14,11 @@ async function getAll() {
       total: count || 0,
     };
   } catch (err) {
-    console.error("Error in getAll:", err);
+    console.error("Unexpected error in getAll:", err);
     throw err;
   }
 }
 
-/**
- * Get a meal by ID
- * @param {number} id
- * @returns {Promise<DataEnvelope<Meal>>}
- */
 async function get(id) {
   try {
     const { data, error } = await conn
@@ -42,23 +33,14 @@ async function get(id) {
       data: data || null,
     };
   } catch (err) {
-    console.error(`Error in get for meal ID ${id}:`, err);
+    console.error(`Unexpected error fetching meal with ID ${id}:`, err);
     throw err;
   }
 }
 
-/**
- * Add a new meal
- * @param {Meal} meal
- * @returns {Promise<DataEnvelope<Meal>>}
- */
 async function add(meal) {
   try {
-    const { data, error } = await conn
-      .from("Meals")
-      .insert([meal])
-      .select("*")
-      .single();
+    const { data, error } = await conn.from("Meals").insert([meal]).single();
 
     return {
       isSuccess: !error,
@@ -66,17 +48,11 @@ async function add(meal) {
       data: data || null,
     };
   } catch (err) {
-    console.error("Error in add:", err);
+    console.error("Unexpected error in add:", err);
     throw err;
   }
 }
 
-/**
- * Update a meal
- * @param {number} id
- * @param {Meal} meal
- * @returns {Promise<DataEnvelope<Meal>>}
- */
 async function update(id, meal) {
   try {
     const { data, error } = await conn
@@ -92,16 +68,11 @@ async function update(id, meal) {
       data: data || null,
     };
   } catch (err) {
-    console.error(`Error in update for meal ID ${id}:`, err);
+    console.error("Unexpected error in update:", err);
     throw err;
   }
 }
 
-/**
- * Remove a meal
- * @param {number} id
- * @returns {Promise<DataEnvelope<number>>}
- */
 async function remove(id) {
   try {
     const { data, error } = await conn
@@ -117,7 +88,7 @@ async function remove(id) {
       data: data || null,
     };
   } catch (err) {
-    console.error(`Error in remove for meal ID ${id}:`, err);
+    console.error("Unexpected error in remove:", err);
     throw err;
   }
 }
