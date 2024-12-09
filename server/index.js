@@ -3,16 +3,12 @@ const express = require("express");
 const { createServer } = require("http");
 const path = require("path");
 const cors = require("cors");
-const exerciseController = require(
-  path.join(__dirname, "controllers", "exercises.js")
-);
-const mealsController = require(
-  path.join(__dirname, "controllers", "meals.js")
-);
+
+// Import controllers and middleware
+const exerciseController = require(path.join(__dirname, "controllers", "exercises.js"));
+const mealsController = require(path.join(__dirname, "controllers", "meals.js"));
 const userController = require(path.join(__dirname, "controllers", "users.js"));
-const { parseToken } = require(
-  path.join(__dirname, "middleware", "verifyJWT.js")
-);
+const { parseToken } = require(path.join(__dirname, "middleware", "verifyJWT.js"));
 
 console.log("Environment variables loaded:");
 console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
@@ -26,7 +22,7 @@ const API_PREFIX = "/api/v1";
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(parseToken); // Parse token and attach user to the request
+app.use(parseToken); // Apply parseToken globally
 
 // Debugging middleware
 app.use((req, res, next) => {

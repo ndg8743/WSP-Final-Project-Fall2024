@@ -4,14 +4,16 @@ import { api } from './myFetch';
 import { type DataEnvelope } from './dataEnvelope';
 
 const session = reactive({
-  user: JSON.parse(localStorage.getItem('session') || '{}').user || null,
-  token: JSON.parse(localStorage.getItem('session') || '{}').token || null,
+  user: null, // User information
+  token: null, // JWT token
 });
 
-const isLoggedIn = ref(!!session.user);
+// Reactive state for login status
+const isLoggedIn = ref(false);
 const router = useRouter();
 
 export function getLogin() {
+  // Load session data from localStorage when component is mounted
   onMounted(() => {
     const storedSession = localStorage.getItem('session');
     if (storedSession) {
@@ -22,6 +24,7 @@ export function getLogin() {
     }
   });
 
+  // Logout function to clear session and navigate to the home page
   const logout = () => {
     localStorage.removeItem('session');
     session.user = null;
@@ -30,19 +33,35 @@ export function getLogin() {
     router.push('/');
   };
 
+  // Login function to authenticate the user
   const login = async (loginIdentifier: string, password: string) => {
-    const response = await api<DataEnvelope<any>>('users/login', { identifier: loginIdentifier, password }, 'POST');
-    if (response.isSuccess) {
-      const newSession = {
-        token: response.data.token,
-        user: response.data.users,
-      };
-      localStorage.setItem('session', JSON.stringify(newSession));
-      session.user = newSession.user;
-      session.token = newSession.token;
-      isLoggedIn.value = true;
-    } else {
-      throw new Error(response.message);
+    try {
+      // Call the `users/login` REST endpoint
+      const response = await api<DataEnvelope<{ token: string; users: any }>>(
+        'users/login',
+        { identifier: loginIdentifier, password },
+        'POST'
+      );
+
+      if (response.isSuccess) {
+        const newSession = {
+          token: response.data.token,
+          user: response.data.users,
+        };
+
+        // Save session in localStorage
+        localStorage.setItem('session', JSON.stringify(newSession));
+        session.user = newSession.user;
+        session.token = newSession.token;
+        isLoggedIn.value = true;
+
+        // Redirect to the dashboard
+        router.push('/dashboard');
+      } else {
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      throw new Error('Login failed. Please check your credentials.');
     }
   };
 
