@@ -30,10 +30,10 @@ export function getLogin() {
     router.push('/')
   }
 
-  const login = (users: { token: string; users: any }) => {
-    localStorage.setItem('session', JSON.stringify(users))
-    session.users = users.users
-    session.token = users.token
+  const login = (newSession: { token: string; users: any }) => {
+    localStorage.setItem('session', JSON.stringify(newSession))
+    session.users = newSession.users
+    session.token = newSession.token
     isLoggedIn.value = true
   }
 

@@ -27,8 +27,9 @@ const handleSignup = async () => {
       token: 'dummy-token'
     }
     await api('users', newUser, 'POST')
-    localStorage.setItem('session', JSON.stringify(newUser))
-    login(newUser)
+    const sessionData = { token: newUser.token, users: newUser }
+    localStorage.setItem('session', JSON.stringify(sessionData))
+    login(sessionData)
     router.push('/dashboard')
   }
 }

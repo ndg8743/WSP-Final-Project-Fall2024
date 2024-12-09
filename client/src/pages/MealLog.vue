@@ -4,6 +4,8 @@ import { ref, onMounted } from 'vue';
 import MealCard from '@/components/MealCard.vue';
 import Modal from '@/components/Modal.vue';
 import { getMeals, addMeal, updateMeal, deleteMeal } from '@/models/meals';
+
+// @ts-ignore
 import type { Meals } from '@/models/meals';
 
 // Retrieve the current user from the session

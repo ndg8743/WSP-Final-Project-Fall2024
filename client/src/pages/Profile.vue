@@ -1,10 +1,10 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { User } from '@/models/users' // Ensure the User interface includes the image property
+import { Users } from '@/models/users' // Ensure the Users interface includes the image property
 
 const avatar = ref('')
-const currentUser = ref<User | null>(null)
+const currentUser = ref<Users | null>(null)
 
 onMounted(() => {
   console.log('Loading user profile');

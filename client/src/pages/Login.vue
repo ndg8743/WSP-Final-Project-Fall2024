@@ -36,7 +36,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const response = await api('users/login', { identifier: loginIdentifier.value, password: password.value }, 'POST');
+    const response = await api('users/login', { identifier: loginIdentifier.value, password: password.value }, 'POST') as any;
     if (response.isSuccess) {
       localStorage.setItem('session', JSON.stringify(response.data));
       login(response.data);

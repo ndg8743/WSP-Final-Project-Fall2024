@@ -1,4 +1,5 @@
-<script setup>
+<!-- eslint-disable vue/multi-word-component-names -->
+ <script setup>
 import { ref, onMounted } from 'vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import { api } from '@/models/myFetch';

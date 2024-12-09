@@ -3,17 +3,18 @@
 import { ref, onMounted } from 'vue'
 import ExerciseCard from '@/components/ExerciseCard.vue'
 import Modal from '@/components/Modal.vue'
+// @ts-ignore
 import { api } from '@/models/myFetch'
-import type { Exercise } from '@/models/exercises'
+import type { Exercises } from '@/models/exercises'
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
 const currentUser = session ? JSON.parse(session) : null
 
-const exercises = ref<Exercise[]>([])
+const exercises = ref<Exercises[]>([])
 const filterDate = ref('')
-const filteredExercises = ref<Exercise[]>([])
-const currentExercise = ref<Exercise | null>(null)
+const filteredExercises = ref<Exercises[]>([])
+const currentExercise = ref<Exercises | null>(null)
 const showModal = ref(false)
 const isAddingExercise = ref(false)
 
@@ -30,13 +31,13 @@ const openAddExercise = () => {
     duration: 0,
     calories: 0, // Ensure the Exercise interface is correctly defined
     date: new Date().toISOString().split('T')[0],
-    userId: currentUser ? currentUser.id : 0 // Ensure the Exercise interface is correctly defined
+    user_id: currentUser ? currentUser.id : 0 // Ensure the Exercise interface is correctly defined
   }
   isAddingExercise.value = true
   showModal.value = true
 }
 
-const handleEdit = (exercise: Exercise) => {
+const handleEdit = (exercise: Exercises) => {
   currentExercise.value = { ...exercise }
   isAddingExercise.value = false
   showModal.value = true
@@ -69,7 +70,7 @@ const closeModal = () => {
 onMounted(async () => {
   if (currentUser) {
     const userExercises = await api('exercises', { userId: currentUser.id })
-    exercises.value = userExercises as Exercise[] // Add type assertion
+    exercises.value = userExercises as Exercises[] // Add type assertion
     filterExercises() // Initialize filteredExercises based on the loaded data
   }
 })

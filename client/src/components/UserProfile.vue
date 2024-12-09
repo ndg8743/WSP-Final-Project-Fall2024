@@ -45,7 +45,7 @@ onMounted(async () => {
           <p>Email: {{ users.email }}</p>
           <p>Role: {{ users.role }}</p>
           <h4>Friends:</h4>
-          <ul v-if="users.friends.length">
+          <ul v-if="users.friends && users.friends.length">
             <li v-for="friend in users.friends" :key="friend">
               Friend ID: {{ friend }}
             </li>
