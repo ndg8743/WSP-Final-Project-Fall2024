@@ -6,9 +6,7 @@ import { api } from '@/models/myFetch';
 
 const exercises = ref<Exercises | null>(null);
 const router = useRouter();
-defineProps<{
-  exercise: Exercises;
-}>();
+
 onMounted(async () => {
   const session = localStorage.getItem('session');
   if (session) {

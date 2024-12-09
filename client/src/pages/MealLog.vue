@@ -8,6 +8,8 @@ import { getMeals, addMeal, updateMeal, deleteMeal } from '@/models/meals';
 // @ts-ignore
 import type { Meals } from '@/models/meals';
 
+declare module '@/components/Modal.vue';
+
 // Retrieve the current user from the session
 const session = localStorage.getItem('session');
 const currentUser = session ? JSON.parse(session).users : null;

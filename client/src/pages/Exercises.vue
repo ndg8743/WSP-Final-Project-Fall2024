@@ -7,6 +7,9 @@ import Modal from '@/components/Modal.vue'
 import { api } from '@/models/myFetch'
 import type { Exercises } from '@/models/exercises'
 
+// Declare module for Modal.vue
+declare module '@/components/Modal.vue';
+
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
 const currentUser = session ? JSON.parse(session) : null
