@@ -28,6 +28,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Logging middleware for all routes
+app.use((req, res, next) => {
+  console.log(`Request Method: ${req.method}, Request URL: ${req.url}`);
+  next();
+});
+
 // API Routes
 app.use(`${API_PREFIX}/exercises`, exerciseController);
 app.use(`${API_PREFIX}/meals`, mealsController);
