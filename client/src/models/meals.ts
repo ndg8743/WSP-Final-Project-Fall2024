@@ -1,5 +1,5 @@
-import { api } from './myFetch'
-import type { DataListEnvelope, DataEnvelope } from './dataEnvelope'
+import { api } from './myFetch.js'
+import type { DataListEnvelope, DataEnvelope } from './dataEnvelope.js'
 
 export interface Meals {
   id: number

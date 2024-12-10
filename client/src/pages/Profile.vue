@@ -1,10 +1,10 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { User } from '@/models/user' // Import User type if necessary
+import { Users } from '@/models/users.js' // Import User type if necessary
 
 const avatar = ref('')
-const currentUser = ref<User | null>(null)
+const currentUser = ref<Users | null>(null)
 
 onMounted(() => {
   // Load the logged-in user data from localStorage

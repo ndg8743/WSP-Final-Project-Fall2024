@@ -27,7 +27,7 @@ const handleSignup = async () => {
     if (response.isSuccess) {
       const newUser = response.data
       localStorage.setItem('session', JSON.stringify(newUser)) // Store new user in session
-      login() // Log in the new user by updating the auth state
+      login(newUser.email, newUser.password) // Log in the new user by updating the auth state
 
       router.push('/dashboard') // Redirect to dashboard after successful signup
     } else {

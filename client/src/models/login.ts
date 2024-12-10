@@ -1,11 +1,11 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { api } from './myFetch';
-import { type DataEnvelope } from './dataEnvelope';
+import { api } from './myFetch.js';
+import { type DataEnvelope } from './dataEnvelope.js';
 
 const session = reactive({
-  user: null, // User information
-  token: null, // JWT token
+  user: null as any, // User information
+  token: null as string | null, // JWT token
 });
 
 // Reactive state for login status
