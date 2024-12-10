@@ -1,89 +1,105 @@
 const model = require("../models/users");
+const { requireUser, requireAdmin, parseToken } = require("../middleware/verifyJWT");
 const express = require("express");
 const app = express.Router();
 
+// Apply parseToken middleware globally to all routes
+app.use(parseToken);
+
 app
+  // Get all users (Admin only)
   .get("/", async (req, res, next) => {
     try {
       const users = await model.getAll();
-      res.status(200).send(users);
-    } catch (error) {
-      next(error);
-    }
-  })
 
-  .get("/:id", async (req, res, next) => {
-    try {
-      const id = req.params.id;
-      const users = await model.get(id);
-      if (!users.data) {
-        return res
-          .status(404)
-          .send({ isSuccess: false, message: "Users not found" });
+      if (!users || users.data.length === 0) {
+        return res.status(404).json({ isSuccess: false, message: "No users found." });
       }
-      // Normalize user data (default image, friends list, etc.)
-      users.data.image = users.data.image || "/assets/User.jpg";
-      users.data.friends = users.data.friends || [];
-      res.status(200).send(users);
+
+      res.status(200).json({ isSuccess: true, data: users.data, total: users.total });
     } catch (error) {
       next(error);
     }
   })
 
-  .post("/", async (req, res, next) => {
+  // Get user by ID (Authenticated user or Admin)
+  .get("/:id", requireUser, async (req, res, next) => {
     try {
-      const users = await model.add(req.body);
-      res.status(201).send(users);
+      const id = parseInt(req.params.id);
+      const user = await model.get(id);
+
+      if (!user || !user.data) {
+        return res.status(404).json({ isSuccess: false, message: "User not found." });
+      }
+
+      // Ensure only the requested user or admin can access the data
+      if (req.user.userid !== id && req.user.role !== "admin") {
+        return res.status(403).json({ isSuccess: false, message: "Access denied." });
+      }
+
+      res.status(200).json({ isSuccess: true, data: user.data });
     } catch (error) {
       next(error);
     }
   })
 
+  // User login
   .post("/login", async (req, res) => {
-    console.log("Received POST request for /api/v1/users/login");
     try {
       const { identifier, password } = req.body;
-      console.log("Login attempt with identifier:", identifier);
+
+      // Validate input
+      if (!identifier || !password) {
+        return res.status(400).json({ isSuccess: false, message: "Identifier and password are required." });
+      }
 
       const response = await model.login(identifier, password);
-      console.log("Login result:", response);
 
       if (response.isSuccess) {
-        res.status(200).json(response);
-      } else {
-        res.status(401).json(response);
+        return res.status(200).json(response);
       }
+
+      return res.status(401).json({ isSuccess: false, message: response.message });
     } catch (error) {
-      console.error("Error during login process:", error);
-      res.status(500).json({ message: "Server error during login." });
+      console.error("Login error:", error);
+      res.status(500).json({ isSuccess: false, message: "Server error during login." });
     }
   })
 
-  .patch("/:id", async (req, res, next) => {
+  // Update user details (Authenticated user or Admin)
+  .patch("/:id", requireUser, async (req, res, next) => {
     try {
-      const id = req.params.id;
-      const users = await model.update(+id, req.body);
-      if (!users.data) {
-        return res
-          .status(404)
-          .send({ isSuccess: false, message: "Users not found" });
+      const id = parseInt(req.params.id);
+
+      // Ensure the user can only update their own details or admin access
+      if (req.user.userid !== id && req.user.role !== "admin") {
+        return res.status(403).json({ isSuccess: false, message: "You are not authorized to update this user." });
       }
-      res.status(200).send(users);
+
+      const updatedUser = await model.update(id, req.body);
+
+      if (!updatedUser || !updatedUser.data) {
+        return res.status(404).json({ isSuccess: false, message: "User not found." });
+      }
+
+      res.status(200).json({ isSuccess: true, data: updatedUser.data });
     } catch (error) {
       next(error);
     }
   })
 
-  .delete("/:id", async (req, res, next) => {
+  // Delete user (Admin only)
+  .delete("/:id", requireAdmin, async (req, res, next) => {
     try {
-      const id = req.params.id;
-      const response = await model.remove(+id);
-      if (!response.data) {
-        return res
-          .status(404)
-          .send({ isSuccess: false, message: "Users not found" });
+      const id = parseInt(req.params.id);
+
+      const response = await model.remove(id);
+
+      if (!response || !response.data) {
+        return res.status(404).json({ isSuccess: false, message: "User not found." });
       }
-      res.status(200).send(response);
+
+      res.status(200).json({ isSuccess: true, message: "User deleted successfully.", data: response.data });
     } catch (error) {
       next(error);
     }

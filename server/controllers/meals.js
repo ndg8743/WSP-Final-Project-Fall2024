@@ -1,20 +1,20 @@
 const express = require("express");
 const model = require("../models/meals");
-const { requireUser } = require("../middleware/verifyJWT");
+const { requireUser, requireAdmin } = require("../middleware/verifyJWT");
 const app = express.Router();
 
 app
   .get("/", requireUser, async (req, res, next) => {
     try {
       const requestingUser = req.user;
-      const { data, error, count } = await model.getAll();
+      const { data, error } = await model.getAll();
       if (error) {
         return res.status(500).json({ isSuccess: false, message: error.message });
       }
       const userMeals = data.filter(
         (meals) =>
-          meals.user_id === requestingUser.id ||
-          (requestingUser.friends || []).includes(meals.user_id)
+          meals.userId === requestingUser.id ||
+          (requestingUser.friends || []).includes(meals.userId)
       );
       res.status(200).json({
         isSuccess: true,
@@ -32,9 +32,9 @@ app
       meals.data = meals.data.map((meal) => ({
         id: meal.id,
         name: meal.name,
-        calories: meal.calories,
+        mealCalories: meal.mealCalories,
         date: meal.date,
-        userId: meal.user_id,
+        userId: meal.userId,
       }));
       res.status(200).send(meals);
     } catch (error) {
@@ -47,8 +47,8 @@ app
       const requestingUser = req.user;
       if (
         !meals.data ||
-        (meals.data.user_id !== requestingUser.id &&
-          !(requestingUser.friends || []).includes(meals.data.user_id))
+        (meals.data.userId !== requestingUser.id &&
+          !(requestingUser.friends || []).includes(meals.data.userId))
       ) {
         return res
           .status(403)
@@ -62,7 +62,7 @@ app
   .post("/", requireUser, async (req, res, next) => {
     try {
       const newMeal = req.body;
-      if (newMeal.user_id !== req.user.id) {
+      if (newMeal.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only add meals for yourself." });
@@ -76,7 +76,7 @@ app
   .patch("/:id", requireUser, async (req, res, next) => {
     try {
       const meals = await model.get(+req.params.id);
-      if (!meals.data || meals.data.user_id !== req.user.id) {
+      if (!meals.data || meals.data.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only update your own meals." });
@@ -90,7 +90,7 @@ app
   .delete("/:id", requireUser, async (req, res, next) => {
     try {
       const meals = await model.get(+req.params.id);
-      if (!meals.data || meals.data.user_id !== req.user.id) {
+      if (!meals.data || meals.data.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only delete your own meals." });

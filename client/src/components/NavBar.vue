@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { getLogin } from '@/models/login';
 
 const isOpen = ref(false);
+const { isLoggedIn, logout } = getLogin();
 </script>
 
 <template>
@@ -74,14 +76,18 @@ const isOpen = ref(false);
         <div class="navbar-end">
           <div class="navbar-item">
             <div class="buttons">
-              <RouterLink to="/signup" class="button is-primary">
+              <RouterLink v-if="!isLoggedIn" to="/signup" class="button is-primary">
                 <span class="icon"><i class="fas fa-user-plus"></i></span>
                 <strong>Sign up</strong>
               </RouterLink>
-              <RouterLink to="/login" class="button is-light">
+              <RouterLink v-if="!isLoggedIn" to="/login" class="button is-light">
                 <span class="icon"><i class="fas fa-sign-in-alt"></i></span>
                 Log in
               </RouterLink>
+              <button v-if="isLoggedIn" class="button is-danger" @click="logout">
+                <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                Logout
+              </button>
             </div>
           </div>
         </div>

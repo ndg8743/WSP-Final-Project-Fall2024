@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getLogin } from '@/models/login'
-import { api } from '@/models/myFetch'
+import { getLogin } from '@/models/login' // Import getLogin
+import { addUser } from '@/models/users'
 
 const name = ref('')
 const email = ref('')
 const password = ref('')
 const signupError = ref('')
 const router = useRouter()
-const { login } = getLogin()
+const { login } = getLogin() // Destructure login from getLogin
 
 const handleSignup = async () => {
-  const existingUser = await api('users', { email: email.value }, 'POST')
-  if (existingUser) {
-    signupError.value = 'Email already exists'
-  } else {
-    const newUser = {
+  try {
+    // Check if the email is already taken
+    const response = await addUser({
       id: Date.now(),
       name: name.value,
       email: email.value,
@@ -24,14 +22,26 @@ const handleSignup = async () => {
       role: 'user',
       friends: [],
       image: 'User.jpg',
-      token: 'dummy-token'
+    })
+
+    if (response.isSuccess) {
+      const newUser = response.data
+      localStorage.setItem('session', JSON.stringify(newUser)) // Store new user in session
+      login() // Log in the new user by updating the auth state
+
+      router.push('/dashboard') // Redirect to dashboard after successful signup
+    } else {
+      signupError.value = response.message || 'Error creating user.'
     }
-    await api('users', newUser, 'POST')
-    const sessionData = { token: newUser.token, users: newUser }
-    localStorage.setItem('session', JSON.stringify(sessionData))
-    login(sessionData)
-    router.push('/dashboard')
+  } catch (error) {
+    console.error('Signup error:', error)
+    signupError.value = 'An unexpected error occurred. Please try again.'
   }
+}
+
+// Stub for server-side saving (requires backend)
+function saveUsersToFile() {
+  // Logic for writing to file or updating backend API
 }
 </script>
 

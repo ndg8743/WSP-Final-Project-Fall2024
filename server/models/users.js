@@ -25,7 +25,7 @@ async function get(id) {
     const { data, error } = await conn
       .from("users")
       .select("*")
-      .eq("userid", id)
+      .eq("userId", id)
       .single();
 
     if (data) {
@@ -125,7 +125,7 @@ async function update(id, users) {
         username: users.username,
         bio: users.bio || "",
       })
-      .eq("userid", id)
+      .eq("userId", id)
       .select("*")
       .single();
 
@@ -145,7 +145,7 @@ async function remove(id) {
     const { data, error } = await conn
       .from("Users")
       .delete()
-      .eq("userid", id)
+      .eq("userId", id)
       .select("*")
       .single();
 
@@ -163,7 +163,7 @@ async function remove(id) {
 async function createToken(users, expiresIn) {
   return new Promise((resolve, reject) => {
     jwt.sign(
-      { userid: users.userid, email: users.email },
+      { userId: users.userId, email: users.email },
       process.env.JWT_SECRET || "",
       { expiresIn },
       (err, token) => {

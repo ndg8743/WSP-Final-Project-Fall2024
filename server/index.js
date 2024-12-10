@@ -1,17 +1,19 @@
+require("dotenv").config();
 const express = require("express");
 const { createServer } = require("http");
 const path = require("path");
 const cors = require("cors");
-const exerciseController = require(
-  path.join(__dirname, "controllers", "exercises.js")
-);
-const mealsController = require(
-  path.join(__dirname, "controllers", "meals.js")
-);
+
+// Import controllers and middleware
+const exerciseController = require(path.join(__dirname, "controllers", "exercises.js"));
+const mealsController = require(path.join(__dirname, "controllers", "meals.js"));
 const userController = require(path.join(__dirname, "controllers", "users.js"));
-const { parseToken } = require(
-  path.join(__dirname, "middleware", "verifyJWT.js")
-);
+const { parseToken } = require(path.join(__dirname, "middleware", "verifyJWT.js"));
+
+console.log("Environment variables loaded:");
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+console.log("SUPABASE_SECRET_KEY:", process.env.SUPABASE_SECRET_KEY);
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -20,17 +22,11 @@ const API_PREFIX = "/api/v1";
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(parseToken); // Parse token and attach user to the request
+app.use(parseToken); // Apply parseToken globally
 
 // Debugging middleware
 app.use((req, res, next) => {
   console.log(`Received ${req.method} request for ${req.url}`);
-  next();
-});
-
-// Logging middleware for all routes
-app.use((req, res, next) => {
-  console.log(`Request Method: ${req.method}, Request URL: ${req.url}`);
   next();
 });
 
@@ -43,12 +39,23 @@ app.use(`${API_PREFIX}/users`, userController);
 app.use(express.static(path.resolve("dist")));
 app.get("*", (req, res) => {
   console.log("Serving SPA");
-  res.sendFile(path.resolve("client/index.html"));
+  try {
+    res.sendFile(path.resolve("client/index.html"));
+  } catch (err) {
+    console.error("Error serving SPA:", err);
+    res.status(500).send("Error serving SPA");
+  }
 });
 
 // Error Handling
 app.use((err, req, res, next) => {
-  console.error(err);
+  console.error("Error details:", {
+    message: err.message,
+    stack: err.stack,
+    code: err.code,
+    syscall: err.syscall,
+    path: err.path,
+  });
   res.status(err.status || 500).json({ error: err.message || "Server Error" });
 });
 

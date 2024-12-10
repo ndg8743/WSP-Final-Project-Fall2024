@@ -3,72 +3,80 @@
 import { ref, onMounted } from 'vue'
 import UserManagement from '@/components/UserManagement.vue'
 import Modal from '@/components/Modal.vue'
-import { api } from '@/models/myFetch'
+import { getUsers } from '@/models/users'
 
-const users = ref([]) 
+// Load users from users.json
+const users = ref([])
 const currentUser = ref(null)
 const showModal = ref(false)
-const isAdmin = ref(false)
-const isAddingUser = ref(false)
-const loading = ref(true)
-const error = ref('')
+const isAdmin = ref(false) // Flag to check if the user is an admin
+const isAddingUser = ref(false) // Flag for add mode
 
+// Retrieve the current user from localStorage session
 const session = localStorage.getItem('session')
-const loggedInUser = session ? JSON.parse(session).users : null
+const loggedInUser = session ? JSON.parse(session) : null
 
 onMounted(async () => {
-  try {
-    if (loggedInUser && loggedInUser.role === 'admin') {
-      isAdmin.value = true
-      const usersFromApi = await api('users')
-      users.value = usersFromApi.data || []
+  if (loggedInUser && loggedInUser.user.role === 'admin') {
+    isAdmin.value = true
+    // Fetch users from the API
+    const response = await getUsers()
+    if (response.isSuccess) {
+      users.value = response.data
     } else {
-      isAdmin.value = false
-      router.push('/'); // Redirect non-admin users to home page
+      console.error('Error fetching users:', response.message)
     }
-  } catch (err) {
-    console.error('Error fetching users:', err)
-    error.value = 'Failed to load user data. Please try again later.'
-  } finally {
-    loading.value = false
+  } else {
+    isAdmin.value = false
   }
 })
 
+// Handle editing a user
 const handleEdit = (user) => {
-  currentUser.value = { ...user, friends: user.friends || [] }
+  currentUser.value = { ...user }
   isAddingUser.value = false
   showModal.value = true
 }
 
+// Handle deleting a user
 const handleDelete = async (id) => {
-  try {
-    await api('users/' + id, {}, 'DELETE')
-    users.value = users.value.filter((u) => u.id !== id)
-  } catch (err) {
-    console.error('Error deleting user:', err)
+  const response = await deleteUsers(id)
+  if (response.isSuccess) {
+    users.value = users.value.filter(u => u.id !== id)
+  } else {
+    console.error('Error deleting user:', response.message)
   }
 }
 
+// Handle adding a new user
 const handleAddUser = () => {
-  currentUser.value = { id: null, name: '', email: '', role: 'User' }
+  currentUser.value = { id: Date.now(), name: '', email: '', role: 'User' }
   isAddingUser.value = true
   showModal.value = true
 }
 
+// Save user updates or add new user
 const saveUser = async () => {
-  try {
-    if (isAddingUser.value) {
-      const response = await api('users', currentUser.value, 'POST')
+  const user = { ...currentUser.value }
+
+  if (isAddingUser.value) {
+    const response = await addUser(user)
+    if (response.isSuccess) {
       users.value.push(response.data)
     } else {
-      const response = await api(`users/${currentUser.value.id}`, currentUser.value, 'PATCH')
-      const index = users.value.findIndex((u) => u.id === currentUser.value.id)
-      if (index !== -1) users.value.splice(index, 1, response.data)
+      console.error('Error adding user:', response.message)
     }
-    closeModal()
-  } catch (err) {
-    console.error('Error saving user:', err)
+  } else {
+    const response = await updateUsers(currentUser.value.user.id, user)
+    if (response.isSuccess) {
+      const index = users.value.findIndex(u => u.id === currentUser.value.user.id)
+      if (index !== -1) users.value.splice(index, 1, response.data)
+    } else {
+      console.error('Error updating user:', response.message)
+    }
   }
+
+  closeModal()
 }
 
 const closeModal = () => {
@@ -77,7 +85,7 @@ const closeModal = () => {
 </script>
 
 <template>
-  <section v-if="isAdmin && !loading" class="section">
+  <section v-if="isAdmin" class="section">
     <div class="container">
       <h1 class="title">User Management</h1>
       <button class="button is-primary" @click="handleAddUser">Add New User</button>
@@ -91,8 +99,13 @@ const closeModal = () => {
           </tr>
         </thead>
         <tbody>
-          <UserManagement v-for="user in users" :key="user.id" :user="user" @edit-user="handleEdit"
-            @delete-user="handleDelete" />
+          <UserManagement
+            v-for="user in users"
+            :key="user.id"
+            :user="user"
+            @edit-user="handleEdit"
+            @delete-user="handleDelete"
+          />
         </tbody>
       </table>
 
@@ -103,16 +116,16 @@ const closeModal = () => {
         <template #body>
           <div class="field">
             <label class="label">Name</label>
-            <input class="input" v-model="currentUser.name" />
+            <input class="input" v-model="currentUser.user.name" />
           </div>
           <div class="field">
             <label class="label">Email</label>
-            <input class="input" type="email" v-model="currentUser.email" />
+            <input class="input" type="email" v-model="currentUser.user.email" />
           </div>
           <div class="field">
             <label class="label">Role</label>
             <div class="select">
-              <select v-model="currentUser.role">
+              <select v-model="currentUser.user.role">
                 <option>Admin</option>
                 <option>User</option>
               </select>
@@ -123,12 +136,6 @@ const closeModal = () => {
           <button class="button is-success" @click="saveUser">Save</button>
         </template>
       </Modal>
-    </div>
-  </section>
-
-  <section v-else-if="loading" class="section">
-    <div class="container">
-      <h1 class="title">Loading...</h1>
     </div>
   </section>
 
@@ -144,7 +151,6 @@ const closeModal = () => {
 .section {
   padding-top: 2rem;
 }
-
 .mt-4 {
   margin-top: 1rem;
 }
