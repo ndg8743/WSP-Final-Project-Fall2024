@@ -85,7 +85,7 @@ onMounted(async () => {
               exercise: recentActivity.name,
               caloriesBurned: recentActivity.caloriesBurned,
               lastMeal: lastMeal.name,
-              mealCalories: lastMeal.calories
+              mealCalories: lastMeal.mealCalories
             }
           })
         )

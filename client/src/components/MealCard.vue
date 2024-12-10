@@ -23,7 +23,7 @@ const handleDelete = () => {
 <template>
   <div class="box">
     <h3>{{ meal.name }}</h3>
-    <p>Calories: {{ meal.mealCalories }} kcal</p>
+    <p>Calories: {{ meal.mealCalories }} cal</p>
     <p>Date: {{ meal.date }}</p>
     <button class="button is-info" @click="handleEdit">Edit</button>
     <button class="button is-danger" @click="handleDelete">Delete</button>

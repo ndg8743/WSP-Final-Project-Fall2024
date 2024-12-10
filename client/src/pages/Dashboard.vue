@@ -1,8 +1,8 @@
-<!-- eslint-disable vue/multi-word-component-names -->
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'
-import { getUserExercises } from '@/models/exercises'; // Import your model function
+import { getUserExercises } from '@/models/exercises'
+import { getUserMeals } from '@/models/meals' // Import meals model function
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
@@ -13,6 +13,8 @@ const lastExercise = ref('')
 const totalExercises = ref(0)
 const completedExercises = ref(0)
 const caloriesBurned = ref(0) // Track calories burned
+const mealCalories = ref(0) // Track meal calories
+const netCalorieBalance = ref(0) // Track net calorie balance
 
 // Goals for exercises and calories
 const exerciseGoal = ref(localStorage.getItem('exerciseGoal') ? parseInt(localStorage.getItem('exerciseGoal')) : 100)
@@ -36,11 +38,11 @@ const startTimer = () => {
   if (!timerInterval.value && timer.value > 0) {
     timerInterval.value = setInterval(() => {
       if (timer.value > 0) {
-        timer.value -= 1 // Decrement the timer in seconds
+        timer.value -= 1
       } else {
-        stopTimer() // Stop when it reaches 0
+        stopTimer()
       }
-    }, 1000) // Update every second
+    }, 1000)
   }
 }
 
@@ -57,12 +59,12 @@ const resetTimer = () => {
 }
 
 const incrementTimer = () => {
-  timer.value += 60 // Increment by 1 minute
+  timer.value += 60
 }
 
 const decrementTimer = () => {
   if (timer.value >= 60) {
-    timer.value -= 60 // Decrement by 1 minute
+    timer.value -= 60
   }
 }
 
@@ -70,7 +72,7 @@ const startStopwatch = () => {
   if (!stopwatchInterval.value) {
     stopwatchInterval.value = setInterval(() => {
       stopwatch.value++
-    }, 1000) // 1-second interval
+    }, 1000)
   }
 }
 
@@ -93,29 +95,33 @@ onMounted(async () => {
       const userExercises = await getUserExercises(currentUser.user.id)
 
       if (userExercises.data.length > 0) {
-        // Sort exercises by the most recent one
         const sortedExercises = userExercises.data.sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
-
-        // Set the last exercise details
         const recentExercise = sortedExercises[0]
         lastExercise.value = `${recentExercise.name} - ${recentExercise.duration} minutes`
-
-        // Set exercise statistics
         totalExercises.value = sortedExercises.length
         completedExercises.value = Math.min(sortedExercises.length, exerciseGoal.value)
         caloriesBurned.value = sortedExercises.reduce((total, exercise) => total + exercise.caloriesBurned, 0)
-
-        // Calculate combined progress as a percentage of the combined goal
-        combinedProgress.value = Math.min(
-          ((completedExercises.value / exerciseGoal.value) * 50) +
-          ((caloriesBurned.value / caloriesGoal.value) * 50),
-          100
-        )
       }
+
+      // Fetch user meals from the API
+      const userMeals = await getUserMeals(currentUser.user.id)
+      if (userMeals.data.length > 0) {
+        mealCalories.value = userMeals.data.reduce((total, meal) => total + meal.mealCalories, 0)
+      }
+
+      // Calculate net calorie balance
+      netCalorieBalance.value = mealCalories.value - caloriesBurned.value
+
+      // Calculate combined progress
+      combinedProgress.value = Math.min(
+        ((completedExercises.value / exerciseGoal.value) * 50) +
+        ((caloriesBurned.value / caloriesGoal.value) * 50),
+        100
+      )
     } catch (error) {
-      console.error('Error fetching user exercises:', error)
+      console.error('Error fetching user data:', error)
     }
   }
 })
@@ -140,11 +146,13 @@ watch([exerciseGoal, caloriesGoal], () => {
           <p>Last exercise: {{ lastExercise }}</p>
           <p>Total exercises completed: {{ totalExercises }}</p>
           <p>Total calories burned: {{ caloriesBurned }}</p>
+          <p>Total meal calories: {{ mealCalories }}</p>
         </div>
         <div class="box">
           <h2 class="subtitle">Total Progress</h2>
           <ProgressBar :value="combinedProgress" max="100" />
           <p>{{ combinedProgress.toFixed(2) }}% of combined goal reached</p>
+          <p>Net Calorie Balance: {{ netCalorieBalance }}</p> <!-- New Row -->
         </div>
         <div class="box">
           <h2 class="subtitle">Timer</h2>
@@ -205,20 +213,15 @@ watch([exerciseGoal, caloriesGoal], () => {
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  /* Center the buttons */
 }
 
 .button.is-danger.is-red {
   background-color: #ffffff !important;
-  /* Light red background */
   color: #000000 !important;
-  /* Dark red text */
 }
 
 .button.is-danger.is-light {
   background-color: #0748ba !important;
-  /* Light red background */
   color: #ffffff !important;
-  /* Dark red text */
 }
 </style>
