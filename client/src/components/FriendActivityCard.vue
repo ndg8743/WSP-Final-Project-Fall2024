@@ -19,10 +19,10 @@ const props = defineProps({
       </div>
       <h2 class="subtitle">{{ friend.name }}'s Recent Activity</h2>
     </div>
-    <p><strong>Activity:</strong> {{ friend.exercise }}</p>
-    <p><strong>Calories Burned:</strong> {{ friend.caloriesBurned }} kcal</p>
-    <p><strong>Last Meal:</strong> {{ friend.lastMeal }}</p>
-    <p><strong>Calories from Last Meal:</strong> {{ friend.mealCalories }} kcal</p>
+    <p><strong>Activity:</strong> {{ friend.exercise || 'No recent activity' }}</p>
+    <p><strong>Calories Burned:</strong> {{ friend.caloriesBurned || 0 }} cal</p>
+    <p><strong>Last Meal:</strong> {{ friend.lastMeal || 'No meal recorded' }}</p>
+    <p><strong>Calories from Last Meal:</strong> {{ friend.mealCalories || 0 }} cal</p>
   </div>
 </template>
 

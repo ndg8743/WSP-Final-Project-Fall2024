@@ -19,6 +19,28 @@ async function getAll() {
   }
 }
 
+async function getByUserId(userId) {
+  try {
+    console.log(`Fetching meals for userId: ${userId}`); // Add debug logging
+    const { data, error } = await conn
+      .from("Meals")
+      .select("*")
+      .eq("userId", userId);
+
+    console.log(`Meals fetched for userId ${userId}:`, data); // Log fetched meals
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || [],
+    };
+  } catch (err) {
+    console.error(`Unexpected error fetching meals for user ${userId}:`, err);
+    throw err;
+  }
+}
+
+//fix get
 async function get(id) {
   try {
     const { data, error } = await conn
@@ -99,4 +121,5 @@ module.exports = {
   add,
   update,
   remove,
+  getByUserId,
 };

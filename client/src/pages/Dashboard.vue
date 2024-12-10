@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'

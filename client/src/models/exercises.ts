@@ -25,11 +25,11 @@ export async function getExercises(): Promise<DataListEnvelope<Exercise>> {
   }
   return response
 }
-
+/*
 export async function getExerciseById(id: number): Promise<DataEnvelope<Exercise>> {
   return api<DataEnvelope<Exercise>>(`exercises/${id}`)
 }
-
+*/
 export async function addExercise(exercise: Exercise): Promise<DataEnvelope<Exercise>> {
   return api<DataEnvelope<Exercise>>('exercises', exercise, 'POST')
 }

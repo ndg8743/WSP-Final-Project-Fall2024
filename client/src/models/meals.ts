@@ -21,8 +21,15 @@ export async function getMeals(): Promise<DataListEnvelope<Meals>> {
   return response
 }
 
-export async function getMealById(id: number): Promise<DataEnvelope<Meals>> {
-  return api<DataEnvelope<Meals>>(`meals/${id}`)
+export async function getUserMeals(userId: number): Promise<DataListEnvelope<Meals>> {
+  console.log(`Fetching meals for userId: ${userId}`) // Debug log
+  const response = await api<DataListEnvelope<Meals>>(`meals?userId=${userId}`)
+  if (response.isSuccess) {
+    console.log(`Meals fetched for userId ${userId}:`, response.data) // Log meals data
+  } else {
+    console.error(`Error fetching meals for userId ${userId}:`, response.message)
+  }
+  return response
 }
 
 export async function addMeal(meal: Meals): Promise<DataEnvelope<Meals>> {

@@ -99,7 +99,7 @@ const { isLoggedIn, logout } = getLogin();
 <style scoped>
 .router-link-active {
   font-weight: bold;
-  border-bottom: 2px solid blue;
+  border-bottom: 2px solid rgba(0, 255, 217, 0.803);
 }
 
 .navbar-burger {

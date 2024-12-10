@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 import FriendActivityCard from '@/components/FriendActivityCard.vue'
 import { getUserExercises } from '@/models/exercises'; // Import your model function
 import { getUsers } from '@/models/users'; // Import your model function
-import { getMeals } from '@/models/meals';
+import { getUserMeals } from '@/models/meals';
 
 // Retrieve current user from session token
 const session = localStorage.getItem('session')
@@ -26,14 +26,19 @@ async function getMostRecentActivity(userId) {
 }
 
 async function getLastMeal(userId) {
-  const response = await getMeals()
+  console.log(`Fetching last meal for userId: ${userId}`); // Debug log
+  const response = await getUserMeals(userId);
   if (response.isSuccess) {
-    const userMeals = response.data.filter(meal => meal.user_id === userId)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-    return userMeals.length ? userMeals[0] : { name: 'No meal recorded', calories: 0 }
+    console.log(`API response for userId ${userId}:`, response.data);
+    const userMeals = response.data
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    console.log(`Sorted meals for userId ${userId}:`, userMeals);
+    return userMeals.length
+      ? userMeals[0]
+      : { name: "No meal recorded", mealCalories: 0 };
   } else {
-    console.error('Error fetching meals:', response.message)
-    return { name: 'No meal recorded', calories: 0 }
+    console.error(`Error fetching last meal for userId ${userId}:`, response.message);
+    return { name: "No meal recorded", mealCalories: 0 };
   }
 }
 
@@ -47,6 +52,10 @@ onMounted(async () => {
           friends.map(async friend => {
             const recentActivity = await getMostRecentActivity(friend.id)
             const lastMeal = await getLastMeal(friend.id)
+            console.log(`Friend activity for ${friend.name}:`, {
+              recentActivity,
+              lastMeal,
+            });
             return {
               id: friend.id,
               name: friend.name,
@@ -54,10 +63,11 @@ onMounted(async () => {
               exercise: recentActivity.name,
               caloriesBurned: recentActivity.caloriesBurned,
               lastMeal: lastMeal.name,
-              mealCalories: lastMeal.calories
+              mealCalories: lastMeal.mealCalories,
             }
           })
         )
+        console.log("Final friendsActivities array:", friendsActivities.value);
       }
     }
 
