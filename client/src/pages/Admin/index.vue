@@ -4,11 +4,13 @@ import { ref, onMounted } from 'vue';
 import { getUsers } from '@/models/users';
 
 const totalUsers = ref(0);
+const lastLogin = ref('');
 
 onMounted(async () => {
   const response = await getUsers();
   if (response.isSuccess) {
     totalUsers.value = response.total;
+    lastLogin.value = new Date().toLocaleString();
   }
 });
 </script>
@@ -29,7 +31,7 @@ onMounted(async () => {
         <div class="box">
           <h2 class="subtitle">Quick Statistics</h2>
           <p><strong>Total Users:</strong> {{ totalUsers }}</p>
-          <p><strong>Settings Updated:</strong> {{ lastSettingsUpdate }}</p>
+          <p><strong>Last Login:</strong> {{ lastLogin }}</p>
         </div>
       </div>
     </section>

@@ -89,12 +89,8 @@ onMounted(async () => {
   <section class="section">
     <div class="container">
       <h1 class="title">Social</h1>
-      <div v-if="currentUser.user">
-        <FriendActivityCard
-          v-for="friend in friendsActivities"
-          :key="friend.id"
-          :friend="friend"
-        />
+      <div v-if="currentUser && currentUser.user">
+        <FriendActivityCard v-for="friend in friendsActivities" :key="friend.id" :friend="friend" />
       </div>
       <div v-else>
         <p class="notification is-danger">Please log in to view social activities.</p>

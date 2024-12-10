@@ -23,6 +23,12 @@ const handleLogin = async () => {
     }
   }
 };
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
+    handleLogin();
+  }
+};
 </script>
 
 <template>
@@ -38,6 +44,7 @@ const handleLogin = async () => {
             type="text"
             placeholder="Enter your email or username"
             v-model="loginIdentifier"
+            @keydown="handleKeydown"
           />
         </div>
         <div class="field">
@@ -47,6 +54,7 @@ const handleLogin = async () => {
             type="password"
             placeholder="Enter your password"
             v-model="password"
+            @keydown="handleKeydown"
           />
         </div>
         <button class="button is-primary" @click="handleLogin">Login</button>
