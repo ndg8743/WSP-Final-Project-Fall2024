@@ -51,7 +51,7 @@ async function login(identifier, password) {
     const { data, error } = await conn
       .from("Users")
       .select("*")
-      .or(`name.eq.${identifier},email.eq.${identifier}`)
+      .or(`name.ilike.${identifier.toLowerCase()},email.ilike.${identifier.toLowerCase()}`)
       .single();
 
     console.log("Query result:", data, "Error:", error);
