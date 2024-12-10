@@ -5,7 +5,7 @@ import { ref, onMounted } from 'vue'
 import MealCard from '@/components/MealCard.vue'
 // @ts-ignore
 import Modal from '@/components/Modal.vue'
-import { getMeals } from '@/models/meals'
+import { getMeals, getUserMeals } from '@/models/meals'
 import type { Meals } from '@/models/meals.js'
 
 // Retrieve the current user from the session
@@ -61,10 +61,17 @@ const closeModal = () => {
 // Load current user's meals on component mount
 onMounted(() => {
   if (currentUser) {
-    getMeals().then(response => {
-      meals.value = response.data.filter((meal: Meals) => meal.userId === currentUser.user.id)
-      filterMeals() // Initialize filteredMeals based on the loaded data
-    })
+    getUserMeals(currentUser.user.id).then(response => {
+      if (response.isSuccess) {
+        meals.value = response.data; // Store all meals for the current user
+        filterMeals(); // Initialize filteredMeals based on the loaded data
+        console.log("Meals fetched and filtered:", meals.value); // Debug log
+      } else {
+        console.error("Error fetching user meals:", response.message);
+      }
+    }).catch(error => {
+      console.error("Unexpected error fetching user meals:", error);
+    });
   }
 })
 </script>

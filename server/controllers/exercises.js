@@ -3,31 +3,35 @@ const model = require("../models/exercises");
 const { requireUser, requireAdmin } = require("../middleware/verifyJWT");
 const app = express.Router();
 
-app
-  .get("/", requireUser, async (req, res, next) => {
-    try {
-      const requestingUser = req.user;
-      const { data, error } = await model.getAll();
-      if (error) {
-        return res.status(500).json({ isSuccess: false, message: error.message });
-      }
-      const userExercises = data.filter(
-        (exercises) =>
-          exercises.userId === requestingUser.id ||
-          (requestingUser.friends || []).includes(exercises.userId)
-      );
-      const sortedExercises = userExercises.sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
-      );
-      res.status(200).json({
-        isSuccess: true,
-        message: "Exercises fetched successfully.",
-        data: sortedExercises,
-      });
-    } catch (error) {
-      next(error);
+app.
+
+  get("/", requireUser, async (req, res, next) => {
+  try {
+    const requestingUser = req.user;
+    const { userId } = req.query; // Extract userId from query parameters
+
+    const { data, error } = await model.getAll();
+    if (error) {
+      return res.status(500).json({ isSuccess: false, message: error.message });
     }
+
+    // Filter exercises based on userId
+    const userExercises = data.filter(
+      (exercise) =>
+        exercise.userId === parseInt(userId, 10) || 
+        (requestingUser.friends || []).includes(exercise.userId)
+    );
+
+    res.status(200).json({
+      isSuccess: true,
+      message: "Exercises fetched successfully.",
+      data: userExercises,
+    });
+  } catch (error) {
+    next(error);
+  }
   })
+
   .get("/all", async (req, res, next) => {
     try {
       const exercises = await model.getAll();

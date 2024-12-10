@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 import ExerciseCard from '@/components/ExerciseCard.vue'
 // @ts-ignore
 import Modal from '@/components/Modal.vue'
-import { getExercises } from '@/models/exercises.js'
+import { getUserExercises } from '@/models/exercises.js'
 import type { Exercise } from '@/models/exercises.js'
 
 // Retrieve the current user from session
@@ -13,19 +13,15 @@ const currentUser = session ? JSON.parse(session) : null
 
 const exercises = ref<Exercise[]>([])
 const filterDate = ref('')
-const filteredExercises = ref<Exercise[]>([]);
+const filteredExercises = ref<Exercise[]>([])
 const currentExercise = ref<Exercise | null>(null)
 const showModal = ref(false)
 const isAddingExercise = ref(false)
 
-
 const filterExercises = () => {
-  console.log(exercises.value + " here")
   filteredExercises.value = filterDate.value
     ? exercises.value.filter(exercise => exercise.date === filterDate.value)
-    : [...exercises.value];
-
-  console.log('Filtered exercises:', filteredExercises.value);  // Debug log
+    : [...exercises.value]
 }
 
 const openAddExercise = () => {
@@ -69,18 +65,18 @@ const closeModal = () => {
 
 onMounted(() => {
   if (currentUser) {
-    getExercises().then(response => {
+    getUserExercises(currentUser.user.id).then(response => {
       if (response.isSuccess && response.data) {
-        exercises.value = response.data.filter((exercise: Exercise) => exercise.userId === currentUser.user.id);
-        filterExercises();
+        exercises.value = response.data
+        filterExercises()
       } else {
-        console.error('Failed to fetch exercises:', response.message);
+        console.error('Failed to fetch user exercises:', response.message)
       }
     }).catch(error => {
-      console.error('Error in fetching exercises:', error);
-    });
+      console.error('Error fetching user exercises:', error)
+    })
   }
-});
+})
 </script>
 
 <template>
@@ -96,13 +92,8 @@ onMounted(() => {
           <input type="date" class="input" v-model="filterDate" @change="filterExercises" />
         </div>
         <div>
-          <ExerciseCard
-            v-for="exercise in filteredExercises"
-            :key="exercise.id"
-            :exercise="exercise"
-            @edit="handleEdit"
-            @delete="handleDelete"
-          />
+          <ExerciseCard v-for="exercise in filteredExercises" :key="exercise.id" :exercise="exercise" @edit="handleEdit"
+            @delete="handleDelete" />
         </div>
       </div>
       <div v-else>
@@ -145,6 +136,7 @@ onMounted(() => {
 .section {
   padding-top: 2rem;
 }
+
 .notification {
   margin-top: 1rem;
 }
