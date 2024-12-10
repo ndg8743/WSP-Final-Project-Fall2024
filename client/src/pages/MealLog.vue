@@ -27,7 +27,7 @@ const filterMeals = () => {
 }
 
 const openAddMeal = () => {
-  currentMeal.value = { id: Date.now(), name: '', calories: 0, date: '', userId: currentUser.user.id }
+  currentMeal.value = { id: Date.now(), name: '', mealCalories: 0, date: '', userId: currentUser.user.id }
   isAddingMeal.value = true
   showModal.value = true
 }
