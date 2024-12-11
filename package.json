@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "npm run build -w client",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "npm run build -w client",
+    "build:server": "echo 'No server build step defined'",
     "start": "npm-run-all --parallel start:server start:client",
     "start:server": "node server/index.js",
     "start:client": "npm start -w client",

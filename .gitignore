@@ -212,6 +212,6 @@ yarn-error.log
 *.local
 
 # Add server/dist to ignore
-server/dist
+../server/dist
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,node,vuejs,macos
