@@ -5,10 +5,16 @@ const path = require("path");
 const cors = require("cors");
 
 // Import controllers and middleware
-const exerciseController = require(path.join(__dirname, "controllers", "exercises.js"));
-const mealsController = require(path.join(__dirname, "controllers", "meals.js"));
+const exerciseController = require(
+  path.join(__dirname, "controllers", "exercises.js")
+);
+const mealsController = require(
+  path.join(__dirname, "controllers", "meals.js")
+);
 const userController = require(path.join(__dirname, "controllers", "users.js"));
-const { parseToken } = require(path.join(__dirname, "middleware", "verifyJWT.js"));
+const { parseToken } = require(
+  path.join(__dirname, "middleware", "verifyJWT.js")
+);
 
 console.log("Environment variables loaded:");
 console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
@@ -36,11 +42,13 @@ app.use(`${VITE_API_URL}/meals`, mealsController);
 app.use(`${VITE_API_URL}/users`, userController);
 
 // Serve static files for SPA
-app.use(express.static(path.resolve("dist")));
+app.use(express.static(path.resolve(__dirname, "dist")));
+
+// SPA route handling - must come after static file serving
 app.get("*", (req, res) => {
   console.log("Serving SPA");
   try {
-    res.sendFile(path.resolve("client/index.html"));
+    res.sendFile(path.resolve(__dirname, "dist", "index.html"));
   } catch (err) {
     console.error("Error serving SPA:", err);
     res.status(500).send("Error serving SPA");

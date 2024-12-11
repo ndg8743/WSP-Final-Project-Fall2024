@@ -13,7 +13,7 @@ const { login } = getLogin() // Destructure login from getLogin
 
 const handleSignup = async () => {
   try {
-    // Check if the email is already taken
+    // Create a new user object
     const response = await addUser({
       id: Date.now(),
       name: name.value,
@@ -21,27 +21,22 @@ const handleSignup = async () => {
       password: password.value,
       role: 'user',
       friends: [],
-      image: 'User.jpg',
+      image: '../src/assets/User.jpg',
     })
 
     if (response.isSuccess) {
-      const newUser = response.data
-      localStorage.setItem('session', JSON.stringify(newUser)) // Store new user in session
-      login(newUser.email, newUser.password) // Log in the new user by updating the auth state
+      // Save session data
+      localStorage.setItem('session', JSON.stringify(response.data))
 
-      router.push('/dashboard') // Redirect to dashboard after successful signup
+      // Redirect to dashboard after signup
+      router.push('/dashboard')
     } else {
-      signupError.value = response.message || 'Error creating user.'
+      signupError.value = response.message || 'Signup failed. Please try again.'
     }
   } catch (error) {
     console.error('Signup error:', error)
     signupError.value = 'An unexpected error occurred. Please try again.'
   }
-}
-
-// Stub for server-side saving (requires backend)
-function saveUsersToFile() {
-  // Logic for writing to file or updating backend API
 }
 </script>
 
@@ -52,15 +47,15 @@ function saveUsersToFile() {
       <p v-if="signupError" class="error">{{ signupError }}</p>
       <div class="field">
         <label class="label">Name</label>
-        <input class="input" type="text" v-model="name" />
+        <input class="input" type="text" v-model="name" placeholder="Enter your name" />
       </div>
       <div class="field">
         <label class="label">Email</label>
-        <input class="input" type="email" v-model="email" />
+        <input class="input" type="email" v-model="email" placeholder="Enter your email" />
       </div>
       <div class="field">
         <label class="label">Password</label>
-        <input class="input" type="password" v-model="password" />
+        <input class="input" type="password" v-model="password" placeholder="Enter your password" />
       </div>
       <button class="button is-primary" @click="handleSignup">Signup</button>
     </div>

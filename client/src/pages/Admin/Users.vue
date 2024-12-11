@@ -3,7 +3,7 @@
 import { ref, onMounted } from 'vue'
 import UserManagement from '@/components/UserManagement.vue'
 import Modal from '@/components/Modal.vue'
-import { getUsers } from '@/models/users'
+import { getUsers, addUser, updateUsers, deleteUsers } from '@/models/users'
 
 // Load users from users.json
 const users = ref([])
@@ -42,7 +42,7 @@ const handleEdit = (user) => {
 const handleDelete = async (id) => {
   const response = await deleteUsers(id)
   if (response.isSuccess) {
-    users.value = users.value.filter(u => u.id !== id)
+    users.value = users.value.filter((user) => user.id !== id)
   } else {
     console.error('Error deleting user:', response.message)
   }
@@ -50,12 +50,12 @@ const handleDelete = async (id) => {
 
 // Handle adding a new user
 const handleAddUser = () => {
-  currentUser.value = { id: Date.now(), name: '', email: '', role: 'User' }
+  currentUser.value = { id: Date.now(), name: '', email: '', role: 'user' }
   isAddingUser.value = true
   showModal.value = true
 }
 
-// Save user updates or add new user
+// Save changes for editing or adding a user
 const saveUser = async () => {
   const user = { ...currentUser.value }
 
@@ -67,10 +67,10 @@ const saveUser = async () => {
       console.error('Error adding user:', response.message)
     }
   } else {
-    const response = await updateUsers(currentUser.value.user.id, user)
+    const response = await updateUsers(user.id, user)
     if (response.isSuccess) {
-      const index = users.value.findIndex(u => u.id === currentUser.value.user.id)
-      if (index !== -1) users.value.splice(index, 1, response.data)
+      const index = users.value.findIndex((u) => u.id === user.id)
+      if (index !== -1) users.value[index] = response.data
     } else {
       console.error('Error updating user:', response.message)
     }
@@ -82,6 +82,7 @@ const saveUser = async () => {
 const closeModal = () => {
   showModal.value = false
 }
+
 </script>
 
 <template>
@@ -116,16 +117,16 @@ const closeModal = () => {
         <template #body>
           <div class="field">
             <label class="label">Name</label>
-            <input class="input" v-model="currentUser.user.name" />
+            <input class="input" v-model="currentUser.name" />
           </div>
           <div class="field">
             <label class="label">Email</label>
-            <input class="input" type="email" v-model="currentUser.user.email" />
+            <input class="input" type="email" v-model="currentUser.email" />
           </div>
           <div class="field">
             <label class="label">Role</label>
             <div class="select">
-              <select v-model="currentUser.user.role">
+              <select v-model="currentUser.role">
                 <option>Admin</option>
                 <option>User</option>
               </select>

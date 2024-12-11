@@ -103,6 +103,53 @@ app
     } catch (error) {
       next(error);
     }
+  })
+    // Add a new user
+  .post("/", async (req, res, next) => {
+    try {
+      const response = await model.add(req.body);
+      if (response.isSuccess) {
+        res.status(201).json(response);
+      } else {
+        res.status(400).json({ isSuccess: false, message: response.message });
+      }
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  // Add a friend
+  .post("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const friendId = parseInt(req.params.friendId);
+      const response = await model.addFriend(userId, friendId);
+
+      if (response.isSuccess) {
+        res.status(200).json(response);
+      } else {
+        res.status(400).json({ isSuccess: false, message: response.message });
+      }
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  // Remove a friend
+  .delete("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const friendId = parseInt(req.params.friendId);
+      const response = await model.removeFriend(userId, friendId);
+
+      if (response.isSuccess) {
+        res.status(200).json(response);
+      } else {
+        res.status(400).json({ isSuccess: false, message: response.message });
+      }
+    } catch (error) {
+      next(error);
+    }
   });
 
 module.exports = app;
