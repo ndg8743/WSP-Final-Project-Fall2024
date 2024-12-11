@@ -12,7 +12,7 @@ const { isLoggedIn, logout } = getLogin();
     <div class="container">
       <div class="navbar-brand">
         <RouterLink to="/">
-          <img alt="App logo" class="logo" src="@/assets/logo.svg" width="30" height="30" />
+          <img alt="App logo" class="logo" src="@/assets/Logo.png" width="30" height="30" />
         </RouterLink>
 
         <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" :class="{ 'is-active': isOpen }"
