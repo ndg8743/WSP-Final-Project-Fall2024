@@ -211,4 +211,7 @@ yarn-error.log
 .vite/
 *.local
 
+# Add server/dist to ignore
+server/dist
+
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,node,vuejs,macos
