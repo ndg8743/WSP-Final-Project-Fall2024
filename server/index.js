@@ -17,7 +17,7 @@ console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const API_PREFIX = "/api/v1";
+const VITE_API_URL = "/api/v1";
 
 // Middleware
 app.use(cors());
@@ -31,9 +31,9 @@ app.use((req, res, next) => {
 });
 
 // API Routes
-app.use(`${API_PREFIX}/exercises`, exerciseController);
-app.use(`${API_PREFIX}/meals`, mealsController);
-app.use(`${API_PREFIX}/users`, userController);
+app.use(`${VITE_API_URL}/exercises`, exerciseController);
+app.use(`${VITE_API_URL}/meals`, mealsController);
+app.use(`${VITE_API_URL}/users`, userController);
 
 // Serve static files for SPA
 app.use(express.static(path.resolve("dist")));
