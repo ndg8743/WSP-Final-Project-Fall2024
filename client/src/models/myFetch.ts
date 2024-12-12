@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 
-export const API_URL = 'http://localhost:3001/api/v1/'
+export const VITE_API_URL = 'http://localhost:3001/api/v1/'
 
 const session = reactive({
   token: JSON.parse(localStorage.getItem('session') || '{}').token || null
@@ -33,5 +33,5 @@ export function rest<T>(url: string, data?: any, method?: string): Promise<T> {
 }
 
 export function api<T>(url: string, data?: any, method?: string): Promise<T> {
-  return rest<T>(API_URL + url, data, method)
+  return rest<T>(VITE_API_URL + url, data, method)
 }
