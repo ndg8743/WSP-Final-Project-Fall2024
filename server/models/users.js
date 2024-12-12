@@ -140,20 +140,20 @@ async function add(users) {
   }
 }
 
-async function update(id, users) {
+async function update(id, user) {
   try {
     const { data, error } = await conn
       .from("Users")
       .update({
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        image: users.image || "/assets/User.jpg",
-        friends: users.friends || [],
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image || "/assets/User.jpg",
+        friends: user.friends, // Update the friends array
       })
       .eq("id", id)
       .select("*")
-      .single(); // Ensure the updated user is returned
+      .single();
 
     return {
       isSuccess: !error,
@@ -190,14 +190,16 @@ async function addFriend(userId, friendId) {
   try {
     const user = await get(userId);
     if (!user.isSuccess || !user.data) {
-      return {
-        isSuccess: false,
-        message: "User not found.",
-      };
+      return { isSuccess: false, message: "User not found." };
     }
 
-    const updatedFriends = [...user.data.friends, friendId];
-    return await update(userId, { ...user.data, friends: updatedFriends });
+    const updatedFriends = [...new Set([...user.data.friends, friendId])]; // Avoid duplicates
+    const updatedUser = await update(userId, {
+      ...user.data,
+      friends: updatedFriends,
+    });
+
+    return updatedUser;
   } catch (err) {
     console.error("Unexpected error in addFriend:", err);
     throw err;
@@ -208,14 +210,16 @@ async function removeFriend(userId, friendId) {
   try {
     const user = await get(userId);
     if (!user.isSuccess || !user.data) {
-      return {
-        isSuccess: false,
-        message: "User not found.",
-      };
+      return { isSuccess: false, message: "User not found." };
     }
 
     const updatedFriends = user.data.friends.filter((id) => id !== friendId);
-    return await update(userId, { ...user.data, friends: updatedFriends });
+    const updatedUser = await update(userId, {
+      ...user.data,
+      friends: updatedFriends,
+    });
+
+    return updatedUser;
   } catch (err) {
     console.error("Unexpected error in removeFriend:", err);
     throw err;
