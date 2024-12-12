@@ -8,7 +8,7 @@ async function parseToken(req, res, next) {
   const token = authHeader?.split(" ")[1];
 
   if (!token) {
-    return next(); // Proceed without user
+    return next();
   }
 
   try {
@@ -26,7 +26,9 @@ async function parseToken(req, res, next) {
  */
 function requireUser(req, res, next) {
   if (!req.user) {
-    return res.status(401).json({ error: "You must be logged in to perform this action." });
+    return res
+      .status(401)
+      .json({ error: "You must be logged in to perform this action." });
   }
   next();
 }
@@ -36,7 +38,9 @@ function requireUser(req, res, next) {
  */
 function requireAdmin(req, res, next) {
   if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ error: "You must be an admin to perform this action." });
+    return res
+      .status(403)
+      .json({ error: "You must be an admin to perform this action." });
   }
   next();
 }

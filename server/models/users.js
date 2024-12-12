@@ -51,10 +51,12 @@ async function login(identifier, password) {
     const { data, error } = await conn
       .from("Users")
       .select("*")
-      .or(`name.ilike.${identifier.toLowerCase()},email.ilike.${identifier.toLowerCase()}`)
+      .or(
+        `name.ilike.${identifier.toLowerCase()},email.ilike.${identifier.toLowerCase()}`
+      )
       .single();
 
-    console.log("Query result:", data, "Error:", error);
+    console.log("Query result:", data, "Error:", error ?? "None");
 
     if (error || !data) {
       return {
@@ -78,7 +80,7 @@ async function login(identifier, password) {
     return {
       isSuccess: true,
       message: "Login successful.",
-      data: { users: data, token },
+      data: { users: data, token: token },
     };
   } catch (err) {
     console.error("Unexpected error during login:", err);
@@ -238,4 +240,3 @@ module.exports = {
   addFriend,
   removeFriend,
 };
-

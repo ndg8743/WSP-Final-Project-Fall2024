@@ -12,9 +12,7 @@ const mealsController = require(
   path.join(__dirname, "controllers", "meals.js")
 );
 const userController = require(path.join(__dirname, "controllers", "users.js"));
-const { parseToken } = require(
-  path.join(__dirname, "middleware", "verifyJWT.js")
-);
+const { parseToken } = require("./middleware/verifyJWT");
 
 console.log("Environment variables loaded:");
 console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
