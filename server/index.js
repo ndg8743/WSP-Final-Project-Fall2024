@@ -22,7 +22,7 @@ console.log("SUPABASE_SECRET_KEY:", process.env.SUPABASE_SECRET_KEY);
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const VITE_API_URL = "/api/v1";
 
 // Middleware

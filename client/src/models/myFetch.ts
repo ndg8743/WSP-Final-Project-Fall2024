@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 
-export const API_URL = 'http://localhost:3001/api/v1/'
+export const API_URL = process.env.VITE_API_URL || 'http://localhost:3000/api/v1/'
 
 const session = reactive({
   token: JSON.parse(localStorage.getItem('session') || '{}').token || null

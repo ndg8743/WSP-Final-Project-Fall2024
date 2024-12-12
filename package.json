@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "build": "npm run build -w client",
-    "start": "npm-run-all --parallel start:client start:server",
+    "start": "npm-run-all start:client start:server",
     "start:server": "node server/index.js",
     "start:client": "cd client && npm run build",
     "dev": "npm-run-all --parallel dev:server dev:client",
