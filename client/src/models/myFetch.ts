@@ -33,5 +33,5 @@ export function rest<T>(url: string, data?: any, method?: string): Promise<T> {
 }
 
 export function api<T>(url: string, data?: any, method?: string): Promise<T> {
-  return rest<T>(VITE_API_URL + url, data, method)
+  return rest<T>(API_URL + url, data, method)
 }
