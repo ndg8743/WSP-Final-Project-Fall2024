@@ -1,5 +1,10 @@
 const model = require("../models/users");
-const { requireUser, requireAdmin, parseToken } = require("../middleware/verifyJWT");
+const { addFriend } = require("../models/users");
+const {
+  requireUser,
+  requireAdmin,
+  parseToken,
+} = require("../middleware/verifyJWT");
 const express = require("express");
 const app = express.Router();
 
@@ -152,33 +157,19 @@ app
   })
   // Add a friend
   .post("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const friendId = parseInt(req.params.friendId);
+    const userId = parseInt(req.params.userId);
+    const friendId = parseInt(req.params.friendId);
 
-      console.log("Processing add friend:", { userId, friendId });
+    console.log("Processing add friend:", { userId, friendId });
 
-      const user = await model.get(userId);
-      if (!user.isSuccess || !user.data) {
-        return res.status(404).json({ isSuccess: false, message: "User not found." });
-      }
+    const result = await addFriend(userId, friendId);
 
-      console.log("Current friends:", user.data.friends);
-
-      const updatedFriends = [...new Set([...user.data.friends, friendId])]; // Add and deduplicate
-      console.log("Updated friends list:", updatedFriends);
-
-      const response = await model.update(userId, { ...user.data, friends: updatedFriends });
-
-      if (!response.isSuccess) {
-        console.error("Error updating friends:", response.message);
-        return res.status(400).json({ isSuccess: false, message: "Failed to add friend." });
-      }
-
-      res.status(200).json({ isSuccess: true, message: "Friend added successfully.", data: response.data });
-    } catch (error) {
-      console.error("Error in addFriend route:", error);
-      next(error);
+    if (!result.success) {
+      return res
+        .status(parseInt(result.errorCode))
+        .json({ isSuccess: false, message: result.message });
+    } else {
+      res.status(200).json({ isSuccess: true, message: result.message });
     }
   })
 

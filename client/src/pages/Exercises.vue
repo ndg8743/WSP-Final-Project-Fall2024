@@ -4,8 +4,8 @@ import { ref, onMounted } from 'vue'
 import ExerciseCard from '@/components/ExerciseCard.vue'
 // @ts-ignore
 import Modal from '@/components/Modal.vue'
-import { getUserExercises } from '@/models/exercises.js'
-import type { Exercise } from '@/models/exercises.js'
+import { getUserExercises, addExercise } from '@/models/exercises.js'
+import type { Exercise } from '@/models/exercises'
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
@@ -48,9 +48,18 @@ const handleDelete = (id: number) => {
   filterExercises()
 }
 
-const saveExercise = () => {
+const saveExercise = async () => {
   if (isAddingExercise.value) {
-    exercises.value.push({ ...currentExercise.value! })
+    try {
+      const response = await addExercise(currentExercise.value!)
+      if (response.isSuccess && response.data) {
+        exercises.value.push(response.data)
+      } else {
+        console.error('Failed to add exercise:', response.message)
+      }
+    } catch (error) {
+      console.error('Error adding exercise:', error)
+    }
   } else {
     const index = exercises.value.findIndex(exercise => exercise.id === currentExercise.value!.id)
     if (index !== -1) exercises.value.splice(index, 1, { ...currentExercise.value! })

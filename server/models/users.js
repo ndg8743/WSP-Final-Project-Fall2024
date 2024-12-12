@@ -23,9 +23,9 @@ async function getAll() {
 async function get(id) {
   try {
     const { data, error } = await conn
-      .from("users")
+      .from("Users")
       .select("*")
-      .eq("userId", id)
+      .eq("id", id)
       .single();
 
     if (data) {
@@ -192,7 +192,12 @@ async function addFriend(userId, friendId) {
   try {
     const user = await get(userId);
     if (!user.isSuccess || !user.data) {
-      return { isSuccess: false, message: "User not found." };
+      return { errorCode: 404, success: false, message: "User not found." };
+    }
+
+    const friend = await get(friendId);
+    if (!friend.isSuccess || !friend.data) {
+      return { errorCode: 404, success: false, message: "Friend not found." };
     }
 
     const updatedFriends = [...new Set([...user.data.friends, friendId])]; // Avoid duplicates
@@ -201,10 +206,22 @@ async function addFriend(userId, friendId) {
       friends: updatedFriends,
     });
 
-    return updatedUser;
+    if (!updatedUser.isSuccess) {
+      return {
+        errorCode: 400,
+        success: false,
+        message: "Failed to add friend to friend list.",
+      };
+    }
+
+    return {
+      errorCode: 200,
+      success: true,
+      message: "Friend added successfully.",
+    };
   } catch (err) {
     console.error("Unexpected error in addFriend:", err);
-    throw err;
+    return { errorCode: 500, success: false, message: "Server error." };
   }
 }
 
