@@ -104,37 +104,45 @@ app
       next(error);
     }
   })
-    // Add a new user
+  // Add a new user
   .post("/", async (req, res, next) => {
     try {
+      console.log("Request Body:", req.body); // Debugging
       const response = await model.add(req.body);
       if (response.isSuccess) {
         res.status(201).json(response);
       } else {
+        console.error("Validation Error:", response.message);
         res.status(400).json({ isSuccess: false, message: response.message });
       }
     } catch (error) {
-      next(error);
+      console.error("Error adding user:", error);
+      res.status(500).json({ isSuccess: false, message: "Server error during user creation." });
     }
   })
-
   // Add a friend
   .post("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
     try {
       const userId = parseInt(req.params.userId);
       const friendId = parseInt(req.params.friendId);
+
+      if (userId === friendId) {
+        return res.status(400).json({ isSuccess: false, message: "Cannot add yourself as a friend." });
+      }
+
       const response = await model.addFriend(userId, friendId);
 
-      if (response.isSuccess) {
-        res.status(200).json(response);
-      } else {
-        res.status(400).json({ isSuccess: false, message: response.message });
+      if (!response.isSuccess) {
+        return res.status(400).json({ isSuccess: false, message: response.message });
       }
+
+      res.status(200).json(response);
     } catch (error) {
+      console.error("Error adding friend:", error);
       next(error);
     }
   })
-
+  
   // Remove a friend
   .delete("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
     try {

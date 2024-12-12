@@ -111,18 +111,23 @@ async function verifyToken(token) {
 
 async function add(users) {
   try {
+    const existingUser = await conn
+      .from("Users")
+      .select("*")
+      .eq("id", users.id)
+      .single();
+    if (existingUser.data) {
+      return {
+        isSuccess: false,
+        message: "ID already exists.",
+      };
+    }
+
     const { data, error } = await conn
       .from("Users")
-      .insert([
-        {
-          name: users.name,
-          email: users.email,
-          role: users.role,
-          password: users.password,
-        },
-      ])
+      .insert([users])
       .select("*")
-      .single(); // Ensure the inserted user is returned
+      .single();
 
     return {
       isSuccess: !error,
@@ -143,6 +148,8 @@ async function update(id, users) {
         name: users.name,
         email: users.email,
         role: users.role,
+        image: users.image || "/assets/User.jpg",
+        friends: users.friends || [],
       })
       .eq("id", id)
       .select("*")

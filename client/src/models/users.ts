@@ -60,14 +60,22 @@ export async function deleteUsers(id: number): Promise<void> {
 }
 
 export async function addFriend(userId: number, friendId: number): Promise<DataEnvelope<Users>> {
-  const response = await api<DataEnvelope<Users>>(`users/${userId}/friends/${friendId}`, {}, 'POST')
-
-  if (response.data) {
-    response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
+  try {
+    const response = await api<DataEnvelope<Users>>(
+      `users/${userId}/friends/${friendId}`,
+      {},
+      'POST'
+    )
+    if (!response.isSuccess) {
+      console.error('Error adding friend:', response.message)
+    }
+    return response
+  } catch (error) {
+    console.error('Unexpected error in addFriend:', error)
+    throw error
   }
-
-  return response
 }
+
 
 export async function removeFriend(userId: number, friendId: number): Promise<DataEnvelope<Users>> {
   const response = await api<DataEnvelope<Users>>(

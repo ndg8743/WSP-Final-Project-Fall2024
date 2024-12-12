@@ -151,7 +151,7 @@ watch([exerciseGoal, caloriesGoal], () => {
         </div>
         <div class="box">
           <h2 class="subtitle">Total Progress</h2>
-          <ProgressBar :value="combinedProgress" max="100" />
+          <ProgressBar :value="combinedProgress" :max="100" />
           <p>{{ combinedProgress.toFixed(2) }}% of combined goal reached</p>
           <p>Net Calorie Balance: {{ netCalorieBalance }}</p> <!-- New Row -->
         </div>
