@@ -152,33 +152,30 @@ app
   })
   // Add a friend
   .post("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
-    console.log("Received POST request for /users/:userId/friends/:friendId");
-    console.log("userId:", req.params.userId, "friendId:", req.params.friendId); 
     try {
       const userId = parseInt(req.params.userId);
       const friendId = parseInt(req.params.friendId);
 
-      if (isNaN(userId) || isNaN(friendId)) {
-        return res.status(400).json({ isSuccess: false, message: "Invalid userId or friendId." });
-      }
-
-      if (userId === friendId) {
-        return res.status(400).json({ isSuccess: false, message: "You cannot add yourself as a friend." });
-      }
+      console.log("Processing add friend:", { userId, friendId });
 
       const user = await model.get(userId);
       if (!user.isSuccess || !user.data) {
         return res.status(404).json({ isSuccess: false, message: "User not found." });
       }
 
-      const updatedFriends = [...new Set([...user.data.friends, friendId])]; // Add friend and prevent duplicates
+      console.log("Current friends:", user.data.friends);
+
+      const updatedFriends = [...new Set([...user.data.friends, friendId])]; // Add and deduplicate
+      console.log("Updated friends list:", updatedFriends);
+
       const response = await model.update(userId, { ...user.data, friends: updatedFriends });
 
-      if (response.isSuccess) {
-        res.status(200).json({ isSuccess: true, message: "Friend added successfully.", data: response.data });
-      } else {
-        res.status(400).json({ isSuccess: false, message: "Failed to add friend." });
+      if (!response.isSuccess) {
+        console.error("Error updating friends:", response.message);
+        return res.status(400).json({ isSuccess: false, message: "Failed to add friend." });
       }
+
+      res.status(200).json({ isSuccess: true, message: "Friend added successfully.", data: response.data });
     } catch (error) {
       console.error("Error in addFriend route:", error);
       next(error);

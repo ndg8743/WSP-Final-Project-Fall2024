@@ -71,7 +71,7 @@ const handleRemoveFriend = async (friendId: number) => {
     const response = await removeFriend(currentUser.user.id, friendId);
 
     if (response.isSuccess) {
-      friends.value = friends.value.filter((id) => id !== friendId); // Update local friends list
+      friends.value = friends.value.filter((id: number) => id !== friendId); // Update local friends list
       currentUser.user.friends = friends.value; // Update session data
       localStorage.setItem("session", JSON.stringify(currentUser));
       alert("Friend removed successfully.");
