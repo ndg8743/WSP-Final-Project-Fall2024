@@ -40,11 +40,14 @@ const handleEdit = (user) => {
 
 // Handle deleting a user
 const handleDelete = async (id) => {
-  const response = await deleteUsers(id)
+  const confirmDelete = confirm("Are you sure you want to delete this user?");
+  if (!confirmDelete) return;
+
+  const response = await deleteUsers(id); // Call delete API
   if (response.isSuccess) {
-    users.value = users.value.filter((user) => user.id !== id)
+    users.value = users.value.filter((user) => user.id !== id); // Remove user from local state
   } else {
-    console.error('Error deleting user:', response.message)
+    console.error("Error deleting user:", response.message);
   }
 }
 
@@ -57,26 +60,27 @@ const handleAddUser = () => {
 
 // Save changes for editing or adding a user
 const saveUser = async () => {
-  const user = { ...currentUser.value }
+  const user = { ...currentUser.value };
 
+  let response;
   if (isAddingUser.value) {
-    const response = await addUser(user)
-    if (response.isSuccess) {
-      users.value.push(response.data)
-    } else {
-      console.error('Error adding user:', response.message)
-    }
+    response = await addUser(user); // Call add API
   } else {
-    const response = await updateUsers(user.id, user)
-    if (response.isSuccess) {
-      const index = users.value.findIndex((u) => u.id === user.id)
-      if (index !== -1) users.value[index] = response.data
-    } else {
-      console.error('Error updating user:', response.message)
-    }
+    response = await updateUsers(user.id, user); // Call update API
   }
 
-  closeModal()
+  if (response.isSuccess) {
+    if (isAddingUser.value) {
+      users.value.push(response.data); // Add new user to local state
+    } else {
+      const index = users.value.findIndex((u) => u.id === user.id);
+      if (index !== -1) users.value[index] = response.data; // Update local state
+    }
+  } else {
+    console.error("Error saving user:", response.message);
+  }
+
+  closeModal();
 }
 
 const closeModal = () => {
@@ -100,13 +104,8 @@ const closeModal = () => {
           </tr>
         </thead>
         <tbody>
-          <UserManagement
-            v-for="user in users"
-            :key="user.id"
-            :user="user"
-            @edit-user="handleEdit"
-            @delete-user="handleDelete"
-          />
+          <UserManagement v-for="user in users" :key="user.id" :user="user" @edit-user="handleEdit"
+            @delete-user="handleDelete" />
         </tbody>
       </table>
 
@@ -152,6 +151,7 @@ const closeModal = () => {
 .section {
   padding-top: 2rem;
 }
+
 .mt-4 {
   margin-top: 1rem;
 }

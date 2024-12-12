@@ -104,6 +104,7 @@ app
       next(error);
     }
   })
+
   // Add a new user
   .post("/", async (req, res, next) => {
     try {

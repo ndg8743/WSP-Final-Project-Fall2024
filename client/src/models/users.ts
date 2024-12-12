@@ -47,16 +47,14 @@ export async function addUser(user: Users): Promise<DataEnvelope<Users>> {
 
 export async function updateUsers(id: number, user: Users): Promise<DataEnvelope<Users>> {
   const response = await api<DataEnvelope<Users>>(`users/${id}`, user, 'PATCH')
-
   if (response.data) {
     response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
   }
-
   return response
 }
 
-export async function deleteUsers(id: number): Promise<void> {
-  return api<void>(`users/${id}`, null, 'DELETE')
+export async function deleteUsers(id: number): Promise<DataEnvelope<void>> {
+  return await api<DataEnvelope<void>>(`users/${id}`, null, 'DELETE')
 }
 
 export async function addFriend(userId: number, friendId: number): Promise<DataEnvelope<Users>> {
@@ -75,7 +73,6 @@ export async function addFriend(userId: number, friendId: number): Promise<DataE
     throw error
   }
 }
-
 
 export async function removeFriend(userId: number, friendId: number): Promise<DataEnvelope<Users>> {
   const response = await api<DataEnvelope<Users>>(
