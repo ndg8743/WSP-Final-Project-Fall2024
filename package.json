@@ -4,7 +4,9 @@
   "description": "",
   "scripts": {
     "build": "npm run build -w client",
-    "start": "node server/index.js",
+    "start": "npm-run-all start:client start:server",
+    "start:server": "node server/index.js",
+    "start:client": "cd client && npm run build",
     "dev": "npm-run-all --parallel dev:server dev:client",
     "dev:server": "nodemon server/index.js --watch server",
     "dev:client": "npm run dev -w client"
@@ -14,7 +16,6 @@
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
-    "eslint": "^9.16.0",
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "wsp-final-project-fall2024": "file:"

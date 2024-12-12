@@ -19,12 +19,12 @@ html.dark .navbar-item:hover, html.dark .navbar-link:hover {
 }
 
 html.dark .button.is-primary {
-  background-color: #00ff99 !important; /* Light green for primary buttons */
+  background-color: #00ff99b6 !important; /* Light green for primary buttons */
   color: #fff !important;
 }
 
 html.dark .button.is-danger {
-  background-color: #0821ff !important; /* Keep danger color for contrast */
+  background-color: #0821ffb0 !important; /* Keep danger color for contrast */
   color: #fff !important;
 }
 
@@ -41,12 +41,12 @@ html.light .container, html.light .box, html.light .navbar, html.light .card, ht
 }
 
 html.dark .button.is-primary {
-  background-color: #00ff99 !important; /* Light green for primary buttons */
+  background-color: #00ff99c2 !important; /* Light green for primary buttons */
   color: #fff !important;
 }
 
 html.dark .button.is-danger {
-  background-color: #0821ff !important; /* Keep danger color for contrast */
+  background-color: #0821ffa4 !important; /* Keep danger color for contrast */
   color: #fff !important;
 }
 
@@ -83,8 +83,8 @@ html.dark .input, html.dark .textarea, html.dark .select select {
 }
 
 html.dark .input:focus, html.dark .textarea:focus, html.dark .select select:focus {
-  border-color: #00ff99 !important;
-  box-shadow: 0 0 0 0.125em rgba(0, 255, 153, 0.25) !important;
+  border-color: #00ff99da !important;
+  box-shadow: 0 0 0 0.125em rgba(0, 255, 153, 0.401) !important;
 }
 
 /* Social cards specific styles */
@@ -95,4 +95,8 @@ html.dark .social-card {
   margin-bottom: 10px !important;
   border-radius: 8px !important;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
+}
+
+html.dark .progress-wrapper .progress-bar {
+  background-color: var(--bar-color, #00ff99d4) !important;
 }

@@ -14,17 +14,13 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    },
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "isolatedModules": true
+    }
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "src/models/supabase.ts"
-  ],
-  "exclude": ["node_modules"]
+    "node_modules/vite/client"
+  ]
 }

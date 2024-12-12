@@ -1,94 +1,79 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import MealCard from '@/components/MealCard.vue';
-import Modal from '@/components/Modal.vue';
-import { getMeals, addMeal, updateMeal, deleteMeal } from '@/models/meals';
-
+import { ref, onMounted } from 'vue'
 // @ts-ignore
-import type { Meals } from '@/models/meals';
-
-declare module '@/components/Modal.vue';
+import MealCard from '@/components/MealCard.vue'
+// @ts-ignore
+import Modal from '@/components/Modal.vue'
+import { getMeals, getUserMeals } from '@/models/meals'
+import type { Meals } from '@/models/meals.js'
 
 // Retrieve the current user from the session
-const session = localStorage.getItem('session');
-const currentUser = session ? JSON.parse(session).users : null;
+const session = localStorage.getItem('session')
+const currentUser = session ? JSON.parse(session) : null
 
-const meals = ref<Meals[]>([]);
-const filterDate = ref('');
-const filteredMeals = ref<Meals[]>([]);
-const currentMeal = ref<Meals | null>(null);
-const showModal = ref(false);
-const isAddingMeal = ref(false); // Flag for add mode
+const meals = ref<Meals[]>([])
+const filterDate = ref('')
+const filteredMeals = ref<Meals[]>([])
+const currentMeal = ref<Meals | null>(null)
+const showModal = ref(false)
+const isAddingMeal = ref(false) // Flag for add mode
 
 // Filter meals based on the selected date
 const filterMeals = () => {
   filteredMeals.value = filterDate.value
-    ? meals.value.filter((meal) => meal.date === filterDate.value)
-    : [...meals.value];
-};
+    ? meals.value.filter(meal => meal.date === filterDate.value)
+    : [...meals.value]
+}
 
 const openAddMeal = () => {
-  console.log('Opening add meal modal');
-  currentMeal.value = { id: Date.now(), name: '', calories: 0, date: '', user_id: currentUser.id };
-  isAddingMeal.value = true;
-  showModal.value = true;
-};
+  currentMeal.value = { id: Date.now(), name: '', mealCalories: 0, date: '', userId: currentUser.user.id }
+  isAddingMeal.value = true
+  showModal.value = true
+}
 
-const handleEdit = (meals: Meals) => {
-  console.log('Editing meal:', meals);
-  currentMeal.value = { ...meals };
-  isAddingMeal.value = false;
-  showModal.value = true;
-};
+const handleEdit = (meal: Meals) => {
+  currentMeal.value = { ...meal }
+  isAddingMeal.value = false
+  showModal.value = true
+}
 
-const handleDelete = async (id: number) => {
-  console.log('Deleting meal with id:', id);
-  try {
-    await deleteMeal(id);
-    meals.value = meals.value.filter(meals => meals.id !== id);
-    filterMeals();
-  } catch (err) {
-    console.error('Error deleting meal:', err);
-  } finally {
-    console.log('Delete operation completed');
+const handleDelete = (id: number) => {
+  meals.value = meals.value.filter(meal => meal.id !== id)
+  filterMeals()
+}
+
+const saveMeal = () => {
+  if (isAddingMeal.value) {
+    meals.value.push({ ...currentMeal.value! })
+  } else {
+    const index = meals.value.findIndex(meal => meal.id === currentMeal.value!.id)
+    if (index !== -1) meals.value.splice(index, 1, { ...currentMeal.value! })
   }
-};
-
-const saveMeal = async () => {
-  console.log('Saving meal:', currentMeal.value);
-  try {
-    if (isAddingMeal.value) {
-      const response = await addMeal(currentMeal.value!);
-      meals.value.push(response.data);
-    } else {
-      const response = await updateMeal(currentMeal.value!.id, currentMeal.value!);
-      const index = meals.value.findIndex(meals => meals.id === currentMeal.value!.id);
-      if (index !== -1) meals.value.splice(index, 1, response.data);
-    }
-    closeModal();
-    filterMeals();
-  } catch (err) {
-    console.error('Error saving meal:', err);
-  }
-};
+  closeModal()
+  filterMeals()
+}
 
 const closeModal = () => {
-  showModal.value = false;
-};
+  showModal.value = false
+}
 
 // Load current user's meals on component mount
-onMounted(async () => {
+onMounted(() => {
   if (currentUser) {
-    try {
-      const mealsResponse = await getMeals();
-      meals.value = mealsResponse.data.filter((meal) => meal.user_id === currentUser.id);
-      filterMeals(); // Initialize filteredMeals based on the loaded data
-    } catch (err) {
-      console.error('Error loading meals:', err);
-    }
+    getUserMeals(currentUser.user.id).then(response => {
+      if (response.isSuccess) {
+        meals.value = response.data; // Store all meals for the current user
+        filterMeals(); // Initialize filteredMeals based on the loaded data
+        console.log("Meals fetched and filtered:", meals.value); // Debug log
+      } else {
+        console.error("Error fetching user meals:", response.message);
+      }
+    }).catch(error => {
+      console.error("Unexpected error fetching user meals:", error);
+    });
   }
-});
+})
 </script>
 
 <template>
@@ -105,9 +90,9 @@ onMounted(async () => {
         </div>
         <div>
           <MealCard
-            v-for="meals in filteredMeals"
-            :key="meals.id"
-            :meals="meals"
+            v-for="meal in filteredMeals"
+            :key="meal.id"
+            :meal="meal"
             @edit="handleEdit"
             @delete="handleDelete"
           />
@@ -131,7 +116,7 @@ onMounted(async () => {
         </div>
         <div class="field">
           <label class="label">Calories</label>
-          <input class="input" type="number" v-model="currentMeal.calories" />
+          <input class="input" type="number" v-model="currentMeal.mealCalories" />
         </div>
         <div class="field">
           <label class="label">Date</label>
@@ -149,7 +134,6 @@ onMounted(async () => {
 .section {
   padding-top: 2rem;
 }
-
 .notification {
   margin-top: 1rem;
 }

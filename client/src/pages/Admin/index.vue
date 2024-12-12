@@ -1,10 +1,18 @@
 <!-- eslint-disable vue/multi-word-component-names -->
- <script setup>
-import { ref } from 'vue';
+<script setup>
+import { ref, onMounted } from 'vue';
+import { getUsers } from '@/models/users';
 
-// Mock data for dashboard stats
-const totalUsers = ref(50);
-const lastSettingsUpdate = ref('2024-10-19');
+const totalUsers = ref(0);
+const lastLogin = ref('');
+
+onMounted(async () => {
+  const response = await getUsers();
+  if (response.isSuccess) {
+    totalUsers.value = response.total;
+    lastLogin.value = new Date().toLocaleString();
+  }
+});
 </script>
 
 <template>
@@ -23,7 +31,7 @@ const lastSettingsUpdate = ref('2024-10-19');
         <div class="box">
           <h2 class="subtitle">Quick Statistics</h2>
           <p><strong>Total Users:</strong> {{ totalUsers }}</p>
-          <p><strong>Settings Updated:</strong> {{ lastSettingsUpdate }}</p>
+          <p><strong>Last Login:</strong> {{ lastLogin }}</p>
         </div>
       </div>
     </section>
@@ -37,4 +45,3 @@ const lastSettingsUpdate = ref('2024-10-19');
     margin-top: 15px;
   }
   </style>
-  

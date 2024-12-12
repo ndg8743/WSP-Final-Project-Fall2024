@@ -2,7 +2,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'
-import { api } from '@/models/myFetch'
+import { getUserExercises } from '@/models/exercises'; // Import your model function
 
 // User-specific stats and goals
 const completedExercises = ref(0)
@@ -17,16 +17,23 @@ const currentUser = session ? JSON.parse(session) : null
 // Fetch and calculate user stats
 onMounted(async () => {
   if (currentUser) {
-    console.log('Fetching user stats for:', currentUser.id);
-    const currentUserId = currentUser.id
+    const currentUserId = currentUser.user.id
 
-    // Fetch exercises for the current user from the backend
-    const userExercises = await api('exercises', { userId: currentUserId })
+    try {
+      // Fetch exercises from the API
+      const response = await getUserExercises(currentUserId)
+      if (response.isSuccess) {
+        const userExercises = response.data
 
-    // Set the total completed exercises and total calories burned
-    completedExercises.value = userExercises.length
-    caloriesBurned.value = userExercises.reduce((total, exercise) => total + exercise.caloriesBurned, 0)
-    console.log('User stats fetched:', { completedExercises: completedExercises.value, caloriesBurned: caloriesBurned.value });
+        // Set the total completed exercises and total calories burned
+        completedExercises.value = userExercises.length
+        caloriesBurned.value = userExercises.reduce((total, exercise) => total + exercise.caloriesBurned, 0)
+      } else {
+        console.error('Failed to fetch exercises:', response.message)
+      }
+    } catch (error) {
+      console.error('Error fetching user exercises:', error)
+    }
   }
 })
 
@@ -77,7 +84,6 @@ const saveGoals = () => {
 .section {
   padding-top: 2rem;
 }
-
 .notification {
   margin-top: 1rem;
 }

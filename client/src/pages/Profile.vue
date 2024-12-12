@@ -1,19 +1,17 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Users } from '@/models/users' // Ensure the Users interface includes the image property
+import { Users } from '@/models/users.js' // Import User type if necessary
 
 const avatar = ref('')
 const currentUser = ref<Users | null>(null)
 
 onMounted(() => {
-  console.log('Loading user profile');
   // Load the logged-in user data from localStorage
   const session = localStorage.getItem('session')
   if (session) {
     currentUser.value = JSON.parse(session)
     avatar.value = currentUser.value?.image || '' // Set avatar to the user's current image if available
-    console.log('User profile loaded:', currentUser.value);
   }
 })
 
@@ -29,7 +27,6 @@ const uploadImage = (event: Event) => {
         currentUser.value.image = avatar.value
         // Save the updated user data to localStorage
         localStorage.setItem('session', JSON.stringify(currentUser.value))
-        console.log('User avatar updated:', avatar.value);
       }
     }
     reader.readAsDataURL(file)

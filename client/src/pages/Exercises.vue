@@ -2,22 +2,19 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import ExerciseCard from '@/components/ExerciseCard.vue'
-import Modal from '@/components/Modal.vue'
 // @ts-ignore
-import { api } from '@/models/myFetch'
-import type { Exercises } from '@/models/exercises'
-
-// Declare module for Modal.vue
-declare module '@/components/Modal.vue';
+import Modal from '@/components/Modal.vue'
+import { getUserExercises } from '@/models/exercises.js'
+import type { Exercise } from '@/models/exercises.js'
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
 const currentUser = session ? JSON.parse(session) : null
 
-const exercises = ref<Exercises[]>([])
+const exercises = ref<Exercise[]>([])
 const filterDate = ref('')
-const filteredExercises = ref<Exercises[]>([])
-const currentExercise = ref<Exercises | null>(null)
+const filteredExercises = ref<Exercise[]>([])
+const currentExercise = ref<Exercise | null>(null)
 const showModal = ref(false)
 const isAddingExercise = ref(false)
 
@@ -32,32 +29,29 @@ const openAddExercise = () => {
     id: Date.now(),
     name: '',
     duration: 0,
-    calories: 0, // Ensure the Exercise interface is correctly defined
+    caloriesBurned: 0,
     date: new Date().toISOString().split('T')[0],
-    user_id: currentUser ? currentUser.id : 0 // Ensure the Exercise interface is correctly defined
+    userId: currentUser ? currentUser.user.id : 0 // Set userId to current logged-in user
   }
   isAddingExercise.value = true
   showModal.value = true
 }
 
-const handleEdit = (exercise: Exercises) => {
+const handleEdit = (exercise: Exercise) => {
   currentExercise.value = { ...exercise }
   isAddingExercise.value = false
   showModal.value = true
 }
 
-const handleDelete = async (id: number) => {
-  await api('exercises/' + id, {}, 'DELETE')
+const handleDelete = (id: number) => {
   exercises.value = exercises.value.filter(exercise => exercise.id !== id)
   filterExercises()
 }
 
-const saveExercise = async () => {
+const saveExercise = () => {
   if (isAddingExercise.value) {
-    await api('exercises', currentExercise.value, 'POST')
     exercises.value.push({ ...currentExercise.value! })
   } else {
-    await api('exercises/' + currentExercise.value!.id, currentExercise.value, 'PUT')
     const index = exercises.value.findIndex(exercise => exercise.id === currentExercise.value!.id)
     if (index !== -1) exercises.value.splice(index, 1, { ...currentExercise.value! })
   }
@@ -69,12 +63,18 @@ const closeModal = () => {
   showModal.value = false
 }
 
-// Load current user's exercises on component mount
-onMounted(async () => {
+onMounted(() => {
   if (currentUser) {
-    const userExercises = await api('exercises', { userId: currentUser.id })
-    exercises.value = userExercises as Exercises[] // Add type assertion
-    filterExercises() // Initialize filteredExercises based on the loaded data
+    getUserExercises(currentUser.user.id).then(response => {
+      if (response.isSuccess && response.data) {
+        exercises.value = response.data
+        filterExercises()
+      } else {
+        console.error('Failed to fetch user exercises:', response.message)
+      }
+    }).catch(error => {
+      console.error('Error fetching user exercises:', error)
+    })
   }
 })
 </script>
@@ -118,7 +118,7 @@ onMounted(async () => {
         </div>
         <div class="field">
           <label class="label">Calories Burned</label>
-          <input class="input" type="number" v-model="currentExercise.calories" />
+          <input class="input" type="number" v-model="currentExercise.caloriesBurned" />
         </div>
         <div class="field">
           <label class="label">Date</label>

@@ -1,21 +1,45 @@
 const express = require("express");
 const model = require("../models/meals");
-const { requireUser } = require("../middleware/verifyJWT");
+const { requireUser, requireAdmin } = require("../middleware/verifyJWT");
 const app = express.Router();
 
 app
   .get("/", requireUser, async (req, res, next) => {
     try {
-      const requestingUser = req.user;
-      const { data, error, count } = await model.getAll();
-      if (error) {
-        return res.status(500).json({ isSuccess: false, message: error.message });
+      const { userId } = req.query;
+
+      if (userId) {
+        // Fetch meals for a specific user
+        const { data, isSuccess, message } = await model.getByUserId(+userId);
+
+        if (!isSuccess) {
+          return res
+            .status(404)
+            .json({ isSuccess, message: "No meals found for this user." });
+        }
+
+        return res.status(200).json({
+          isSuccess: true,
+          message: "Meals fetched successfully for user.",
+          data,
+          total: data.length,
+        });
       }
+
+      // Fetch meals for the requesting user and their friends
+      const requestingUser = req.user;
+      const { data, isSuccess, message } = await model.getAll();
+
+      if (!isSuccess) {
+        return res.status(500).json({ isSuccess, message });
+      }
+
       const userMeals = data.filter(
-        (meals) =>
-          meals.user_id === requestingUser.id ||
-          (requestingUser.friends || []).includes(meals.user_id)
+        (meal) =>
+          meal.userId === requestingUser.id ||
+          (requestingUser.friends || []).includes(meal.userId)
       );
+
       res.status(200).json({
         isSuccess: true,
         message: "Meals fetched successfully.",
@@ -26,35 +50,38 @@ app
       next(error);
     }
   })
-  .get("/all", async (req, res, next) => {
+
+  .get("/all", requireAdmin, async (req, res, next) => {
     try {
-      const meals = await model.getAll();
-      meals.data = meals.data.map((meal) => ({
-        id: meal.id,
-        name: meal.name,
-        calories: meal.calories,
-        date: meal.date,
-        userId: meal.user_id,
-      }));
-      res.status(200).send(meals);
+      const { data, isSuccess, message } = await model.getAll();
+
+      if (!isSuccess) {
+        return res.status(500).json({ isSuccess, message });
+      }
+
+      res.status(200).json({
+        isSuccess: true,
+        message: "All meals fetched successfully.",
+        data,
+        total: data.length,
+      });
     } catch (error) {
       next(error);
     }
   })
   .get("/:id", requireUser, async (req, res, next) => {
     try {
-      const meals = await model.get(+req.params.id);
-      const requestingUser = req.user;
-      if (
-        !meals.data ||
-        (meals.data.user_id !== requestingUser.id &&
-          !(requestingUser.friends || []).includes(meals.data.user_id))
-      ) {
-        return res
-          .status(403)
-          .json({ error: "You are not authorized to view this meal." });
+      const { data, isSuccess, message } = await model.get(+req.params.id);
+
+      if (!isSuccess) {
+        return res.status(404).json({ isSuccess, message: "Meal not found." });
       }
-      res.status(200).json(meals);
+
+      res.status(200).json({
+        isSuccess: true,
+        message: "Meal fetched successfully.",
+        data,
+      });
     } catch (error) {
       next(error);
     }
@@ -62,7 +89,7 @@ app
   .post("/", requireUser, async (req, res, next) => {
     try {
       const newMeal = req.body;
-      if (newMeal.user_id !== req.user.id) {
+      if (newMeal.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only add meals for yourself." });
@@ -76,7 +103,7 @@ app
   .patch("/:id", requireUser, async (req, res, next) => {
     try {
       const meals = await model.get(+req.params.id);
-      if (!meals.data || meals.data.user_id !== req.user.id) {
+      if (!meals.data || meals.data.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only update your own meals." });
@@ -90,7 +117,7 @@ app
   .delete("/:id", requireUser, async (req, res, next) => {
     try {
       const meals = await model.get(+req.params.id);
-      if (!meals.data || meals.data.user_id !== req.user.id) {
+      if (!meals.data || meals.data.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only delete your own meals." });

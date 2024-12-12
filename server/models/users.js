@@ -25,7 +25,7 @@ async function get(id) {
     const { data, error } = await conn
       .from("users")
       .select("*")
-      .eq("userid", id)
+      .eq("userId", id)
       .single();
 
     if (data) {
@@ -51,7 +51,7 @@ async function login(identifier, password) {
     const { data, error } = await conn
       .from("Users")
       .select("*")
-      .or(`name.eq.${identifier},email.eq.${identifier}`)
+      .or(`name.ilike.${identifier.toLowerCase()},email.ilike.${identifier.toLowerCase()}`)
       .single();
 
     console.log("Query result:", data, "Error:", error);
@@ -86,84 +86,10 @@ async function login(identifier, password) {
   }
 }
 
-async function add(users) {
-  try {
-    const { data, error } = await conn
-      .from("Users")
-      .insert([
-        {
-          firstname: users.firstname,
-          lastname: users.lastname,
-          email: users.email,
-          username: users.username,
-          password: users.password,
-          isadmin: users.isadmin || false,
-          bio: users.bio || "",
-        },
-      ])
-      .single();
-
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
-  } catch (err) {
-    console.error("Unexpected error in add:", err);
-    throw err;
-  }
-}
-
-async function update(id, users) {
-  try {
-    const { data, error } = await conn
-      .from("Users")
-      .update({
-        firstname: users.firstname,
-        lastname: users.lastname,
-        email: users.email,
-        username: users.username,
-        bio: users.bio || "",
-      })
-      .eq("userid", id)
-      .select("*")
-      .single();
-
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
-  } catch (err) {
-    console.error("Unexpected error in update:", err);
-    throw err;
-  }
-}
-
-async function remove(id) {
-  try {
-    const { data, error } = await conn
-      .from("Users")
-      .delete()
-      .eq("userid", id)
-      .select("*")
-      .single();
-
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
-  } catch (err) {
-    console.error("Unexpected error in remove:", err);
-    throw err;
-  }
-}
-
 async function createToken(users, expiresIn) {
   return new Promise((resolve, reject) => {
     jwt.sign(
-      { userid: users.userid, email: users.email },
+      { userId: users.userId, email: users.email },
       process.env.JWT_SECRET || "",
       { expiresIn },
       (err, token) => {
@@ -183,6 +109,123 @@ async function verifyToken(token) {
   });
 }
 
+async function add(users) {
+  try {
+    const existingUser = await conn
+      .from("Users")
+      .select("*")
+      .eq("id", users.id)
+      .single();
+    if (existingUser.data) {
+      return {
+        isSuccess: false,
+        message: "ID already exists.",
+      };
+    }
+
+    const { data, error } = await conn
+      .from("Users")
+      .insert([users])
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error("Unexpected error in add:", err);
+    throw err;
+  }
+}
+
+async function update(id, user) {
+  try {
+    const { data, error } = await conn
+      .from("Users")
+      .update({
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image || "/assets/User.jpg",
+        friends: user.friends, // Update the friends array
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error("Unexpected error in update:", err);
+    throw err;
+  }
+}
+
+async function remove(id) {
+  try {
+    const { data, error } = await conn
+      .from("Users")
+      .delete()
+      .eq("id", id)
+      .select("*")
+      .single(); // Ensure the deleted user is returned
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
+  } catch (err) {
+    console.error("Unexpected error in remove:", err);
+    throw err;
+  }
+}
+
+async function addFriend(userId, friendId) {
+  try {
+    const user = await get(userId);
+    if (!user.isSuccess || !user.data) {
+      return { isSuccess: false, message: "User not found." };
+    }
+
+    const updatedFriends = [...new Set([...user.data.friends, friendId])]; // Avoid duplicates
+    const updatedUser = await update(userId, {
+      ...user.data,
+      friends: updatedFriends,
+    });
+
+    return updatedUser;
+  } catch (err) {
+    console.error("Unexpected error in addFriend:", err);
+    throw err;
+  }
+}
+
+async function removeFriend(userId, friendId) {
+  try {
+    const user = await get(userId);
+    if (!user.isSuccess || !user.data) {
+      return { isSuccess: false, message: "User not found." };
+    }
+
+    const updatedFriends = user.data.friends.filter((id) => id !== friendId);
+    const updatedUser = await update(userId, {
+      ...user.data,
+      friends: updatedFriends,
+    });
+
+    return updatedUser;
+  } catch (err) {
+    console.error("Unexpected error in removeFriend:", err);
+    throw err;
+  }
+}
+
 module.exports = {
   getAll,
   get,
@@ -192,4 +235,7 @@ module.exports = {
   remove,
   createToken,
   verifyToken,
+  addFriend,
+  removeFriend,
 };
+

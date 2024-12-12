@@ -1,65 +1,90 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { api } from '@/models/myFetch'
-
-const usersData = ref<{ id: number, name: string, email: string }[]>([])
+import { getUsers, addFriend, removeFriend, type Users } from '@/models/users'
 
 // Retrieve the current user from session
 const session = localStorage.getItem('session')
 const currentUser = session ? JSON.parse(session) : null
 
 const searchQuery = ref('')
-const friends = ref(currentUser ? currentUser.friends : []) // Initialize friends list
+const friends = ref(
+  currentUser && Array.isArray(currentUser.user.friends) ? currentUser.user.friends : []
+)
+const users = ref<Users[]>([]) // Reactive array to hold users data
+const isLoading = ref(false)
+
+const fetchUsers = async () => {
+  isLoading.value = true
+  const response = await getUsers()
+  if (response.isSuccess) {
+    users.value = response.data
+  } else {
+    console.error('Error fetching users:', response.message)
+  }
+  isLoading.value = false
+}
 
 // Filtered users based on search query
 const filteredUsers = computed(() => {
-  return usersData.value.filter(user =>
+  return users.value.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
 
-// Fetch users data from the backend
-onMounted(async () => {
-  if (currentUser) {
-    console.log('Fetching users data');
-    const users = await api('users')
-    usersData.value.splice(0, usersData.value.length, ...users as any[]) // Add type assertion
-    console.log('Users data fetched:', usersData.value);
+// Add a user to the friend list (backend + frontend update)
+const handleAddFriend = async (friendId: number) => {
+  if (!currentUser) {
+    alert("You must be logged in to add friends.");
+    return;
   }
-})
 
-// Add a user to the friend list
-const addFriend = async (userId: number) => {
-  console.log('Adding friend with id:', userId);
-  if (currentUser && !friends.value.includes(userId)) {
-    friends.value.push(userId); // Add user ID to the current user's friend list
-    await api(`users/${currentUser.id}/friends/${userId}`, {}, 'POST');
-    localStorage.setItem('session', JSON.stringify({ ...currentUser, friends: friends.value })); // Update session
-    const user = usersData.value.find(user => user.id === userId);
-    if (user) {
-      alert(`${user.name} has been added to your friends.`);
-    }
-  } else if (friends.value.includes(userId)) {
+  if (friends.value.includes(friendId)) {
     alert("This user is already your friend.");
+    return;
+  }
+
+  try {
+    const response = await addFriend(currentUser.user.id, friendId);
+
+    if (response.isSuccess) {
+      friends.value.push(friendId); // Update local friends list
+      currentUser.user.friends = friends.value; // Update session data
+      localStorage.setItem("session", JSON.stringify(currentUser));
+      alert("Friend added successfully.");
+    } else {
+      alert("Failed to add friend. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error in handleAddFriend:", error);
+    alert("An error occurred while adding a friend.");
   }
 }
 
-// Remove a user from the friend list
-const removeFriend = async (userId: number) => {
-  console.log('Removing friend with id:', userId);
-  if (currentUser && friends.value.includes(userId)) {
-    friends.value = friends.value.filter((id: number) => id !== userId); // Remove user ID from the current user's friend list
-    await api(`users/${currentUser.id}/friends/${userId}`, {}, 'DELETE');
-    localStorage.setItem('session', JSON.stringify({ ...currentUser, friends: friends.value })); // Update session
-    const user = usersData.value.find(user => user.id === userId);
-    if (user) {
-      alert(`${user.name} has been removed from your friends.`);
+const handleRemoveFriend = async (friendId: number) => {
+  if (!currentUser) {
+    alert("You must be logged in to remove friends.");
+    return;
+  }
+
+  try {
+    const response = await removeFriend(currentUser.user.id, friendId);
+
+    if (response.isSuccess) {
+      friends.value = friends.value.filter((id: number) => id !== friendId); // Update local friends list
+      currentUser.user.friends = friends.value; // Update session data
+      localStorage.setItem("session", JSON.stringify(currentUser));
+      alert("Friend removed successfully.");
+    } else {
+      alert("Failed to remove friend. Please try again.");
     }
-  } else {
-    alert("This user is not in your friend list.");
+  } catch (error) {
+    console.error("Error in handleRemoveFriend:", error);
+    alert("An error occurred while removing a friend.");
   }
 }
+
+onMounted(fetchUsers)
 </script>
 
 <template>
@@ -73,14 +98,14 @@ const removeFriend = async (userId: number) => {
         <ul>
           <li v-for="user in filteredUsers" :key="user.id">
             {{ user.name }} - {{ user.email }}
-            <button
-              v-if="!friends.includes(user.id)"
-              class="button is-small is-primary ml-2"
-              @click="addFriend(user.id)"
-            >
+            <button v-if="!friends.includes(user.id)" class="button is-small is-primary ml-2"
+              @click="handleAddFriend(user.id)">
               Add Friend
             </button>
-            <span v-else class="tag is-info ml-2">Already a Friend</span>
+            <button v-else class="button is-small is-danger ml-2"
+              @click="handleRemoveFriend(user.id)">
+              Remove Friend
+            </button>
           </li>
         </ul>
       </div>
@@ -95,9 +120,11 @@ const removeFriend = async (userId: number) => {
 .section {
   padding-top: 2rem;
 }
+
 .ml-2 {
   margin-left: 0.5rem;
 }
+
 .notification {
   margin-top: 1rem;
 }

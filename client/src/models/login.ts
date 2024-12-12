@@ -1,41 +1,74 @@
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { type DataEnvelope } from '../models/dataEnvelope'
-import { type Users } from '../models/users'
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { api } from './myFetch.js';
+import { type DataEnvelope } from './dataEnvelope.js';
 
 const session = reactive({
-  users: JSON.parse(localStorage.getItem('session') || '{}').users || null,
-  token: JSON.parse(localStorage.getItem('session') || '{}').token || null
-})
+  user: null as any, // User information
+  token: null as string | null, // JWT token
+});
 
-const isLoggedIn = ref(!!session.users)
-const router = useRouter()
+// Reactive state for login status
+const isLoggedIn = ref(false);
+const router = useRouter();
 
 export function getLogin() {
+  // Load session data from localStorage when component is mounted
   onMounted(() => {
-    const storedSession = localStorage.getItem('session')
+    const storedSession = localStorage.getItem('session');
     if (storedSession) {
-      const parsedSession = JSON.parse(storedSession)
-      session.users = parsedSession.users
-      session.token = parsedSession.token
-      isLoggedIn.value = true
+      const parsedSession = JSON.parse(storedSession);
+      session.user = parsedSession.user;
+      session.token = parsedSession.token;
+      isLoggedIn.value = true;
     }
-  })
+  });
 
+  // Logout function to clear session and navigate to the home page
   const logout = () => {
-    localStorage.removeItem('session')
-    session.users = null
-    session.token = null
-    isLoggedIn.value = false
-    router.push('/')
-  }
+    localStorage.removeItem('session');
+    session.user = null;
+    session.token = null;
+    isLoggedIn.value = false;
+    router.push('/');
+  };
 
-  const login = (newSession: { token: string; users: any }) => {
-    localStorage.setItem('session', JSON.stringify(newSession))
-    session.users = newSession.users
-    session.token = newSession.token
-    isLoggedIn.value = true
-  }
+  const router = useRouter();
 
-  return { isLoggedIn, session, logout, login }
+  // Login function to authenticate the user
+  const login = async (loginIdentifier: string, password: string) => {
+    try {
+      // Call the `users/login` REST endpoint
+      const response = await api<DataEnvelope<{ token: string; users: any }>>(
+        'users/login',
+        { identifier: loginIdentifier, password: password },
+        'POST'
+      );
+
+      if (response.isSuccess) {
+        const newSession = {
+          token: response.data.token,
+          user: response.data.users,
+        };
+
+        // Save session in localStorage
+        localStorage.setItem('session', JSON.stringify(newSession));
+        session.user = newSession.user;
+        session.token = newSession.token;
+        isLoggedIn.value = true;
+
+        console.log(router);  // Check if router is defined
+
+        // Redirect to the dashboard
+        router.push('/dashboard');
+      } else {
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw new Error('Login failed. Please check your credentials.');
+    }
+  };
+
+  return { isLoggedIn, session, logout, login };
 }

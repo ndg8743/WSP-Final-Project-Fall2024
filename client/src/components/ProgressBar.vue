@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, computed } from 'vue';
+import { defineProps } from 'vue';
 
 const props = defineProps({
   value: {
@@ -11,25 +11,31 @@ const props = defineProps({
     required: true
   }
 });
-
-// Ensure value does not exceed max
-const adjustedValue = computed(() => Math.min(props.value || 0, props.max || 100));
-
-// Dynamic class for color
-const progressClass = computed(() => {
-  const ratio = adjustedValue.value / props.max;
-  return ratio >= 0.8 ? 'is-success' : ratio >= 0.5 ? 'is-warning' : 'is-primary';
-});
 </script>
 
 <template>
-  <progress class="progress" :class="progressClass" :value="adjustedValue" :max="max">
-    {{ adjustedValue }}%
-  </progress>
+  <div class="progress-wrapper">
+    <div class="progress-bar" :style="{ width: `${(value / max) * 100}%` }"></div>
+  </div>
 </template>
 
 <style scoped>
-.progress {
+.progress-wrapper {
+  width: 100%;
+  background-color: #ffffff30;
+  /* Background color of the progress bar container */
+  border-radius: 4px;
+  overflow: hidden;
   margin-bottom: 1rem;
+}
+
+.progress-bar {
+  height: 1rem;
+  background-color: var(--bar-color, #1f191900);
+  /* Use CSS custom property for dynamic color */
+  width: var(--progress-width, 0);
+  /* Dynamic width using custom property */
+  transition: width 1s ease-in-out, background-color 0.3s ease-in-out;
+  /* Smooth transition for both width and color */
 }
 </style>

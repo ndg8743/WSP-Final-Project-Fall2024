@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { getLogin } from '@/models/login';
 
 const isOpen = ref(false);
+const { isLoggedIn, logout } = getLogin();
 </script>
 
 <template>
@@ -10,7 +12,7 @@ const isOpen = ref(false);
     <div class="container">
       <div class="navbar-brand">
         <RouterLink to="/">
-          <img alt="App logo" class="logo" src="@/assets/logo.svg" width="30" height="30" />
+          <img alt="App logo" class="logo" src="@/assets/Logo.png" width="30" height="30" />
         </RouterLink>
 
         <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" :class="{ 'is-active': isOpen }"
@@ -74,14 +76,18 @@ const isOpen = ref(false);
         <div class="navbar-end">
           <div class="navbar-item">
             <div class="buttons">
-              <RouterLink to="/signup" class="button is-primary">
+              <RouterLink v-if="!isLoggedIn" to="/signup" class="button is-primary">
                 <span class="icon"><i class="fas fa-user-plus"></i></span>
                 <strong>Sign up</strong>
               </RouterLink>
-              <RouterLink to="/login" class="button is-light">
+              <RouterLink v-if="!isLoggedIn" to="/login" class="button is-light">
                 <span class="icon"><i class="fas fa-sign-in-alt"></i></span>
                 Log in
               </RouterLink>
+              <button v-if="isLoggedIn" class="button is-danger" @click="logout">
+                <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -93,7 +99,7 @@ const isOpen = ref(false);
 <style scoped>
 .router-link-active {
   font-weight: bold;
-  border-bottom: 2px solid blue;
+  border-bottom: 2px solid rgba(0, 255, 217, 0.803);
 }
 
 .navbar-burger {

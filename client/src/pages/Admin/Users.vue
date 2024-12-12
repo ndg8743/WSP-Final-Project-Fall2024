@@ -3,81 +3,94 @@
 import { ref, onMounted } from 'vue'
 import UserManagement from '@/components/UserManagement.vue'
 import Modal from '@/components/Modal.vue'
-import { api } from '@/models/myFetch'
+import { getUsers, addUser, updateUsers, deleteUsers } from '@/models/users'
 
-const users = ref([]) 
+// Load users from users.json
+const users = ref([])
 const currentUser = ref(null)
 const showModal = ref(false)
-const isAdmin = ref(false)
-const isAddingUser = ref(false)
-const loading = ref(true)
-const error = ref('')
+const isAdmin = ref(false) // Flag to check if the user is an admin
+const isAddingUser = ref(false) // Flag for add mode
 
+// Retrieve the current user from localStorage session
 const session = localStorage.getItem('session')
-const loggedInUser = session ? JSON.parse(session).users : null
+const loggedInUser = session ? JSON.parse(session) : null
 
 onMounted(async () => {
-  try {
-    if (loggedInUser && loggedInUser.role === 'admin') {
-      isAdmin.value = true
-      const usersFromApi = await api('users')
-      users.value = usersFromApi.data || []
+  if (loggedInUser && loggedInUser.user.role === 'admin') {
+    isAdmin.value = true
+    // Fetch users from the API
+    const response = await getUsers()
+    if (response.isSuccess) {
+      users.value = response.data
     } else {
-      isAdmin.value = false
-      router.push('/'); // Redirect non-admin users to home page
+      console.error('Error fetching users:', response.message)
     }
-  } catch (err) {
-    console.error('Error fetching users:', err)
-    error.value = 'Failed to load user data. Please try again later.'
-  } finally {
-    loading.value = false
+  } else {
+    isAdmin.value = false
   }
 })
 
+// Handle editing a user
 const handleEdit = (user) => {
-  currentUser.value = { ...user, friends: user.friends || [] }
+  currentUser.value = { ...user }
   isAddingUser.value = false
   showModal.value = true
 }
 
+// Handle deleting a user
 const handleDelete = async (id) => {
-  try {
-    await api('users/' + id, {}, 'DELETE')
-    users.value = users.value.filter((u) => u.id !== id)
-  } catch (err) {
-    console.error('Error deleting user:', err)
+  const confirmDelete = confirm("Are you sure you want to delete this user?");
+  if (!confirmDelete) return;
+
+  const response = await deleteUsers(id); // Call delete API
+  if (response.isSuccess) {
+    users.value = users.value.filter((user) => user.id !== id); // Remove user from local state
+  } else {
+    console.error("Error deleting user:", response.message);
   }
 }
 
+// Handle adding a new user
 const handleAddUser = () => {
-  currentUser.value = { id: null, name: '', email: '', role: 'User' }
+  currentUser.value = { id: Date.now(), name: '', email: '', role: 'user' }
   isAddingUser.value = true
   showModal.value = true
 }
 
+// Save changes for editing or adding a user
 const saveUser = async () => {
-  try {
-    if (isAddingUser.value) {
-      const response = await api('users', currentUser.value, 'POST')
-      users.value.push(response.data)
-    } else {
-      const response = await api(`users/${currentUser.value.id}`, currentUser.value, 'PATCH')
-      const index = users.value.findIndex((u) => u.id === currentUser.value.id)
-      if (index !== -1) users.value.splice(index, 1, response.data)
-    }
-    closeModal()
-  } catch (err) {
-    console.error('Error saving user:', err)
+  const user = { ...currentUser.value };
+
+  let response;
+  if (isAddingUser.value) {
+    response = await addUser(user); // Call add API
+  } else {
+    response = await updateUsers(user.id, user); // Call update API
   }
+
+  if (response.isSuccess) {
+    if (isAddingUser.value) {
+      users.value.push(response.data); // Add new user to local state
+    } else {
+      const index = users.value.findIndex((u) => u.id === user.id);
+      if (index !== -1) users.value[index] = response.data; // Update local state
+    }
+  } else {
+    console.error("Error saving user:", response.message);
+  }
+
+  closeModal();
 }
 
 const closeModal = () => {
   showModal.value = false
 }
+
 </script>
 
 <template>
-  <section v-if="isAdmin && !loading" class="section">
+  <section v-if="isAdmin" class="section">
     <div class="container">
       <h1 class="title">User Management</h1>
       <button class="button is-primary" @click="handleAddUser">Add New User</button>
@@ -123,12 +136,6 @@ const closeModal = () => {
           <button class="button is-success" @click="saveUser">Save</button>
         </template>
       </Modal>
-    </div>
-  </section>
-
-  <section v-else-if="loading" class="section">
-    <div class="container">
-      <h1 class="title">Loading...</h1>
     </div>
   </section>
 

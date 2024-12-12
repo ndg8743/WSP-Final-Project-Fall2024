@@ -1,90 +1,227 @@
 const model = require("../models/users");
+const { requireUser, requireAdmin, parseToken } = require("../middleware/verifyJWT");
 const express = require("express");
 const app = express.Router();
 
+// Apply parseToken middleware globally to all routes
+app.use(parseToken);
+
 app
+  // Get all users (Admin only)
   .get("/", async (req, res, next) => {
     try {
       const users = await model.getAll();
-      res.status(200).send(users);
-    } catch (error) {
-      next(error);
-    }
-  })
 
-  .get("/:id", async (req, res, next) => {
-    try {
-      const id = req.params.id;
-      const users = await model.get(id);
-      if (!users.data) {
+      if (!users || users.data.length === 0) {
         return res
           .status(404)
-          .send({ isSuccess: false, message: "Users not found" });
+          .json({ isSuccess: false, message: "No users found." });
       }
-      // Normalize user data (default image, friends list, etc.)
-      users.data.image = users.data.image || "/assets/User.jpg";
-      users.data.friends = users.data.friends || [];
-      res.status(200).send(users);
+
+      res
+        .status(200)
+        .json({ isSuccess: true, data: users.data, total: users.total });
     } catch (error) {
       next(error);
     }
   })
 
-  .post("/", async (req, res, next) => {
+  // Get user by ID (Authenticated user or Admin)
+  .get("/:id", requireUser, async (req, res, next) => {
     try {
-      const users = await model.add(req.body);
-      res.status(201).send(users);
+      const id = parseInt(req.params.id);
+      const user = await model.get(id);
+
+      if (!user || !user.data) {
+        return res
+          .status(404)
+          .json({ isSuccess: false, message: "User not found." });
+      }
+
+      // Ensure only the requested user or admin can access the data
+      if (req.user.userid !== id && req.user.role !== "admin") {
+        return res
+          .status(403)
+          .json({ isSuccess: false, message: "Access denied." });
+      }
+
+      res.status(200).json({ isSuccess: true, data: user.data });
     } catch (error) {
       next(error);
     }
   })
 
+  // User login
   .post("/login", async (req, res) => {
-    console.log("Received POST request for /api/v1/users/login");
     try {
       const { identifier, password } = req.body;
-      console.log("Login attempt with identifier:", identifier);
+
+      // Validate input
+      if (!identifier || !password) {
+        return res.status(400).json({
+          isSuccess: false,
+          message: "Identifier and password are required.",
+        });
+      }
 
       const response = await model.login(identifier, password);
-      console.log("Login result:", response);
 
       if (response.isSuccess) {
-        res.status(200).json(response);
-      } else {
-        res.status(401).json(response);
+        return res.status(200).json(response);
       }
+
+      return res
+        .status(401)
+        .json({ isSuccess: false, message: response.message });
     } catch (error) {
-      console.error("Error during login process:", error);
-      res.status(500).json({ message: "Server error during login." });
+      console.error("Login error:", error);
+      res
+        .status(500)
+        .json({ isSuccess: false, message: "Server error during login." });
     }
   })
 
-  .patch("/:id", async (req, res, next) => {
+  // Update user details (Authenticated user or Admin)
+  .patch("/:id", requireUser, async (req, res, next) => {
     try {
-      const id = req.params.id;
-      const users = await model.update(+id, req.body);
-      if (!users.data) {
+      const id = parseInt(req.params.id);
+
+      // Ensure the user can only update their own details or admin access
+      if (req.user.userid !== id && req.user.role !== "admin") {
+        return res.status(403).json({
+          isSuccess: false,
+          message: "You are not authorized to update this user.",
+        });
+      }
+
+      const updatedUser = await model.update(id, req.body);
+
+      if (!updatedUser || !updatedUser.data) {
         return res
           .status(404)
-          .send({ isSuccess: false, message: "Users not found" });
+          .json({ isSuccess: false, message: "User not found." });
       }
-      res.status(200).send(users);
+
+      res.status(200).json({ isSuccess: true, data: updatedUser.data });
     } catch (error) {
       next(error);
     }
   })
 
-  .delete("/:id", async (req, res, next) => {
+  // Delete user (Admin only)
+  .delete("/:id", requireAdmin, async (req, res, next) => {
     try {
-      const id = req.params.id;
-      const response = await model.remove(+id);
-      if (!response.data) {
+      const id = parseInt(req.params.id);
+
+      const response = await model.remove(id);
+
+      if (!response || !response.data) {
         return res
           .status(404)
-          .send({ isSuccess: false, message: "Users not found" });
+          .json({ isSuccess: false, message: "User not found." });
       }
-      res.status(200).send(response);
+
+      res.status(200).json({
+        isSuccess: true,
+        message: "User deleted successfully.",
+        data: response.data,
+      });
     } catch (error) {
+      next(error);
+    }
+  })
+
+  // Add a new user
+  .post("/", async (req, res, next) => {
+    try {
+      console.log("Request Body:", req.body); // Debugging
+      const response = await model.add(req.body);
+      if (response.isSuccess) {
+        res.status(201).json(response);
+      } else {
+        console.error("Validation Error:", response.message);
+        res.status(400).json({ isSuccess: false, message: response.message });
+      }
+    } catch (error) {
+      console.error("Error adding user:", error);
+      res.status(500).json({
+        isSuccess: false,
+        message: "Server error during user creation.",
+      });
+    }
+  })
+  // Add a friend
+  .post("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const friendId = parseInt(req.params.friendId);
+
+      console.log("Processing add friend:", { userId, friendId });
+
+      const user = await model.get(userId);
+      if (!user.isSuccess || !user.data) {
+        return res.status(404).json({ isSuccess: false, message: "User not found." });
+      }
+
+      console.log("Current friends:", user.data.friends);
+
+      const updatedFriends = [...new Set([...user.data.friends, friendId])]; // Add and deduplicate
+      console.log("Updated friends list:", updatedFriends);
+
+      const response = await model.update(userId, { ...user.data, friends: updatedFriends });
+
+      if (!response.isSuccess) {
+        console.error("Error updating friends:", response.message);
+        return res.status(400).json({ isSuccess: false, message: "Failed to add friend." });
+      }
+
+      res.status(200).json({ isSuccess: true, message: "Friend added successfully.", data: response.data });
+    } catch (error) {
+      console.error("Error in addFriend route:", error);
+      next(error);
+    }
+  })
+
+  // Remove a friend
+  .delete("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const friendId = parseInt(req.params.friendId);
+
+      if (isNaN(userId) || isNaN(friendId)) {
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Invalid userId or friendId." });
+      }
+
+      // Fetch the user and their friends array
+      const user = await model.get(userId);
+      if (!user.isSuccess || !user.data) {
+        return res
+          .status(404)
+          .json({ isSuccess: false, message: "User not found." });
+      }
+
+      const updatedFriends = user.data.friends.filter((id) => id !== friendId); // Remove the friend
+
+      // Update the user
+      const response = await model.update(userId, {
+        ...user.data,
+        friends: updatedFriends,
+      });
+      if (!response.isSuccess) {
+        return res
+          .status(400)
+          .json({ isSuccess: false, message: "Failed to remove friend." });
+      }
+
+      res.status(200).json({
+        isSuccess: true,
+        message: "Friend removed successfully.",
+        data: response.data,
+      });
+    } catch (error) {
+      console.error("Error in removeFriend route:", error);
       next(error);
     }
   });

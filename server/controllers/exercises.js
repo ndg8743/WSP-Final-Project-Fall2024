@@ -1,33 +1,37 @@
 const express = require("express");
 const model = require("../models/exercises");
-const { requireUser } = require("../middleware/verifyJWT");
+const { requireUser, requireAdmin } = require("../middleware/verifyJWT");
 const app = express.Router();
 
-app
-  .get("/", requireUser, async (req, res, next) => {
-    try {
-      const requestingUser = req.user;
-      const { data, error, count } = await model.getAll();
-      if (error) {
-        return res.status(500).json({ isSuccess: false, message: error.message });
-      }
-      const userExercises = data.filter(
-        (exercises) =>
-          exercises.user_id === requestingUser.id ||
-          (requestingUser.friends || []).includes(exercises.user_id)
-      );
-      const sortedExercises = userExercises.sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
-      );
-      res.status(200).json({
-        isSuccess: true,
-        message: "Exercises fetched successfully.",
-        data: sortedExercises,
-      });
-    } catch (error) {
-      next(error);
+app.
+
+  get("/", requireUser, async (req, res, next) => {
+  try {
+    const requestingUser = req.user;
+    const { userId } = req.query; // Extract userId from query parameters
+
+    const { data, error } = await model.getAll();
+    if (error) {
+      return res.status(500).json({ isSuccess: false, message: error.message });
     }
+
+    // Filter exercises based on userId
+    const userExercises = data.filter(
+      (exercise) =>
+        exercise.userId === parseInt(userId, 10) || 
+        (requestingUser.friends || []).includes(exercise.userId)
+    );
+
+    res.status(200).json({
+      isSuccess: true,
+      message: "Exercises fetched successfully.",
+      data: userExercises,
+    });
+  } catch (error) {
+    next(error);
+  }
   })
+
   .get("/all", async (req, res, next) => {
     try {
       const exercises = await model.getAll();
@@ -35,10 +39,11 @@ app
         id: exercise.id,
         name: exercise.name,
         duration: exercise.duration,
-        calories: exercise.calories,
+        caloriesBurned: exercise.caloriesBurned,
         date: exercise.date,
-        userId: exercise.user_id,
+        userId: exercise.userId,
       }));
+
       res.status(200).send(exercises);
     } catch (error) {
       next(error);
@@ -50,8 +55,8 @@ app
       const requestingUser = req.user;
       if (
         !exercises.data ||
-        (exercises.data.user_id !== requestingUser.id &&
-          !(requestingUser.friends || []).includes(exercises.data.user_id))
+        (exercises.data.userId !== requestingUser.id &&
+          !(requestingUser.friends || []).includes(exercises.data.userId))
       ) {
         return res
           .status(403)
@@ -65,7 +70,7 @@ app
   .post("/", requireUser, async (req, res, next) => {
     try {
       const newExercise = req.body;
-      if (newExercise.user_id !== req.user.id) {
+      if (newExercise.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only add exercises for yourself." });
@@ -79,7 +84,7 @@ app
   .patch("/:id", requireUser, async (req, res, next) => {
     try {
       const exercises = await model.get(+req.params.id);
-      if (!exercises.data || exercises.data.user_id !== req.user.id) {
+      if (!exercises.data || exercises.data.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only update your own exercises." });
@@ -93,7 +98,7 @@ app
   .delete("/:id", requireUser, async (req, res, next) => {
     try {
       const exercises = await model.get(+req.params.id);
-      if (!exercises.data || exercises.data.user_id !== req.user.id) {
+      if (!exercises.data || exercises.data.userId !== req.user.id) {
         return res
           .status(403)
           .json({ error: "You can only delete your own exercises." });

@@ -1,30 +1,45 @@
-import { api } from './myFetch'
-import type { DataListEnvelope, DataEnvelope } from './dataEnvelope'
+import { api } from './myFetch.js'
+import type { DataListEnvelope, DataEnvelope } from './dataEnvelope.js'
 
 export interface Meals {
   id: number
   name: string
-  calories: number
+  mealCalories: number
   date: string // ISO string
-  user_id: number // Match backend property name
+  userId: number // Match backend property name
 }
 
 export async function getMeals(): Promise<DataListEnvelope<Meals>> {
-  return api<DataListEnvelope<Meals>>('Meals')
+  const response = await api<DataListEnvelope<Meals>>('meals/all')
+  if (response.isSuccess) {
+    response.data.forEach((meal: Meals) => {
+      meal.mealCalories = meal.mealCalories ?? 0
+    })
+  } else {
+    console.error('Error fetching meals:', response.message)
+  }
+  return response
 }
 
-export async function getMealById(id: number): Promise<DataEnvelope<Meals>> {
-  return api<DataEnvelope<Meals>>(`Meals/${id}`)
+export async function getUserMeals(userId: number): Promise<DataListEnvelope<Meals>> {
+  console.log(`Fetching meals for userId: ${userId}`) // Debug log
+  const response = await api<DataListEnvelope<Meals>>(`meals?userId=${userId}`)
+  if (response.isSuccess) {
+    console.log(`Meals fetched for userId ${userId}:`, response.data) // Log meals data
+  } else {
+    console.error(`Error fetching meals for userId ${userId}:`, response.message)
+  }
+  return response
 }
 
-export async function addMeal(meals: Meals): Promise<DataEnvelope<Meals>> {
-  return api<DataEnvelope<Meals>>('Meals', meals, 'POST')
+export async function addMeal(meal: Meals): Promise<DataEnvelope<Meals>> {
+  return api<DataEnvelope<Meals>>('meals', meal, 'POST')
 }
 
-export async function updateMeal(id: number, meals: Meals): Promise<DataEnvelope<Meals>> {
-  return api<DataEnvelope<Meals>>(`Meals/${id}`, meals, 'PATCH')
+export async function updateMeal(id: number, meal: Meals): Promise<DataEnvelope<Meals>> {
+  return api<DataEnvelope<Meals>>(`meals/${id}`, meal, 'PATCH')
 }
 
 export async function deleteMeal(id: number): Promise<void> {
-  return api<void>(`Meals/${id}`, null, 'DELETE')
+  return api<void>(`meals/${id}`, null, 'DELETE')
 }

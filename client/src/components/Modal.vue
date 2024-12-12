@@ -3,7 +3,6 @@
 defineEmits(['close']);
 </script>
 
-
 <template>
   <div class="modal is-active">
     <div class="modal-background" @click="$emit('close')"></div>
