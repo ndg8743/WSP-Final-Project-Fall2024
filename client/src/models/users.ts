@@ -6,12 +6,12 @@ export interface Users {
   name: string
   email: string
   role: 'user' | 'admin'
-  image?: string // Image property
+  image?: string
   password: string
-  friends?: number[] // Include friends array for easier client-side logic
+  friends?: number[]
 }
 
-const DEFAULT_IMAGE_PATH = '../src/assets/User.jpg' // Adjusted for client-side resolution
+const DEFAULT_IMAGE_PATH = '../src/assets/User.jpg'
 
 export async function getUsers(): Promise<DataListEnvelope<Users>> {
   const response = await api<DataListEnvelope<Users>>('users')
@@ -26,26 +26,30 @@ export async function getUsers(): Promise<DataListEnvelope<Users>> {
 }
 
 export async function getUserById(id: number): Promise<DataEnvelope<Users>> {
-  const response = await api<DataEnvelope<Users>>(`users/${id}`)
-  if (response.isSuccess) {
-    response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
-  } else {
-    console.error(`Error fetching user ${id}:`, response.message)
+  try {
+    const response = await api<DataEnvelope<Users>>(`users/${id}`)
+    if (response.isSuccess && response.data) {
+      response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
+      response.data.friends = response.data.friends ?? []
+    } else {
+      console.error(`Error fetching user ${id}:`, response.message)
+    }
+    return response
+  } catch (error) {
+    console.error(`Unexpected error fetching user ${id}:`, error)
+    throw error
   }
-  return response
 }
 
 export async function addUser(user: Users): Promise<DataEnvelope<Users>> {
   const response = await api<DataEnvelope<Users>>('users', user, 'POST')
-
   if (response.data) {
     response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
   }
-
   return response
 }
 
-export async function updateUsers(id: number, user: Users): Promise<DataEnvelope<Users>> {
+export async function updateUser(id: number, user: Users): Promise<DataEnvelope<Users>> {
   const response = await api<DataEnvelope<Users>>(`users/${id}`, user, 'PATCH')
   if (response.data) {
     response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
@@ -53,14 +57,14 @@ export async function updateUsers(id: number, user: Users): Promise<DataEnvelope
   return response
 }
 
-export async function deleteUsers(id: number): Promise<DataEnvelope<void>> {
+export async function deleteUser(id: number): Promise<DataEnvelope<void>> {
   return await api<DataEnvelope<void>>(`users/${id}`, null, 'DELETE')
 }
 
-export async function addFriend(userId: number, friendId: number): Promise<DataEnvelope<Users>> {
+export async function addFriend(id: number, friendId: number): Promise<DataEnvelope<Users>> {
   try {
     const response = await api<DataEnvelope<Users>>(
-      `users/${userId}/friends/${friendId}`,
+      `users/${id}/friends/${friendId}`,
       {},
       'POST'
     )
@@ -74,16 +78,14 @@ export async function addFriend(userId: number, friendId: number): Promise<DataE
   }
 }
 
-export async function removeFriend(userId: number, friendId: number): Promise<DataEnvelope<Users>> {
+export async function removeFriend(id: number, friendId: number): Promise<DataEnvelope<Users>> {
   const response = await api<DataEnvelope<Users>>(
-    `users/${userId}/friends/${friendId}`,
+    `users/${id}/friends/${friendId}`,
     {},
     'DELETE'
   )
-
   if (response.data) {
     response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
   }
-
   return response
 }

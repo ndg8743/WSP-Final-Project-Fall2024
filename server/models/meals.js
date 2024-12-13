@@ -21,26 +21,17 @@ async function getAll() {
 
 async function getByUserId(userId) {
   try {
-    console.log(`Fetching meals for userId: ${userId}`); // Add debug logging
     const { data, error } = await conn
       .from("Meals")
       .select("*")
       .eq("userId", userId);
-
-    console.log(`Meals fetched for userId ${userId}:`, data); // Log fetched meals
-
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || [],
-    };
+    return { isSuccess: !error, message: error?.message, data: data || [] };
   } catch (err) {
-    console.error(`Unexpected error fetching meals for user ${userId}:`, err);
+    console.error(`Unexpected error fetching meals for userId ${userId}:`, err);
     throw err;
   }
 }
 
-//fix get
 async function get(id) {
   try {
     const { data, error } = await conn
@@ -48,12 +39,7 @@ async function get(id) {
       .select("*")
       .eq("id", id)
       .single();
-
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
+    return { isSuccess: !error, message: error?.message, data: data || null };
   } catch (err) {
     console.error(`Unexpected error fetching meal with ID ${id}:`, err);
     throw err;
@@ -62,13 +48,12 @@ async function get(id) {
 
 async function add(meal) {
   try {
-    const { data, error } = await conn.from("Meals").insert([meal]).single();
-
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
+    const { data, error } = await conn
+      .from("Meals")
+      .insert([meal])
+      .select("*")
+      .single();
+    return { isSuccess: !error, message: error?.message, data: data || null };
   } catch (err) {
     console.error("Unexpected error in add:", err);
     throw err;
@@ -83,12 +68,7 @@ async function update(id, meal) {
       .eq("id", id)
       .select("*")
       .single();
-
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
+    return { isSuccess: !error, message: error?.message, data: data || null };
   } catch (err) {
     console.error("Unexpected error in update:", err);
     throw err;
@@ -103,14 +83,68 @@ async function remove(id) {
       .eq("id", id)
       .select("*")
       .single();
-
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
+    return { isSuccess: !error, message: error?.message, data: data || null };
   } catch (err) {
     console.error("Unexpected error in remove:", err);
+    throw err;
+  }
+}
+
+async function getUserAndFriendsMeals(userId, requestingUser) {
+  try {
+    const { data, error } = await conn.from("Meals").select("*");
+
+    if (error) {
+      return { isSuccess: false, message: error.message, data: [] };
+    }
+
+    const userMeals = data.filter(
+      (meal) =>
+        meal.userId === requestingUser.id ||
+        (requestingUser.friends || []).includes(meal.userId)
+    );
+
+    return {
+      isSuccess: true,
+      message: "Meals fetched successfully.",
+      data: userMeals,
+    };
+  } catch (err) {
+    console.error("Unexpected error in getUserAndFriendsMeals:", err);
+    throw err;
+  }
+}
+
+async function updateMealForUser(id, meal, userId) {
+  try {
+    const existingMeal = await get(id);
+    if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
+      return {
+        isSuccess: false,
+        errorCode: 403,
+        message: "You can only update your own meals.",
+      };
+    }
+    return await update(id, meal);
+  } catch (err) {
+    console.error("Unexpected error in updateMealForUser:", err);
+    throw err;
+  }
+}
+
+async function deleteMealForUser(id, userId) {
+  try {
+    const existingMeal = await get(id);
+    if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
+      return {
+        isSuccess: false,
+        errorCode: 403,
+        message: "You can only delete your own meals.",
+      };
+    }
+    return await remove(id);
+  } catch (err) {
+    console.error("Unexpected error in deleteMealForUser:", err);
     throw err;
   }
 }
@@ -122,4 +156,7 @@ module.exports = {
   update,
   remove,
   getByUserId,
+  getUserAndFriendsMeals,
+  updateMealForUser,
+  deleteMealForUser,
 };

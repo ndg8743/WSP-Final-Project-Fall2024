@@ -1,12 +1,20 @@
-const model = require("../models/users");
-const { addFriend } = require("../models/users");
+const express = require("express");
+const app = express.Router();
+const {
+  getAll,
+  get,
+  login,
+  add,
+  update,
+  remove,
+  addFriend,
+  removeFriend,
+} = require("../models/users");
 const {
   requireUser,
   requireAdmin,
   parseToken,
 } = require("../middleware/verifyJWT");
-const express = require("express");
-const app = express.Router();
 
 // Apply parseToken middleware globally to all routes
 app.use(parseToken);
@@ -15,17 +23,8 @@ app
   // Get all users (Admin only)
   .get("/", async (req, res, next) => {
     try {
-      const users = await model.getAll();
-
-      if (!users || users.data.length === 0) {
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: "No users found." });
-      }
-
-      res
-        .status(200)
-        .json({ isSuccess: true, data: users.data, total: users.total });
+      const response = await getAll();
+      res.status(response.isSuccess ? 200 : 404).json(response);
     } catch (error) {
       next(error);
     }
@@ -35,54 +34,50 @@ app
   .get("/:id", requireUser, async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-      const user = await model.get(id);
-
-      if (!user || !user.data) {
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: "User not found." });
+      
+      // Defensive check for req.user
+      if (!req.user) {
+        return res.status(401).json({ 
+          isSuccess: false, 
+          message: "Authentication required" 
+        });
       }
 
-      // Ensure only the requested user or admin can access the data
-      if (req.user.userid !== id && req.user.role !== "admin") {
-        return res
-          .status(403)
-          .json({ isSuccess: false, message: "Access denied." });
+      const response = await get(id);
+      
+      // More explicit access control
+      if (response.isSuccess) {
+        if (req.user.userid === id || req.user.role === "admin") {
+          return res.status(200).json(response);
+        }
+        return res.status(403).json({ isSuccess: false, message: "Access denied." });
       }
-
-      res.status(200).json({ isSuccess: true, data: user.data });
+      
+      res.status(404).json({ isSuccess: false, message: "User not found." });
     } catch (error) {
+      console.error('Error in user get route:', error);
       next(error);
     }
   })
 
   // User login
-  .post("/login", async (req, res) => {
+  .post("/login", async (req, res, next) => {
     try {
       const { identifier, password } = req.body;
-
-      // Validate input
-      if (!identifier || !password) {
-        return res.status(400).json({
-          isSuccess: false,
-          message: "Identifier and password are required.",
-        });
-      }
-
-      const response = await model.login(identifier, password);
-
-      if (response.isSuccess) {
-        return res.status(200).json(response);
-      }
-
-      return res
-        .status(401)
-        .json({ isSuccess: false, message: response.message });
+      const response = await login(identifier, password);
+      res.status(response.isSuccess ? 200 : 401).json(response);
     } catch (error) {
-      console.error("Login error:", error);
-      res
-        .status(500)
-        .json({ isSuccess: false, message: "Server error during login." });
+      next(error);
+    }
+  })
+
+  // Add a new user
+  .post("/", async (req, res, next) => {
+    try {
+      const response = await add(req.body);
+      res.status(response.isSuccess ? 201 : 400).json(response);
+    } catch (error) {
+      next(error);
     }
   })
 
@@ -90,24 +85,11 @@ app
   .patch("/:id", requireUser, async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-
-      // Ensure the user can only update their own details or admin access
-      if (req.user.userid !== id && req.user.role !== "admin") {
-        return res.status(403).json({
-          isSuccess: false,
-          message: "You are not authorized to update this user.",
-        });
+      if (req.user.userid === id || req.user.role === "admin") {
+        const response = await update(id, req.body);
+        return res.status(response.isSuccess ? 200 : 404).json(response);
       }
-
-      const updatedUser = await model.update(id, req.body);
-
-      if (!updatedUser || !updatedUser.data) {
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: "User not found." });
-      }
-
-      res.status(200).json({ isSuccess: true, data: updatedUser.data });
+      res.status(403).json({ isSuccess: false, message: "Access denied." });
     } catch (error) {
       next(error);
     }
@@ -117,59 +99,22 @@ app
   .delete("/:id", requireAdmin, async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-
-      const response = await model.remove(id);
-
-      if (!response || !response.data) {
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: "User not found." });
-      }
-
-      res.status(200).json({
-        isSuccess: true,
-        message: "User deleted successfully.",
-        data: response.data,
-      });
+      const response = await remove(id);
+      res.status(response.isSuccess ? 200 : 404).json(response);
     } catch (error) {
       next(error);
     }
   })
 
-  // Add a new user
-  .post("/", async (req, res, next) => {
-    try {
-      console.log("Request Body:", req.body); // Debugging
-      const response = await model.add(req.body);
-      if (response.isSuccess) {
-        res.status(201).json(response);
-      } else {
-        console.error("Validation Error:", response.message);
-        res.status(400).json({ isSuccess: false, message: response.message });
-      }
-    } catch (error) {
-      console.error("Error adding user:", error);
-      res.status(500).json({
-        isSuccess: false,
-        message: "Server error during user creation.",
-      });
-    }
-  })
   // Add a friend
   .post("/:userId/friends/:friendId", requireUser, async (req, res, next) => {
-    const userId = parseInt(req.params.userId);
-    const friendId = parseInt(req.params.friendId);
-
-    console.log("Processing add friend:", { userId, friendId });
-
-    const result = await addFriend(userId, friendId);
-
-    if (!result.success) {
-      return res
-        .status(parseInt(result.errorCode))
-        .json({ isSuccess: false, message: result.message });
-    } else {
-      res.status(200).json({ isSuccess: true, message: result.message });
+    try {
+      const userId = parseInt(req.params.userId);
+      const friendId = parseInt(req.params.friendId);
+      const response = await addFriend(userId, friendId);
+      res.status(response.isSuccess ? 200 : response.errorCode).json(response);
+    } catch (error) {
+      next(error);
     }
   })
 
@@ -178,41 +123,9 @@ app
     try {
       const userId = parseInt(req.params.userId);
       const friendId = parseInt(req.params.friendId);
-
-      if (isNaN(userId) || isNaN(friendId)) {
-        return res
-          .status(400)
-          .json({ isSuccess: false, message: "Invalid userId or friendId." });
-      }
-
-      // Fetch the user and their friends array
-      const user = await model.get(userId);
-      if (!user.isSuccess || !user.data) {
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: "User not found." });
-      }
-
-      const updatedFriends = user.data.friends.filter((id) => id !== friendId); // Remove the friend
-
-      // Update the user
-      const response = await model.update(userId, {
-        ...user.data,
-        friends: updatedFriends,
-      });
-      if (!response.isSuccess) {
-        return res
-          .status(400)
-          .json({ isSuccess: false, message: "Failed to remove friend." });
-      }
-
-      res.status(200).json({
-        isSuccess: true,
-        message: "Friend removed successfully.",
-        data: response.data,
-      });
+      const response = await removeFriend(userId, friendId);
+      res.status(response.isSuccess ? 200 : response.errorCode).json(response);
     } catch (error) {
-      console.error("Error in removeFriend route:", error);
       next(error);
     }
   });

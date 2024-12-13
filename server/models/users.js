@@ -2,17 +2,20 @@ const { getConnection } = require("./supabase");
 const conn = getConnection();
 const jwt = require("jsonwebtoken");
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET must be set in environment variables");
+}
+
 async function getAll() {
   try {
     const { data, error, count } = await conn
       .from("Users")
       .select("*", { count: "estimated" });
-
     return {
       isSuccess: !error,
-      message: error?.message,
-      data: data || [],
-      total: count || 0,
+      message: error?.message || "Unable to fetch users",
+      data: data ?? [],
+      total: count ?? 0,
     };
   } catch (err) {
     console.error("Unexpected error in getAll:", err);
@@ -28,26 +31,36 @@ async function get(id) {
       .eq("id", id)
       .single();
 
-    if (data) {
-      // Normalize the user object
-      data.image = data.image || "/assets/User.jpg";
-      data.friends = data.friends || [];
+    if (!data) {
+      return {
+        isSuccess: false,
+        message: "User not found",
+        data: null,
+      };
     }
 
     return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
+      isSuccess: true,
+      message: null,
+      data: {
+        ...data,
+        image: data.image ?? "/assets/User.jpg",
+        friends: Array.isArray(data.friends) ? JSON.parse(data.friends) : [],
+        role: data.role ?? "user", // Default role
+      },
     };
   } catch (err) {
     console.error(`Unexpected error fetching user with ID ${id}:`, err);
-    throw err;
+    return {
+      isSuccess: false,
+      message: err.message,
+      data: null,
+    };
   }
 }
 
 async function login(identifier, password) {
   try {
-    console.log(`Attempting login for identifier: ${identifier}`);
     const { data, error } = await conn
       .from("Users")
       .select("*")
@@ -56,86 +69,36 @@ async function login(identifier, password) {
       )
       .single();
 
-    console.log("Query result:", data, "Error:", error ?? "None");
-
-    if (error || !data) {
-      return {
-        isSuccess: false,
-        message: "Invalid username or password.",
-        data: null,
-        token: null,
-      };
+    if (error || !data || data.password !== password) {
+      return { isSuccess: false, message: "Invalid credentials." };
     }
 
-    if (data.password !== password) {
-      return {
-        isSuccess: false,
-        message: "Invalid username or password.",
-        data: null,
-        token: null,
-      };
-    }
-
-    const token = await createToken(data, 3600000);
-    return {
-      isSuccess: true,
-      message: "Login successful.",
-      data: { users: data, token: token },
-    };
+    const token = await createToken(data, "1h");
+    return { isSuccess: true, data, token };
   } catch (err) {
     console.error("Unexpected error during login:", err);
     throw err;
   }
 }
 
-async function createToken(users, expiresIn) {
-  return new Promise((resolve, reject) => {
-    jwt.sign(
-      { userId: users.userId, email: users.email },
-      process.env.JWT_SECRET || "",
-      { expiresIn },
-      (err, token) => {
-        if (err) reject(err);
-        else resolve(token);
-      }
-    );
-  });
-}
+async function add(user) {
+  if (!user.name || !user.email || !user.password) {
+    return {
+      isSuccess: false,
+      message: "Missing required fields.",
+    };
+  }
 
-async function verifyToken(token) {
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.JWT_SECRET || "", (err, users) => {
-      if (err) reject(err);
-      else resolve(users);
-    });
-  });
-}
-
-async function add(users) {
   try {
-    const existingUser = await conn
-      .from("Users")
-      .select("*")
-      .eq("id", users.id)
-      .single();
-    if (existingUser.data) {
-      return {
-        isSuccess: false,
-        message: "ID already exists.",
-      };
-    }
-
     const { data, error } = await conn
       .from("Users")
-      .insert([users])
+      .insert([
+        { ...user, friends: JSON.stringify([]) }, // Ensure friends is an empty array
+      ])
       .select("*")
       .single();
 
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
+    return { isSuccess: !error, message: error?.message || null, data };
   } catch (err) {
     console.error("Unexpected error in add:", err);
     throw err;
@@ -150,18 +113,14 @@ async function update(id, user) {
         name: user.name,
         email: user.email,
         role: user.role,
-        image: user.image || "/assets/User.jpg",
-        friends: user.friends, // Update the friends array
+        image: user.image ?? "/assets/User.jpg",
+        friends: JSON.stringify(user.friends), // Ensure friends is saved as a string
       })
       .eq("id", id)
       .select("*")
       .single();
 
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
+    return { isSuccess: !error, message: error?.message || null, data };
   } catch (err) {
     console.error("Unexpected error in update:", err);
     throw err;
@@ -188,61 +147,72 @@ async function remove(id) {
   }
 }
 
-async function addFriend(userId, friendId) {
+async function addFriend(id, friendId) {
   try {
-    const user = await get(userId);
+    const user = await get(id);
     if (!user.isSuccess || !user.data) {
-      return { errorCode: 404, success: false, message: "User not found." };
+      return { isSuccess: false, message: "User not found." };
     }
 
     const friend = await get(friendId);
     if (!friend.isSuccess || !friend.data) {
-      return { errorCode: 404, success: false, message: "Friend not found." };
+      return { isSuccess: false, message: "Friend not found." };
     }
 
-    const updatedFriends = [...new Set([...user.data.friends, friendId])]; // Avoid duplicates
-    const updatedUser = await update(userId, {
+    const updatedFriends = [...new Set([...user.data.friends, friendId])];
+    const updateResult = await update(id, {
       ...user.data,
       friends: updatedFriends,
     });
 
-    if (!updatedUser.isSuccess) {
-      return {
-        errorCode: 400,
-        success: false,
-        message: "Failed to add friend to friend list.",
-      };
-    }
-
     return {
-      errorCode: 200,
-      success: true,
-      message: "Friend added successfully.",
+      isSuccess: updateResult.isSuccess,
+      message: updateResult.isSuccess
+        ? "Friend added successfully"
+        : updateResult.message,
     };
   } catch (err) {
     console.error("Unexpected error in addFriend:", err);
-    return { errorCode: 500, success: false, message: "Server error." };
+    return { isSuccess: false, message: "Server error." };
   }
 }
 
-async function removeFriend(userId, friendId) {
+async function removeFriend(id, friendId) {
   try {
-    const user = await get(userId);
+    const user = await get(id);
     if (!user.isSuccess || !user.data) {
       return { isSuccess: false, message: "User not found." };
     }
 
     const updatedFriends = user.data.friends.filter((id) => id !== friendId);
-    const updatedUser = await update(userId, {
-      ...user.data,
-      friends: updatedFriends,
-    });
-
-    return updatedUser;
+    return await update(id, { ...user.data, friends: updatedFriends });
   } catch (err) {
     console.error("Unexpected error in removeFriend:", err);
     throw err;
   }
+}
+
+async function createToken(user, expiresIn) {
+  return new Promise((resolve, reject) => {
+    jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn },
+      (err, token) => {
+        if (err) reject(err);
+        else resolve(token);
+      }
+    );
+  });
+}
+
+async function verifyToken(token) {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
+      if (err) reject(err);
+      else resolve(payload);
+    });
+  });
 }
 
 module.exports = {
@@ -252,8 +222,8 @@ module.exports = {
   add,
   update,
   remove,
-  createToken,
-  verifyToken,
   addFriend,
   removeFriend,
+  createToken,
+  verifyToken,
 };

@@ -3,108 +3,86 @@ const model = require("../models/exercises");
 const { requireUser, requireAdmin } = require("../middleware/verifyJWT");
 const app = express.Router();
 
-app.
-
-  get("/", requireUser, async (req, res, next) => {
-  try {
-    const requestingUser = req.user;
-    const { userId } = req.query; // Extract userId from query parameters
-
-    const { data, error } = await model.getAll();
-    if (error) {
-      return res.status(500).json({ isSuccess: false, message: error.message });
-    }
-
-    // Filter exercises based on userId
-    const userExercises = data.filter(
-      (exercise) =>
-        exercise.userId === parseInt(userId, 10) || 
-        (requestingUser.friends || []).includes(exercise.userId)
-    );
-
-    res.status(200).json({
-      isSuccess: true,
-      message: "Exercises fetched successfully.",
-      data: userExercises,
-    });
-  } catch (error) {
-    next(error);
-  }
-  })
-
-  .get("/all", async (req, res, next) => {
+app
+  .get("/", requireUser, async (req, res, next) => {
     try {
-      const exercises = await model.getAll();
-      exercises.data = exercises.data.map((exercise) => ({
-        id: exercise.id,
-        name: exercise.name,
-        duration: exercise.duration,
-        caloriesBurned: exercise.caloriesBurned,
-        date: exercise.date,
-        userId: exercise.userId,
-      }));
+      const { userId } = req.query;
+      const requestingUser = req.user;
 
-      res.status(200).send(exercises);
+      const response = userId
+        ? await model.getUserAndFriendsExercises(+userId, requestingUser)
+        : await model.getUserAndFriendsExercises(
+            requestingUser.id,
+            requestingUser
+          );
+
+      if (!response.isSuccess) {
+        return res
+          .status(404)
+          .json({ isSuccess: false, message: response.message });
+      }
+
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
   })
+
+  .get("/all", requireAdmin, async (req, res, next) => {
+    try {
+      const response = await model.getAll();
+      res.status(response.isSuccess ? 200 : 500).json(response);
+    } catch (error) {
+      next(error);
+    }
+  })
+
   .get("/:id", requireUser, async (req, res, next) => {
     try {
-      const exercises = await model.get(+req.params.id);
-      const requestingUser = req.user;
-      if (
-        !exercises.data ||
-        (exercises.data.userId !== requestingUser.id &&
-          !(requestingUser.friends || []).includes(exercises.data.userId))
-      ) {
-        return res
-          .status(403)
-          .json({ error: "You are not authorized to view this exercise." });
-      }
-      res.status(200).json(exercises);
+      const response = await model.getExerciseForUser(+req.params.id, req.user);
+      res
+        .status(response.isSuccess ? 200 : response.errorCode || 403)
+        .json(response);
     } catch (error) {
       next(error);
     }
   })
+
   .post("/", requireUser, async (req, res, next) => {
     try {
       const newExercise = req.body;
-      if (newExercise.userId !== req.user.id) {
-        return res
-          .status(403)
-          .json({ error: "You can only add exercises for yourself." });
-      }
-      const addedExercise = await model.add(newExercise);
-      res.status(201).json(addedExercise);
+      newExercise.userId = req.user.id; // Enforce user ownership
+      const response = await model.add(newExercise);
+      res.status(response.isSuccess ? 201 : 400).json(response);
     } catch (error) {
       next(error);
     }
   })
+
   .patch("/:id", requireUser, async (req, res, next) => {
     try {
-      const exercises = await model.get(+req.params.id);
-      if (!exercises.data || exercises.data.userId !== req.user.id) {
-        return res
-          .status(403)
-          .json({ error: "You can only update your own exercises." });
-      }
-      const updatedExercise = await model.update(+req.params.id, req.body);
-      res.status(200).json(updatedExercise);
+      const response = await model.updateExerciseForUser(
+        +req.params.id,
+        req.body,
+        req.user.id
+      );
+      res
+        .status(response.isSuccess ? 200 : response.errorCode || 403)
+        .json(response);
     } catch (error) {
       next(error);
     }
   })
+
   .delete("/:id", requireUser, async (req, res, next) => {
     try {
-      const exercises = await model.get(+req.params.id);
-      if (!exercises.data || exercises.data.userId !== req.user.id) {
-        return res
-          .status(403)
-          .json({ error: "You can only delete your own exercises." });
-      }
-      const deletedExercise = await model.remove(+req.params.id);
-      res.status(200).json(deletedExercise);
+      const response = await model.deleteExerciseForUser(
+        +req.params.id,
+        req.user.id
+      );
+      res
+        .status(response.isSuccess ? 200 : response.errorCode || 403)
+        .json(response);
     } catch (error) {
       next(error);
     }

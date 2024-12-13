@@ -8,21 +8,26 @@ const session = localStorage.getItem('session')
 const currentUser = session ? JSON.parse(session) : null
 
 const searchQuery = ref('')
-const friends = ref(
-  currentUser && Array.isArray(currentUser.user.friends) ? currentUser.user.friends : []
+const friends = ref<number[]>(
+  Array.isArray(currentUser?.user?.friends) ? currentUser.user.friends : []//this fixed search, idk why
 )
 const users = ref<Users[]>([]) // Reactive array to hold users data
 const isLoading = ref(false)
 
 const fetchUsers = async () => {
   isLoading.value = true
-  const response = await getUsers()
-  if (response.isSuccess) {
-    users.value = response.data
-  } else {
-    console.error('Error fetching users:', response.message)
+  try {
+    const response = await getUsers()
+    if (response.isSuccess) {
+      users.value = response.data
+    } else {
+      console.error('Error fetching users:', response.message)
+    }
+  } catch (error) {
+    console.error('Error in fetchUsers:', error)
+  } finally {
+    isLoading.value = false
   }
-  isLoading.value = false
 }
 
 // Filtered users based on search query
