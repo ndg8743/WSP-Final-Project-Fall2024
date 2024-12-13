@@ -21,11 +21,27 @@ async function getAll() {
 
 async function getByUserId(userId) {
   try {
+    console.log("Fetching meals for userId:", userId); // Debug log
     const { data, error } = await conn
       .from("Meals")
       .select("*")
       .eq("userId", userId);
-    return { isSuccess: !error, message: error?.message, data: data || [] };
+
+    if (error) {
+      console.error("Error fetching meals:", error);
+      return { 
+        isSuccess: false, 
+        message: error.message, 
+        data: [] 
+      };
+    }
+
+    console.log("Found meals:", data); // Debug log
+    return { 
+      isSuccess: true, 
+      message: "Meals fetched successfully.", 
+      data: data || [] 
+    };
   } catch (err) {
     console.error(`Unexpected error fetching meals for userId ${userId}:`, err);
     throw err;
@@ -48,12 +64,32 @@ async function get(id) {
 
 async function add(meal) {
   try {
+    // Ensure date is in correct format
+    const formattedMeal = {
+      ...meal,
+      date: meal.date ? new Date(meal.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    };
+
     const { data, error } = await conn
       .from("Meals")
-      .insert([meal])
+      .insert([formattedMeal])
       .select("*")
       .single();
-    return { isSuccess: !error, message: error?.message, data: data || null };
+
+    if (error) {
+      console.error("Error adding meal:", error);
+      return { 
+        isSuccess: false, 
+        message: error.message, 
+        data: null 
+      };
+    }
+
+    return { 
+      isSuccess: true, 
+      message: "Meal added successfully", 
+      data 
+    };
   } catch (err) {
     console.error("Unexpected error in add:", err);
     throw err;
@@ -62,9 +98,15 @@ async function add(meal) {
 
 async function update(id, meal) {
   try {
+    // Ensure date is in correct format
+    const formattedMeal = {
+      ...meal,
+      date: meal.date ? new Date(meal.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    };
+
     const { data, error } = await conn
       .from("Meals")
-      .update(meal)
+      .update(formattedMeal)
       .eq("id", id)
       .select("*")
       .single();

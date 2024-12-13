@@ -3,6 +3,7 @@
 import { ref, onMounted } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import { getUserExercises } from '@/models/exercises'; // Import your model function
+import { getSession } from '@/models/login';
 
 // User-specific stats and goals
 const completedExercises = ref(0)
@@ -11,13 +12,12 @@ const exerciseGoal = ref(localStorage.getItem('exerciseGoal') ? parseInt(localSt
 const caloriesGoal = ref(localStorage.getItem('caloriesGoal') ? parseInt(localStorage.getItem('caloriesGoal')) : 5000)
 
 // Retrieve the current user from session
-const session = localStorage.getItem('session')
-const currentUser = session ? JSON.parse(session) : null
+const session = getSession();
 
 // Fetch and calculate user stats
 onMounted(async () => {
-  if (currentUser) {
-    const currentUserId = currentUser.user.id
+  if (session.user) {
+    const currentUserId = session.user.id
 
     try {
       // Fetch exercises from the API
@@ -49,7 +49,7 @@ const saveGoals = () => {
   <section class="section">
     <div class="container">
       <h1 class="title">Your Exercise Statistics</h1>
-      <div v-if="currentUser">
+      <div v-if="session.user">
         <div class="box">
           <h2 class="subtitle">Set Your Goals</h2>
           <div class="field">
@@ -84,6 +84,7 @@ const saveGoals = () => {
 .section {
   padding-top: 2rem;
 }
+
 .notification {
   margin-top: 1rem;
 }

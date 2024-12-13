@@ -5,10 +5,10 @@ import FriendActivityCard from '@/components/FriendActivityCard.vue'
 import { getUserExercises } from '@/models/exercises'; // Import your model function
 import { getUsers } from '@/models/users'; // Import your model function
 import { getUserMeals } from '@/models/meals';
+import { getSession } from '@/models/login';
 
 // Retrieve current user from session token
-const session = localStorage.getItem('session')
-const currentUser = session ? JSON.parse(session) : null
+const session = getSession();
 
 // Store the data to display in the UI
 const friendsActivities = ref([])
@@ -43,11 +43,11 @@ async function getLastMeal(userId) {
 }
 
 onMounted(async () => {
-  if (currentUser) {
-    if (currentUser.user.role === 'user') {
+  if (session.user) {
+    if (session.user.role === 'user') {
       const userResponse = await getUsers()
       if (userResponse.isSuccess) {
-        const friends = userResponse.data.filter(user => currentUser.user.friends.includes(user.id))
+        const friends = userResponse.data.filter(user => session.user.friends.includes(user.id))
         friendsActivities.value = await Promise.all(
           friends.map(async friend => {
             const recentActivity = await getMostRecentActivity(friend.id)
@@ -71,7 +71,7 @@ onMounted(async () => {
       }
     }
 
-    if (currentUser.user.role === 'admin') {
+    if (session.user.role === 'admin') {
       const userResponse = await getUsers()
       if (userResponse.isSuccess) {
         friendsActivities.value = await Promise.all(
@@ -99,7 +99,7 @@ onMounted(async () => {
   <section class="section">
     <div class="container">
       <h1 class="title">Social</h1>
-      <div v-if="currentUser && currentUser.user">
+      <div v-if="session && session.user">
         <FriendActivityCard v-for="friend in friendsActivities" :key="friend.id" :friend="friend" />
       </div>
       <div v-else>
@@ -113,6 +113,7 @@ onMounted(async () => {
 .section {
   padding-top: 2rem;
 }
+
 .notification {
   margin-top: 1rem;
 }

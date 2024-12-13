@@ -17,15 +17,39 @@ const router = createRouter({
 // Add a global navigation guard
 router.beforeEach((to, from, next) => {
   const session = getSession()
+  
+  // Public routes that don't require authentication
+  const publicRoutes = ['/', '/login', '/signup']
+  
+  // Check if route requires authentication
+  const requiresAuth = !publicRoutes.includes(to.path)
+  
+  // Check if route requires admin role
+  const requiresAdmin = to.path.startsWith('/admin')
 
-  // Example: Protect routes with `meta.requiresAuth`
-  if (to.meta?.requiresAuth && !session?.token) {
-    next({ path: '/', query: { redirect: to.fullPath } }) // Redirect to login
-  } else if (to.meta?.requiresAdmin && session?.user.role !== 'admin') {
-    next({ name: 'unauthorized' }) // Redirect unauthorized
+  if (requiresAuth && !session?.token) {
+    // Redirect to login if authentication is required but no token exists
+    next({ 
+      path: '/login', 
+      query: { redirect: to.fullPath } 
+    })
+  } else if (requiresAdmin && session?.user?.role !== 'admin') {
+    // Redirect unauthorized users trying to access admin routes
+    next({ path: '/unauthorized' })
+  } else if (to.path === '/login' && session?.token) {
+    // Redirect logged in users trying to access login page
+    next({ path: '/dashboard' })
   } else {
-    next() // Allow access
+    // Allow access
+    next()
   }
+})
+
+// Handle navigation errors
+router.onError((error) => {
+  console.error('Navigation error:', error)
+  // Redirect to error page or handle error appropriately
+  router.push('/error')
 })
 
 export default router

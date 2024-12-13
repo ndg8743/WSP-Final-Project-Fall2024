@@ -1,17 +1,15 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Users } from '@/models/users.js' // Import User type if necessary
+//import { Users } from '@/models/users.js' // Import User type if necessary
+import { getSession } from '@/models/login';
 
 const avatar = ref('')
-const currentUser = ref<Users | null>(null)
+const session = getSession()
 
 onMounted(() => {
-  // Load the logged-in user data from localStorage
-  const session = localStorage.getItem('session')
-  if (session) {
-    currentUser.value = JSON.parse(session)
-    avatar.value = currentUser.value?.image || '' // Set avatar to the user's current image if available
+  if (session.user) {
+    avatar.value = session.user.image || '' // Set avatar to the user's current image if available
   }
 })
 
@@ -23,10 +21,10 @@ const uploadImage = (event: Event) => {
       avatar.value = e.target?.result as string
 
       // Update the current user's avatar
-      if (currentUser.value) {
-        currentUser.value.image = avatar.value
+      if (session.user) {
+        session.user.image = avatar.value
         // Save the updated user data to localStorage
-        localStorage.setItem('session', JSON.stringify(currentUser.value))
+        localStorage.setItem('session', JSON.stringify(session))
       }
     }
     reader.readAsDataURL(file)

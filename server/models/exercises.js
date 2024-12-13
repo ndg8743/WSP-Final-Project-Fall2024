@@ -19,6 +19,35 @@ async function getAll() {
   }
 }
 
+async function getByUserId(userId) {
+  try {
+    console.log("Fetching exercises for userId:", userId); // Debug log
+    const { data, error } = await conn
+      .from("Exercises")
+      .select("*")
+      .eq("userId", userId);
+
+    if (error) {
+      console.error("Error fetching exercises:", error);
+      return { 
+        isSuccess: false, 
+        message: error.message, 
+        data: [] 
+      };
+    }
+
+    console.log("Found exercises:", data); // Debug log
+    return { 
+      isSuccess: true, 
+      message: "Exercises fetched successfully", 
+      data: data || [] 
+    };
+  } catch (err) {
+    console.error(`Unexpected error fetching exercises for userId ${userId}:`, err);
+    throw err;
+  }
+}
+
 async function get(id) {
   try {
     const { data, error } = await conn
@@ -40,9 +69,15 @@ async function get(id) {
 
 async function add(exercise) {
   try {
+    // Ensure date is in correct format
+    const formattedExercise = {
+      ...exercise,
+      date: exercise.date ? new Date(exercise.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    };
+
     const { data, error } = await conn
       .from("Exercises")
-      .insert([exercise])
+      .insert([formattedExercise])
       .select("*")
       .single();
 
@@ -59,9 +94,15 @@ async function add(exercise) {
 
 async function update(id, exercise) {
   try {
+    // Ensure date is in correct format
+    const formattedExercise = {
+      ...exercise,
+      date: exercise.date ? new Date(exercise.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    };
+
     const { data, error } = await conn
       .from("Exercises")
-      .update(exercise)
+      .update(formattedExercise)
       .eq("id", id)
       .select("*")
       .single();
@@ -195,6 +236,7 @@ module.exports = {
   add,
   update,
   remove,
+  getByUserId,
   getUserAndFriendsExercises,
   getExerciseForUser,
   updateExerciseForUser,

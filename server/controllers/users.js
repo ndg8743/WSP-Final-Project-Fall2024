@@ -9,6 +9,7 @@ const {
   remove,
   addFriend,
   removeFriend,
+  createToken
 } = require("../models/users");
 const {
   requireUser,

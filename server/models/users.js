@@ -6,6 +6,48 @@ if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET must be set in environment variables");
 }
 
+// Initialize default admin user if none exists
+async function initializeDefaultAdmin() {
+  try {
+    // Check if any admin exists
+    const { count, error: countError } = await conn
+      .from("Users")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "admin");
+
+    if (countError) {
+      console.error("Error checking for admin users:", countError);
+      return;
+    }
+
+    // If no admin exists, create one
+    if (count === 0) {
+      const defaultAdmin = {
+        name: "admin",
+        email: "admin@example.com",
+        password: "admin123", // This should be changed immediately in production
+        role: "admin",
+        friends: [],
+      };
+
+      const { error: insertError } = await conn
+        .from("Users")
+        .insert([defaultAdmin]);
+
+      if (insertError) {
+        console.error("Error creating default admin:", insertError);
+      } else {
+        console.log("Default admin user created");
+      }
+    }
+  } catch (err) {
+    console.error("Error initializing default admin:", err);
+  }
+}
+
+// Call initialization on module load
+initializeDefaultAdmin();
+
 async function getAll() {
   try {
     const { data, error, count } = await conn
@@ -45,8 +87,8 @@ async function get(id) {
       data: {
         ...data,
         image: data.image ?? "/assets/User.jpg",
-        friends: Array.isArray(data.friends) ? JSON.parse(data.friends) : [],
-        role: data.role ?? "user", // Default role
+        friends: Array.isArray(data.friends) ? data.friends : [],
+        role: data.role ?? "user",
       },
     };
   } catch (err) {
@@ -61,47 +103,169 @@ async function get(id) {
 
 async function login(identifier, password) {
   try {
-    const { data, error } = await conn
-      .from("Users")
-      .select("*")
-      .or(
-        `name.ilike.${identifier.toLowerCase()},email.ilike.${identifier.toLowerCase()}`
-      )
-      .single();
-
-    if (error || !data || data.password !== password) {
-      return { isSuccess: false, message: "Invalid credentials." };
+    if (!identifier || !password) {
+      return {
+        isSuccess: false,
+        message: "Email/username and password are required",
+        data: null,
+      };
     }
 
-    const token = await createToken(data, "1h");
-    return { isSuccess: true, data, token };
+    console.log("Login attempt for:", identifier); // Debug log
+
+    // Try to find user by email first
+    let { data: emailUser, error: emailError } = await conn
+      .from("Users")
+      .select("*")
+      .eq("email", identifier)
+      .maybeSingle();
+
+    // If no user found by email, try username
+    if (!emailUser && !emailError) {
+      const { data: nameUser, error: nameError } = await conn
+        .from("Users")
+        .select("*")
+        .eq("name", identifier)
+        .maybeSingle();
+
+      if (nameError) {
+        console.error("Error searching by username:", nameError);
+        return {
+          isSuccess: false,
+          message: "Database error occurred",
+          data: null,
+        };
+      }
+
+      if (nameUser) {
+        emailUser = nameUser; // Use the user found by username
+      }
+    } else if (emailError) {
+      console.error("Error searching by email:", emailError);
+      return {
+        isSuccess: false,
+        message: "Database error occurred",
+        data: null,
+      };
+    }
+
+    // If no user found at all
+    if (!emailUser) {
+      return {
+        isSuccess: false,
+        message: "Invalid credentials",
+        data: null,
+      };
+    }
+
+    // Check password
+    if (emailUser.password !== password) {
+      return {
+        isSuccess: false,
+        message: "Invalid credentials",
+        data: null,
+      };
+    }
+
+    const token = await createToken(emailUser, "1h");
+
+    // Structure the response to match client expectations
+    return {
+      isSuccess: true,
+      data: {
+        token,
+        users: {
+          id: emailUser.id,
+          name: emailUser.name,
+          email: emailUser.email,
+          role: emailUser.role || "user",
+          image: emailUser.image || "/assets/User.jpg",
+          friends: Array.isArray(emailUser.friends) ? emailUser.friends : [],
+        },
+      },
+    };
   } catch (err) {
     console.error("Unexpected error during login:", err);
-    throw err;
+    return {
+      isSuccess: false,
+      message: "An unexpected error occurred",
+      data: null,
+    };
   }
 }
 
 async function add(user) {
-  if (!user.name || !user.email || !user.password) {
-    return {
-      isSuccess: false,
-      message: "Missing required fields.",
-    };
-  }
-
   try {
-    const { data, error } = await conn
+    if (!user.name || !user.email || !user.password) {
+      return {
+        isSuccess: false,
+        message: "Missing required fields.",
+        data: null,
+      };
+    }
+
+    // Check if user already exists
+    const { data: existingUser, error: checkError } = await conn
       .from("Users")
-      .insert([
-        { ...user, friends: JSON.stringify([]) }, // Ensure friends is an empty array
-      ])
       .select("*")
+      .or(`email.eq.${user.email},name.eq.${user.name}`)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking existing user:", checkError);
+      return {
+        isSuccess: false,
+        message: "Error checking user existence",
+        data: null,
+      };
+    }
+
+    if (existingUser) {
+      return {
+        isSuccess: false,
+        message: "User with this email or username already exists.",
+        data: null,
+      };
+    }
+
+    // Prepare user data
+    const newUser = {
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      role: user.role || "user",
+      friends: [],
+      image: user.image || "/assets/User.jpg",
+    };
+
+    // Insert new user
+    const { data: insertedUser, error: insertError } = await conn
+      .from("Users")
+      .insert([newUser])
+      .select()
       .single();
 
-    return { isSuccess: !error, message: error?.message || null, data };
+    if (insertError) {
+      console.error("Error adding user:", insertError);
+      return {
+        isSuccess: false,
+        message: insertError.message || "Error adding user",
+        data: null,
+      };
+    }
+
+    return {
+      isSuccess: true,
+      message: "User added successfully",
+      data: insertedUser,
+    };
   } catch (err) {
     console.error("Unexpected error in add:", err);
-    throw err;
+    return {
+      isSuccess: false,
+      message: "An unexpected error occurred",
+      data: null,
+    };
   }
 }
 
@@ -114,7 +278,7 @@ async function update(id, user) {
         email: user.email,
         role: user.role,
         image: user.image ?? "/assets/User.jpg",
-        friends: JSON.stringify(user.friends), // Ensure friends is saved as a string
+        friends: user.friends || [],
       })
       .eq("id", id)
       .select("*")
@@ -134,7 +298,7 @@ async function remove(id) {
       .delete()
       .eq("id", id)
       .select("*")
-      .single(); // Ensure the deleted user is returned
+      .single();
 
     return {
       isSuccess: !error,
@@ -159,7 +323,9 @@ async function addFriend(id, friendId) {
       return { isSuccess: false, message: "Friend not found." };
     }
 
-    const updatedFriends = [...new Set([...user.data.friends, friendId])];
+    const updatedFriends = [
+      ...new Set([...(user.data.friends || []), friendId]),
+    ];
     const updateResult = await update(id, {
       ...user.data,
       friends: updatedFriends,
@@ -184,7 +350,9 @@ async function removeFriend(id, friendId) {
       return { isSuccess: false, message: "User not found." };
     }
 
-    const updatedFriends = user.data.friends.filter((id) => id !== friendId);
+    const updatedFriends = (user.data.friends || []).filter(
+      (fid) => fid !== friendId
+    );
     return await update(id, { ...user.data, friends: updatedFriends });
   } catch (err) {
     console.error("Unexpected error in removeFriend:", err);
@@ -195,7 +363,11 @@ async function removeFriend(id, friendId) {
 async function createToken(user, expiresIn) {
   return new Promise((resolve, reject) => {
     jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      {
+        userid: user.id,
+        email: user.email,
+        role: user.role || "user",
+      },
       process.env.JWT_SECRET,
       { expiresIn },
       (err, token) => {

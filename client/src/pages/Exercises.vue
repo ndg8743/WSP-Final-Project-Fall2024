@@ -1,21 +1,24 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import ExerciseCard from '@/components/ExerciseCard.vue'
+import { useRouter } from 'vue-router'
 // @ts-ignore
-import Modal from '@/components/Modal.vue'
-import { getUserExercises, addExercise } from '@/models/exercises.js'
-import type { Exercise } from '@/models/exercises'
+import ExerciseCard from '../components/ExerciseCard.vue'
+// @ts-ignore
+import Modal from '../components/Modal.vue'
+import { getUserExercises, addExercise, type Exercise } from '../models/exercises.js'
+import { getSession } from '../models/login.js'
 
-// Retrieve the current user from session
-const session = localStorage.getItem('session')
-const currentUser = session ? JSON.parse(session) : null
+const router = useRouter()
+const session = getSession()
 
 const exercises = ref<Exercise[]>([])
 const filterDate = ref('')
 const filteredExercises = ref<Exercise[]>([])
-const currentExercise = ref<Exercise | null>(null)
+const currentExercise = ref<Partial<Exercise> | null>(null)
 const showModal = ref(false)
+const isLoading = ref(false)
+const error = ref('')
 const isAddingExercise = ref(false)
 
 const filterExercises = () => {
@@ -25,65 +28,107 @@ const filterExercises = () => {
 }
 
 const openAddExercise = () => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
   currentExercise.value = {
-    id: Date.now(),
     name: '',
     duration: 0,
     caloriesBurned: 0,
     date: new Date().toISOString().split('T')[0],
-    userId: currentUser ? currentUser.user.id : 0 // Set userId to current logged-in user
+    userId: session.user.id
   }
   isAddingExercise.value = true
   showModal.value = true
 }
 
 const handleEdit = (exercise: Exercise) => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
   currentExercise.value = { ...exercise }
   isAddingExercise.value = false
   showModal.value = true
 }
 
 const handleDelete = (id: number) => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
   exercises.value = exercises.value.filter(exercise => exercise.id !== id)
   filterExercises()
 }
 
 const saveExercise = async () => {
-  if (isAddingExercise.value) {
-    try {
-      const response = await addExercise(currentExercise.value!)
+  if (!session.token || !session.user?.id || !currentExercise.value) {
+    router.push('/login')
+    return
+  }
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    if (isAddingExercise.value) {
+      const response = await addExercise(currentExercise.value as Omit<Exercise, 'id'>)
       if (response.isSuccess && response.data) {
         exercises.value.push(response.data)
       } else {
-        console.error('Failed to add exercise:', response.message)
+        error.value = response.message || 'Failed to add exercise'
       }
-    } catch (error) {
-      console.error('Error adding exercise:', error)
+    } else {
+      const index = exercises.value.findIndex(exercise => exercise.id === currentExercise.value!.id)
+      if (index !== -1) exercises.value.splice(index, 1, currentExercise.value as Exercise)
     }
-  } else {
-    const index = exercises.value.findIndex(exercise => exercise.id === currentExercise.value!.id)
-    if (index !== -1) exercises.value.splice(index, 1, { ...currentExercise.value! })
+    closeModal()
+    filterExercises()
+  } catch (err) {
+    console.error('Error saving exercise:', err)
+    error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
+    if (err instanceof Error && err.message === 'Session expired') {
+      router.push('/login')
+    }
+  } finally {
+    isLoading.value = false
   }
-  closeModal()
-  filterExercises()
 }
 
 const closeModal = () => {
   showModal.value = false
+  currentExercise.value = null
 }
 
-onMounted(() => {
-  if (currentUser) {
-    getUserExercises(currentUser.user.id).then(response => {
-      if (response.isSuccess && response.data) {
-        exercises.value = response.data
-        filterExercises()
-      } else {
-        console.error('Failed to fetch user exercises:', response.message)
-      }
-    }).catch(error => {
-      console.error('Error fetching user exercises:', error)
-    })
+onMounted(async () => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    const response = await getUserExercises(session.user.id)
+    if (response.isSuccess) {
+      exercises.value = response.data
+      filterExercises()
+    } else {
+      error.value = response.message || 'Error fetching exercises'
+    }
+  } catch (err) {
+    console.error('Error fetching exercises:', err)
+    error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
+    if (err instanceof Error && err.message === 'Session expired') {
+      router.push('/login')
+    }
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
@@ -92,17 +137,51 @@ onMounted(() => {
   <section class="section">
     <div class="container">
       <h1 class="title">Exercises</h1>
-      <div v-if="currentUser">
-        <button class="button is-primary" @click="openAddExercise">Add New Exercise</button>
-        <br />
-        <br />
-        <div class="field">
-          <label class="label">Filter by Date</label>
-          <input type="date" class="input" v-model="filterDate" @change="filterExercises" />
+
+      <div v-if="error" class="notification is-danger">
+        {{ error }}
+      </div>
+
+      <div v-if="session.token && session.user">
+        <button 
+          class="button is-primary" 
+          @click="openAddExercise"
+          :disabled="isLoading"
+        >
+          Add New Exercise
+        </button>
+
+        <div class="mt-4">
+          <div class="field">
+            <label class="label">Filter by Date</label>
+            <input 
+              type="date" 
+              class="input" 
+              v-model="filterDate" 
+              @change="filterExercises"
+              :disabled="isLoading"
+            />
+          </div>
         </div>
-        <div>
-          <ExerciseCard v-for="exercise in filteredExercises" :key="exercise.id" :exercise="exercise" @edit="handleEdit"
-            @delete="handleDelete" />
+
+        <div v-if="isLoading" class="mt-4">
+          <progress class="progress is-small is-primary" max="100">Loading...</progress>
+        </div>
+
+        <div v-else>
+          <div v-if="filteredExercises.length === 0" class="notification is-info mt-4">
+            No exercises found for the selected date.
+          </div>
+
+          <div v-else>
+            <ExerciseCard
+              v-for="exercise in filteredExercises"
+              :key="exercise.id"
+              :exercise="exercise"
+              @edit="handleEdit"
+              @delete="handleDelete"
+            />
+          </div>
         </div>
       </div>
       <div v-else>
@@ -119,24 +198,57 @@ onMounted(() => {
       <template v-if="currentExercise">
         <div class="field">
           <label class="label">Exercise Name</label>
-          <input class="input" v-model="currentExercise.name" />
+          <input 
+            class="input" 
+            v-model="currentExercise.name"
+            :disabled="isLoading"
+          />
         </div>
         <div class="field">
           <label class="label">Duration (minutes)</label>
-          <input class="input" type="number" v-model="currentExercise.duration" />
+          <input 
+            class="input" 
+            type="number" 
+            v-model="currentExercise.duration"
+            :disabled="isLoading"
+          />
         </div>
         <div class="field">
           <label class="label">Calories Burned</label>
-          <input class="input" type="number" v-model="currentExercise.caloriesBurned" />
+          <input 
+            class="input" 
+            type="number" 
+            v-model="currentExercise.caloriesBurned"
+            :disabled="isLoading"
+          />
         </div>
         <div class="field">
           <label class="label">Date</label>
-          <input class="input" type="date" v-model="currentExercise.date" />
+          <input 
+            class="input" 
+            type="date" 
+            v-model="currentExercise.date"
+            :disabled="isLoading"
+          />
         </div>
       </template>
     </template>
     <template #footer>
-      <button class="button is-success" @click="saveExercise">Save</button>
+      <button 
+        class="button is-success" 
+        @click="saveExercise"
+        :class="{ 'is-loading': isLoading }"
+        :disabled="isLoading"
+      >
+        Save
+      </button>
+      <button 
+        class="button" 
+        @click="closeModal"
+        :disabled="isLoading"
+      >
+        Cancel
+      </button>
     </template>
   </Modal>
 </template>
@@ -148,5 +260,13 @@ onMounted(() => {
 
 .notification {
   margin-top: 1rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.button + .button {
+  margin-left: 0.5rem;
 }
 </style>

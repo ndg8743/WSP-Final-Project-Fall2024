@@ -1,35 +1,39 @@
 <!-- eslint-disable vue/multi-word-component-names -->
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import ProgressBar from '@/components/ProgressBar.vue'
-import { getUserExercises } from '@/models/exercises'
-import { getUserMeals } from '@/models/meals' // Import meals model function
+import { useRouter } from 'vue-router'
+// @ts-ignore
+import ProgressBar from '../components/ProgressBar.vue'
+import { getUserExercises, type Exercise } from '../models/exercises.js'
+import { getUserMeals, type Meal } from '../models/meals.js'
+import { getSession } from '../models/login.js'
 
-// Retrieve the current user from session
-const session = localStorage.getItem('session')
-const currentUser = session ? JSON.parse(session) : null
+const router = useRouter()
+const session = getSession()
 
 // User-specific data
 const lastExercise = ref('')
 const totalExercises = ref(0)
 const completedExercises = ref(0)
-const caloriesBurned = ref(0) // Track calories burned
-const mealCalories = ref(0) // Track meal calories
-const netCalorieBalance = ref(0) // Track net calorie balance
+const caloriesBurned = ref(0)
+const mealCalories = ref(0)
+const netCalorieBalance = ref(0)
+const isLoading = ref(false)
+const error = ref('')
 
-// Goals for exercises and calories
-const exerciseGoal = ref(localStorage.getItem('exerciseGoal') ? parseInt(localStorage.getItem('exerciseGoal')) : 100)
-const caloriesGoal = ref(localStorage.getItem('caloriesGoal') ? parseInt(localStorage.getItem('caloriesGoal')) : 5000)
-const combinedProgress = ref(0) // Combined progress percentage
+// Goals with proper type conversion
+const exerciseGoal = ref(Number(localStorage.getItem('exerciseGoal')) || 100)
+const caloriesGoal = ref(Number(localStorage.getItem('caloriesGoal')) || 5000)
+const combinedProgress = ref(0)
 
 // Timer and Stopwatch
-const timer = ref(0) // Timer in seconds
-const stopwatch = ref(0) // Stopwatch in seconds
-const timerInterval = ref(null)
-const stopwatchInterval = ref(null)
+const timer = ref(0)
+const stopwatch = ref(0)
+const timerInterval = ref<number | null>(null)
+const stopwatchInterval = ref<number | null>(null)
 
 // Helper functions to format time
-const formatTime = (seconds) => {
+const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
@@ -37,7 +41,7 @@ const formatTime = (seconds) => {
 
 const startTimer = () => {
   if (!timerInterval.value && timer.value > 0) {
-    timerInterval.value = setInterval(() => {
+    timerInterval.value = window.setInterval(() => {
       if (timer.value > 0) {
         timer.value -= 1
       } else {
@@ -71,7 +75,7 @@ const decrementTimer = () => {
 
 const startStopwatch = () => {
   if (!stopwatchInterval.value) {
-    stopwatchInterval.value = setInterval(() => {
+    stopwatchInterval.value = window.setInterval(() => {
       stopwatch.value++
     }, 1000)
   }
@@ -89,52 +93,83 @@ const resetStopwatch = () => {
   stopwatch.value = 0
 }
 
-onMounted(async () => {
-  console.log(currentUser.value)
-  if (currentUser.value) {
-    try {
-      // Fetch user exercises from the API
-      const userExercises = await getUserExercises(currentUser.user.id)
-
-      if (userExercises.data.length > 0) {
-        const sortedExercises = userExercises.data.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        )
-        const recentExercise = sortedExercises[0]
-        lastExercise.value = `${recentExercise.name} - ${recentExercise.duration} minutes`
-        totalExercises.value = sortedExercises.length
-        completedExercises.value = Math.min(sortedExercises.length, exerciseGoal.value)
-        caloriesBurned.value = sortedExercises.reduce((total, exercise) => total + exercise.caloriesBurned, 0)
-      }
-
-      // Fetch user meals from the API
-      const userMeals = await getUserMeals(currentUser.user.id)
-      if (userMeals.data.length > 0) {
-        mealCalories.value = userMeals.data.reduce((total, meal) => total + meal.mealCalories, 0)
-      }
-
-      // Calculate net calorie balance
-      netCalorieBalance.value = mealCalories.value - caloriesBurned.value
-
-      // Calculate combined progress
-      combinedProgress.value = Math.min(
-        ((completedExercises.value / exerciseGoal.value) * 50) +
-        ((caloriesBurned.value / caloriesGoal.value) * 50),
-        100
-      )
-    } catch (error) {
-      console.error('Error fetching user data:', error)
-    }
+// Calculate combined progress
+const calculateProgress = () => {
+  if (exerciseGoal.value && caloriesGoal.value) {
+    combinedProgress.value = Math.min(
+      ((completedExercises.value / exerciseGoal.value) * 50) +
+      ((caloriesBurned.value / caloriesGoal.value) * 50),
+      100
+    )
   }
+}
+
+// Fetch user data
+const fetchUserData = async () => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    // Fetch user exercises
+    const exercisesResponse = await getUserExercises(session.user.id)
+    if (exercisesResponse.isSuccess && exercisesResponse.data.length > 0) {
+      const sortedExercises = exercisesResponse.data.sort(
+        (a: Exercise, b: Exercise) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      )
+      const recentExercise = sortedExercises[0]
+      lastExercise.value = `${recentExercise.name} - ${recentExercise.duration} minutes`
+      totalExercises.value = sortedExercises.length
+      completedExercises.value = Math.min(sortedExercises.length, exerciseGoal.value)
+      caloriesBurned.value = sortedExercises.reduce((total: number, exercise: Exercise) => total + exercise.caloriesBurned, 0)
+    }
+
+    // Fetch user meals
+    const mealsResponse = await getUserMeals(session.user.id)
+    if (mealsResponse.isSuccess && mealsResponse.data.length > 0) {
+      mealCalories.value = mealsResponse.data.reduce((total: number, meal: Meal) => total + meal.mealCalories, 0)
+    }
+
+    // Calculate net calorie balance
+    netCalorieBalance.value = mealCalories.value - caloriesBurned.value
+    calculateProgress()
+  } catch (err) {
+    console.error('Error fetching user data:', err)
+    error.value = err instanceof Error ? err.message : 'An error occurred while fetching data'
+    if (err instanceof Error && err.message === 'Session expired') {
+      router.push('/login')
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Lifecycle hooks
+onMounted(() => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+  fetchUserData()
 })
 
-// Watch for changes in goals and recalculate progress
+// Watchers
 watch([exerciseGoal, caloriesGoal], () => {
-  combinedProgress.value = Math.min(
-    ((completedExercises.value / exerciseGoal.value) * 50) +
-    ((caloriesBurned.value / caloriesGoal.value) * 50),
-    100
-  )
+  // Save to localStorage
+  localStorage.setItem('exerciseGoal', exerciseGoal.value.toString())
+  localStorage.setItem('caloriesGoal', caloriesGoal.value.toString())
+  calculateProgress()
+})
+
+// Watch for session changes
+watch(() => session.token, (newToken) => {
+  if (!newToken) {
+    router.push('/login')
+  }
 })
 </script>
 
@@ -142,44 +177,58 @@ watch([exerciseGoal, caloriesGoal], () => {
   <section class="section">
     <div class="container">
       <h1 class="title">Dashboard</h1>
-      <div v-if="currentUser">
-        <div class="box">
-          <h2 class="subtitle">Quick Overview</h2>
-          <p>Last exercise: {{ lastExercise }}</p>
-          <p>Total exercises completed: {{ totalExercises }}</p>
-          <p>Total calories burned: {{ caloriesBurned }}</p>
-          <p>Total meal calories: {{ mealCalories }}</p>
+      
+      <div v-if="error" class="notification is-danger">
+        {{ error }}
+      </div>
+
+      <div v-if="session.token && session.user">
+        <div v-if="isLoading" class="mt-4">
+          <progress class="progress is-small is-primary" max="100">Loading...</progress>
         </div>
-        <div class="box">
-          <h2 class="subtitle">Total Progress</h2>
-          <ProgressBar :value="combinedProgress" :max="100" />
-          <p>{{ combinedProgress.toFixed(2) }}% of combined goal reached</p>
-          <p>Net Calorie Balance: {{ netCalorieBalance }}</p> <!-- New Row -->
-        </div>
-        <div class="box">
-          <h2 class="subtitle">Timer</h2>
-          <div class="timer-controls">
-            <button class="button is-info" @click="decrementTimer">-</button>
-            <p class="timer-value">{{ formatTime(timer) }}</p>
-            <button class="button is-info" @click="incrementTimer">+</button>
+
+        <template v-else>
+          <div class="box">
+            <h2 class="subtitle">Quick Overview</h2>
+            <p>Last exercise: {{ lastExercise || 'No exercises recorded' }}</p>
+            <p>Total exercises completed: {{ totalExercises }}</p>
+            <p>Total calories burned: {{ caloriesBurned }}</p>
+            <p>Total meal calories: {{ mealCalories }}</p>
           </div>
-          <div class="buttons is-centered">
-            <button class="button is-primary" @click="startTimer">Start</button>
-            <button class="button is-red is-light" @click="stopTimer">Stop</button>
-            <button class="button is-danger is-light" @click="resetTimer">Reset</button>
+
+          <div class="box">
+            <h2 class="subtitle">Total Progress</h2>
+            <ProgressBar :value="combinedProgress" :max="100" />
+            <p>{{ combinedProgress.toFixed(2) }}% of combined goal reached</p>
+            <p>Net Calorie Balance: {{ netCalorieBalance }}</p>
           </div>
-        </div>
-        <div class="box">
-          <h2 class="subtitle">Stopwatch</h2>
-          <div class="timer-controls">
-            <p class="timer-value">{{ formatTime(stopwatch) }}</p>
+
+          <div class="box">
+            <h2 class="subtitle">Timer</h2>
+            <div class="timer-controls">
+              <button class="button is-info" @click="decrementTimer">-</button>
+              <p class="timer-value">{{ formatTime(timer) }}</p>
+              <button class="button is-info" @click="incrementTimer">+</button>
+            </div>
+            <div class="buttons is-centered">
+              <button class="button is-primary" @click="startTimer">Start</button>
+              <button class="button is-red is-light" @click="stopTimer">Stop</button>
+              <button class="button is-danger is-light" @click="resetTimer">Reset</button>
+            </div>
           </div>
-          <div class="buttons is-centered">
-            <button class="button is-primary" @click="startStopwatch">Start</button>
-            <button class="button is-danger is-red" @click="stopStopwatch">Stop</button>
-            <button class="button is-danger is-light" @click="resetStopwatch">Reset</button>
+
+          <div class="box">
+            <h2 class="subtitle">Stopwatch</h2>
+            <div class="timer-controls">
+              <p class="timer-value">{{ formatTime(stopwatch) }}</p>
+            </div>
+            <div class="buttons is-centered">
+              <button class="button is-primary" @click="startStopwatch">Start</button>
+              <button class="button is-danger is-red" @click="stopStopwatch">Stop</button>
+              <button class="button is-danger is-light" @click="resetStopwatch">Reset</button>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
       <div v-else>
         <p class="notification is-danger">Please log in to view your dashboard.</p>
@@ -225,5 +274,9 @@ watch([exerciseGoal, caloriesGoal], () => {
 .button.is-danger.is-light {
   background-color: #0748ba !important;
   color: #ffffff !important;
+}
+
+.mt-4 {
+  margin-top: 1rem;
 }
 </style>

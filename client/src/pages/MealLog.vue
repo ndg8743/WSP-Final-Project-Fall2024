@@ -1,23 +1,25 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 // @ts-ignore
-import MealCard from '@/components/MealCard.vue'
+import MealCard from '../components/MealCard.vue'
 // @ts-ignore
-import Modal from '@/components/Modal.vue'
-import { getMeals, getUserMeals } from '@/models/meals'
-import type { Meals } from '@/models/meals.js'
+import Modal from '../components/Modal.vue'
+import { getUserMeals, addMeal, type Meal } from '../models/meals.js'
+import { getSession } from '../models/login.js'
 
-// Retrieve the current user from the session
-const session = localStorage.getItem('session')
-const currentUser = session ? JSON.parse(session) : null
+const router = useRouter()
+const session = getSession()
 
-const meals = ref<Meals[]>([])
+const meals = ref<Meal[]>([])
 const filterDate = ref('')
-const filteredMeals = ref<Meals[]>([])
-const currentMeal = ref<Meals | null>(null)
+const filteredMeals = ref<Meal[]>([])
+const currentMeal = ref<Partial<Meal> | null>(null)
 const showModal = ref(false)
-const isAddingMeal = ref(false) // Flag for add mode
+const isLoading = ref(false)
+const error = ref('')
+const isAddingMeal = ref(false)
 
 // Filter meals based on the selected date
 const filterMeals = () => {
@@ -27,51 +29,106 @@ const filterMeals = () => {
 }
 
 const openAddMeal = () => {
-  currentMeal.value = { id: Date.now(), name: '', mealCalories: 0, date: '', userId: currentUser.user.id }
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  currentMeal.value = {
+    name: '',
+    mealCalories: 0,
+    date: new Date().toISOString().split('T')[0],
+    userId: session.user.id
+  }
   isAddingMeal.value = true
   showModal.value = true
 }
 
-const handleEdit = (meal: Meals) => {
+const handleEdit = (meal: Meal) => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
   currentMeal.value = { ...meal }
   isAddingMeal.value = false
   showModal.value = true
 }
 
 const handleDelete = (id: number) => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
   meals.value = meals.value.filter(meal => meal.id !== id)
   filterMeals()
 }
 
-const saveMeal = () => {
-  if (isAddingMeal.value) {
-    meals.value.push({ ...currentMeal.value! })
-  } else {
-    const index = meals.value.findIndex(meal => meal.id === currentMeal.value!.id)
-    if (index !== -1) meals.value.splice(index, 1, { ...currentMeal.value! })
+const saveMeal = async () => {
+  if (!session.token || !session.user?.id || !currentMeal.value) {
+    router.push('/login')
+    return
   }
-  closeModal()
-  filterMeals()
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    if (isAddingMeal.value) {
+      const response = await addMeal(currentMeal.value as Omit<Meal, 'id'>)
+      if (response.isSuccess && response.data) {
+        meals.value.push(response.data)
+      } else {
+        error.value = response.message || 'Failed to add meal'
+      }
+    } else {
+      const index = meals.value.findIndex(meal => meal.id === currentMeal.value!.id)
+      if (index !== -1) meals.value.splice(index, 1, currentMeal.value as Meal)
+    }
+    closeModal()
+    filterMeals()
+  } catch (err) {
+    console.error('Error saving meal:', err)
+    error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
+    if (err instanceof Error && err.message === 'Session expired') {
+      router.push('/login')
+    }
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const closeModal = () => {
   showModal.value = false
+  currentMeal.value = null
 }
 
-// Load current user's meals on component mount
-onMounted(() => {
-  if (currentUser) {
-    getUserMeals(currentUser.user.id).then(response => {
-      if (response.isSuccess) {
-        meals.value = response.data; // Store all meals for the current user
-        filterMeals(); // Initialize filteredMeals based on the loaded data
-        console.log("Meals fetched and filtered:", meals.value); // Debug log
-      } else {
-        console.error("Error fetching user meals:", response.message);
-      }
-    }).catch(error => {
-      console.error("Unexpected error fetching user meals:", error);
-    });
+onMounted(async () => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    const response = await getUserMeals(session.user.id)
+    if (response.isSuccess) {
+      meals.value = response.data
+      filterMeals()
+    } else {
+      error.value = response.message || 'Error fetching meals'
+    }
+  } catch (err) {
+    console.error('Error fetching meals:', err)
+    error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
+    if (err instanceof Error && err.message === 'Session expired') {
+      router.push('/login')
+    }
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
@@ -80,22 +137,51 @@ onMounted(() => {
   <section class="section">
     <div class="container">
       <h1 class="title">Meal Log</h1>
-      <div v-if="currentUser">
-        <button class="button is-primary" @click="openAddMeal">Add New Meal</button>
-        <br />
-        <br />
-        <div class="field">
-          <label class="label">Filter by Date</label>
-          <input type="date" class="input" v-model="filterDate" @change="filterMeals" />
+      
+      <div v-if="error" class="notification is-danger">
+        {{ error }}
+      </div>
+
+      <div v-if="session.token && session.user">
+        <button 
+          class="button is-primary" 
+          @click="openAddMeal"
+          :disabled="isLoading"
+        >
+          Add New Meal
+        </button>
+        
+        <div class="mt-4">
+          <div class="field">
+            <label class="label">Filter by Date</label>
+            <input 
+              type="date" 
+              class="input" 
+              v-model="filterDate" 
+              @change="filterMeals"
+              :disabled="isLoading"
+            />
+          </div>
         </div>
-        <div>
-          <MealCard
-            v-for="meal in filteredMeals"
-            :key="meal.id"
-            :meal="meal"
-            @edit="handleEdit"
-            @delete="handleDelete"
-          />
+
+        <div v-if="isLoading" class="mt-4">
+          <progress class="progress is-small is-primary" max="100">Loading...</progress>
+        </div>
+
+        <div v-else>
+          <div v-if="filteredMeals.length === 0" class="notification is-info mt-4">
+            No meals found for the selected date.
+          </div>
+
+          <div v-else>
+            <MealCard
+              v-for="meal in filteredMeals"
+              :key="meal.id"
+              :meal="meal"
+              @edit="handleEdit"
+              @delete="handleDelete"
+            />
+          </div>
         </div>
       </div>
       <div v-else>
@@ -112,20 +198,48 @@ onMounted(() => {
       <template v-if="currentMeal">
         <div class="field">
           <label class="label">Meal Name</label>
-          <input class="input" v-model="currentMeal.name" />
+          <input 
+            class="input" 
+            v-model="currentMeal.name" 
+            :disabled="isLoading"
+          />
         </div>
         <div class="field">
           <label class="label">Calories</label>
-          <input class="input" type="number" v-model="currentMeal.mealCalories" />
+          <input 
+            class="input" 
+            type="number" 
+            v-model="currentMeal.mealCalories"
+            :disabled="isLoading"
+          />
         </div>
         <div class="field">
           <label class="label">Date</label>
-          <input class="input" type="date" v-model="currentMeal.date" />
+          <input 
+            class="input" 
+            type="date" 
+            v-model="currentMeal.date"
+            :disabled="isLoading"
+          />
         </div>
       </template>
     </template>
     <template #footer>
-      <button class="button is-success" @click="saveMeal">Save</button>
+      <button 
+        class="button is-success" 
+        @click="saveMeal"
+        :class="{ 'is-loading': isLoading }"
+        :disabled="isLoading"
+      >
+        Save
+      </button>
+      <button 
+        class="button" 
+        @click="closeModal"
+        :disabled="isLoading"
+      >
+        Cancel
+      </button>
     </template>
   </Modal>
 </template>
@@ -134,7 +248,16 @@ onMounted(() => {
 .section {
   padding-top: 2rem;
 }
+
 .notification {
   margin-top: 1rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.button + .button {
+  margin-left: 0.5rem;
 }
 </style>
