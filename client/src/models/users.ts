@@ -49,7 +49,7 @@ export async function addUser(user: Users): Promise<DataEnvelope<Users>> {
   return response
 }
 
-export async function updateUser(id: number, user: Users): Promise<DataEnvelope<Users>> {
+export async function updateUsers(id: number, user: Users): Promise<DataEnvelope<Users>> {
   const response = await api<DataEnvelope<Users>>(`users/${id}`, user, 'PATCH')
   if (response.data) {
     response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
@@ -57,7 +57,7 @@ export async function updateUser(id: number, user: Users): Promise<DataEnvelope<
   return response
 }
 
-export async function deleteUser(id: number): Promise<DataEnvelope<void>> {
+export async function deleteUsers(id: number): Promise<DataEnvelope<void>> {
   return await api<DataEnvelope<void>>(`users/${id}`, null, 'DELETE')
 }
 

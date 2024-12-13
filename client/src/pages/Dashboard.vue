@@ -90,7 +90,8 @@ const resetStopwatch = () => {
 }
 
 onMounted(async () => {
-  if (currentUser) {
+  console.log(currentUser.value)
+  if (currentUser.value) {
     try {
       // Fetch user exercises from the API
       const userExercises = await getUserExercises(currentUser.user.id)

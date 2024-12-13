@@ -5,7 +5,6 @@ import UserManagement from '@/components/UserManagement.vue'
 import Modal from '@/components/Modal.vue'
 import { getUsers, addUser, updateUsers, deleteUsers } from '@/models/users'
 
-// Load users from users.json
 const users = ref([])
 const currentUser = ref(null)
 const showModal = ref(false)
