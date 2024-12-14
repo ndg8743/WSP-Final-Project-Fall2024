@@ -5,4 +5,4 @@ This is a Fitness Tracker Social Web app that is my semester long project for We
 
 
 ## Site
-- Render Page: [Final Project](https://wsp-final-project-fall2024.onrender.com/)
+- Render Page: [Final Project](https://wsp-final-project-fall2024-cmjr.onrender.com/)
