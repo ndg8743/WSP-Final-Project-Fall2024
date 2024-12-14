@@ -1,5 +1,5 @@
-<script setup>
-import { defineProps } from 'vue';
+<script setup lang="ts">
+import { defineProps, ref, watch, onMounted } from 'vue';
 
 const props = defineProps({
   value: {
@@ -11,31 +11,48 @@ const props = defineProps({
     required: true
   }
 });
+
+const width = ref(0);
+
+// Use a watcher to animate the width change
+watch(() => props.value, (newValue) => {
+  width.value = (newValue / props.max) * 100;
+}, { immediate: true });
+
+// Set initial width to 0 to enable animation on mount
+onMounted(() => {
+  // Small delay to ensure transition works on initial load
+  setTimeout(() => {
+    width.value = (props.value / props.max) * 100;
+  }, 100);
+});
 </script>
 
 <template>
   <div class="progress-wrapper">
-    <div class="progress-bar" :style="{ width: `${(value / max) * 100}%` }"></div>
+    <div 
+      class="progress-bar" 
+      :style="{ width: `${width}%` }"
+    ></div>
   </div>
 </template>
 
 <style scoped>
 .progress-wrapper {
   width: 100%;
+  height: 1rem;
   background-color: #ffffff30;
-  /* Background color of the progress bar container */
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 1rem;
 }
 
 .progress-bar {
-  height: 1rem;
-  background-color: var(--bar-color, #1f191900);
-  /* Use CSS custom property for dynamic color */
-  width: var(--progress-width, 0);
-  /* Dynamic width using custom property */
-  transition: width 2.5s ease-in-out;
-  /* Smooth transition for width */
+  height: 100%;
+  background-color: var(--bar-color, #00ff99d4);
+  transform-origin: left;
+  transition: width 1.5s ease-in-out;
+  will-change: width;
+  width: 0;
 }
 </style>

@@ -240,13 +240,4 @@ onMounted(fetchUsers)
   width: 100%;
   height: 100%;
 }
-
-.box {
-  transition: all 0.3s ease;
-}
-
-.box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
 </style>

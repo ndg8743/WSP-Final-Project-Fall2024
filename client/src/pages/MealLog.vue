@@ -68,6 +68,8 @@ const handleDelete = async (id: number) => {
   meals.value = meals.value.filter((meal) => meal.id !== id)
 
   await Promise.all([deleteMeal(id), filterMeals()])
+  // Trigger dashboard refresh
+  router.replace(router.currentRoute.value.fullPath)
 }
 
 const saveMeal = async () => {
@@ -94,6 +96,8 @@ const saveMeal = async () => {
     }
     closeModal()
     filterMeals()
+    // Trigger dashboard refresh
+    router.replace(router.currentRoute.value.fullPath)
   } catch (err) {
     console.error('Error saving meal:', err)
     error.value = err instanceof Error ? err.message : 'An unexpected error occurred'

@@ -1,15 +1,16 @@
 <!-- eslint-disable vue/multi-word-component-names -->
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import ProgressBar from '@/components/ProgressBar.vue'
-import { getUserExercises } from '@/models/exercises'; // Import your model function
-import { getSession } from '@/models/login';
+import type { Component } from 'vue'
+import ProgressBar from '../components/ProgressBar.vue'
+import { getUserExercises } from '../models/exercises'
+import { getSession } from '../models/login'
 
 // User-specific stats and goals
 const completedExercises = ref(0)
 const caloriesBurned = ref(0)
-const exerciseGoal = ref(localStorage.getItem('exerciseGoal') ? parseInt(localStorage.getItem('exerciseGoal')) : 100)
-const caloriesGoal = ref(localStorage.getItem('caloriesGoal') ? parseInt(localStorage.getItem('caloriesGoal')) : 5000)
+const exerciseGoal = ref(Number(localStorage.getItem('exerciseGoal')) || 100)
+const caloriesGoal = ref(Number(localStorage.getItem('caloriesGoal')) || 5000)
 
 // Retrieve the current user from session
 const session = getSession();

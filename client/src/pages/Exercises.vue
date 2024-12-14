@@ -73,6 +73,8 @@ const handleDelete = async (id: number) => {
   exercises.value = exercises.value.filter((exercise) => exercise.id !== id)
 
   await Promise.all([deleteExercise(id), filterExercises()])
+  // Trigger dashboard refresh
+  router.replace(router.currentRoute.value.fullPath)
 }
 
 const saveExercise = async () => {
@@ -101,6 +103,8 @@ const saveExercise = async () => {
     }
     closeModal()
     filterExercises()
+    // Trigger dashboard refresh
+    router.replace(router.currentRoute.value.fullPath)
   } catch (err) {
     console.error('Error saving exercise:', err)
     error.value = err instanceof Error ? err.message : 'An unexpected error occurred'

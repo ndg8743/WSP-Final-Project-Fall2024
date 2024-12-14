@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { Meals } from '@/models/meals.js';
+import type { Meal } from '../models/meals';
 import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps<{
-  meal: Meals;
+  meal: Meal;
 }>();
 
 const emit = defineEmits<{
-  (e: 'edit', meal: Meals): void;
+  (e: 'edit', meal: Meal): void;
   (e: 'delete', mealId: number): void;
 }>();
 
@@ -33,7 +33,5 @@ const handleDelete = () => {
 <style scoped>
 .box {
   margin-bottom: 1rem;
-  padding: 1rem;
-  border: 1px solid #ccc;
 }
 </style>

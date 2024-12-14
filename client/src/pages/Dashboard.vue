@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 // @ts-ignore
 import ProgressBar from '../components/ProgressBar.vue'
 import { getUserExercises, type Exercise } from '../models/exercises.js'
@@ -9,6 +9,7 @@ import { getUserMeals, type Meal } from '../models/meals.js'
 import { getSession } from '../models/login.js'
 
 const router = useRouter()
+const route = useRoute()
 const session = getSession()
 
 // User-specific data
@@ -18,12 +19,16 @@ const completedExercises = ref(0)
 const caloriesBurned = ref(0)
 const mealCalories = ref(0)
 const netCalorieBalance = ref(0)
-const isLoading = ref(false)
+const isLoading = ref(true) // Start with loading true
 const error = ref('')
 
 // Goals with proper type conversion
 const exerciseGoal = ref(Number(localStorage.getItem('exerciseGoal')) || 100)
 const caloriesGoal = ref(Number(localStorage.getItem('caloriesGoal')) || 5000)
+
+// Initialize progress values to 0
+const exerciseProgress = ref(0)
+const caloriesProgress = ref(0)
 const combinedProgress = ref(0)
 
 // Timer and Stopwatch
@@ -93,15 +98,17 @@ const resetStopwatch = () => {
   stopwatch.value = 0
 }
 
-// Calculate combined progress
+// Calculate progress values
 const calculateProgress = () => {
-  if (exerciseGoal.value && caloriesGoal.value) {
-    combinedProgress.value = Math.min(
-      ((completedExercises.value / exerciseGoal.value) * 50) +
-      ((caloriesBurned.value / caloriesGoal.value) * 50),
-      100
-    )
-  }
+  const exercisePercent = (completedExercises.value / exerciseGoal.value) * 50
+  const caloriesPercent = (caloriesBurned.value / caloriesGoal.value) * 50
+  
+  // Update progress values with a slight delay to ensure animation
+  setTimeout(() => {
+    exerciseProgress.value = exercisePercent
+    caloriesProgress.value = caloriesPercent
+    combinedProgress.value = Math.min(exercisePercent + caloriesPercent, 100)
+  }, 100)
 }
 
 // Fetch user data
@@ -115,6 +122,11 @@ const fetchUserData = async () => {
   error.value = ''
 
   try {
+    // Reset progress values to 0 before fetching new data
+    exerciseProgress.value = 0
+    caloriesProgress.value = 0
+    combinedProgress.value = 0
+
     // Fetch user exercises
     const exercisesResponse = await getUserExercises(session.user.id)
     if (exercisesResponse.isSuccess && exercisesResponse.data.length > 0) {
@@ -126,16 +138,25 @@ const fetchUserData = async () => {
       totalExercises.value = sortedExercises.length
       completedExercises.value = Math.min(sortedExercises.length, exerciseGoal.value)
       caloriesBurned.value = sortedExercises.reduce((total: number, exercise: Exercise) => total + exercise.caloriesBurned, 0)
+    } else {
+      lastExercise.value = 'No exercises recorded'
+      totalExercises.value = 0
+      completedExercises.value = 0
+      caloriesBurned.value = 0
     }
 
     // Fetch user meals
     const mealsResponse = await getUserMeals(session.user.id)
     if (mealsResponse.isSuccess && mealsResponse.data.length > 0) {
       mealCalories.value = mealsResponse.data.reduce((total: number, meal: Meal) => total + meal.mealCalories, 0)
+    } else {
+      mealCalories.value = 0
     }
 
     // Calculate net calorie balance
     netCalorieBalance.value = mealCalories.value - caloriesBurned.value
+    
+    // Calculate progress after data is loaded
     calculateProgress()
   } catch (err) {
     console.error('Error fetching user data:', err)
@@ -157,11 +178,20 @@ onMounted(() => {
   fetchUserData()
 })
 
+// Watch for route changes to refresh data
+watch(
+  () => route.fullPath,
+  () => {
+    fetchUserData()
+  }
+)
+
 // Watchers
 watch([exerciseGoal, caloriesGoal], () => {
   // Save to localStorage
   localStorage.setItem('exerciseGoal', exerciseGoal.value.toString())
   localStorage.setItem('caloriesGoal', caloriesGoal.value.toString())
+  // Recalculate progress when goals change
   calculateProgress()
 })
 

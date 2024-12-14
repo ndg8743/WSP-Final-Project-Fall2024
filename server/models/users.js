@@ -247,7 +247,7 @@ async function add(user) {
       email: user.email.toLowerCase(),
       password: user.password,
       role: user.role || "user",
-      friends: null, // Initialize as null instead of empty array
+      friends: [], // Initialize as empty array
       image: user.image || null,
     };
 

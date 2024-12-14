@@ -31,7 +31,7 @@ app
     }
   })
 
-  // Get user by ID (Authenticated user or Admin)
+  // Get user by ID (Authenticated user, Admin, or Friend)
   .get("/:id", requireUser, async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
@@ -44,11 +44,23 @@ app
         });
       }
 
+      // First get the requesting user's data to check their friends list
+      const userResponse = await get(req.user.userid);
+      if (!userResponse.isSuccess) {
+        return res.status(404).json({ isSuccess: false, message: "Requesting user not found." });
+      }
+
       const response = await get(id);
       
       // More explicit access control
       if (response.isSuccess) {
-        if (req.user.userid === id || req.user.role === "admin") {
+        // Allow access if:
+        // 1. User is requesting their own data
+        // 2. User is an admin
+        // 3. The requested user is in the requesting user's friends list
+        if (req.user.userid === id || 
+            req.user.role === "admin" || 
+            (userResponse.data.friends && userResponse.data.friends.includes(id))) {
           return res.status(200).json(response);
         }
         return res.status(403).json({ isSuccess: false, message: "Access denied." });

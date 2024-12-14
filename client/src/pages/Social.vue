@@ -118,7 +118,7 @@ async function loadFriendsActivities() {
     )
   } catch (err) {
     console.error('Error loading friend activities:', err)
-    error.value = 'Failed to load social activities'
+    //error.value = 'Failed to load social activities'
   } finally {
     isLoading.value = false
   }

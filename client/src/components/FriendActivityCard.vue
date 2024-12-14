@@ -35,16 +35,6 @@ const props = defineProps<{
 </template>
 
 <style scoped>
-.box {
-  margin-bottom: 15px;
-  transition: all 0.3s ease;
-}
-
-.box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
 .user-info {
   display: flex;
   align-items: center;

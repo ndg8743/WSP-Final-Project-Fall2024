@@ -4,27 +4,38 @@ html.dark body {
   color: #e0e0e0 !important;
 }
 
-html.dark .container, html.dark .box, html.dark .navbar, html.dark .card, html.dark .field input, html.dark .field select, html.dark .progress-bar {
+html.dark .container,
+html.dark .box,
+html.dark .navbar,
+html.dark .card,
+html.dark .field input,
+html.dark .field select,
+html.dark .progress-bar {
   background-color: #1e1e1e !important;
   color: #e0e0e0 !important;
   border-color: #333 !important;
 }
 
-html.dark .navbar-item, html.dark .navbar-link, html.dark .field label {
+html.dark .navbar-item,
+html.dark .navbar-link,
+html.dark .field label {
   color: #e0e0e0 !important;
 }
 
-html.dark .navbar-item:hover, html.dark .navbar-link:hover {
+html.dark .navbar-item:hover,
+html.dark .navbar-link:hover {
   background-color: #333 !important;
 }
 
 html.dark .button.is-primary {
-  background-color: #00ff99b6 !important; /* Light green for primary buttons */
+  background-color: #00ff99b6 !important;
+  /* Light green for primary buttons */
   color: #fff !important;
 }
 
 html.dark .button.is-danger {
-  background-color: #0821ffb0 !important; /* Keep danger color for contrast */
+  background-color: #0821ffb0 !important;
+  /* Keep danger color for contrast */
   color: #fff !important;
 }
 
@@ -34,24 +45,34 @@ html.light body {
   color: #212529 !important;
 }
 
-html.light .container, html.light .box, html.light .navbar, html.light .card, html.light .progress-bar, html.light .field input, html.light .field select {
+html.light .container,
+html.light .box,
+html.light .navbar,
+html.light .card,
+html.light .progress-bar,
+html.light .field input,
+html.light .field select {
   background-color: white !important;
   color: #212529 !important;
   border-color: #ddd !important;
 }
 
 html.dark .button.is-primary {
-  background-color: #00ff99c2 !important; /* Light green for primary buttons */
+  background-color: #00ff99c2 !important;
+  /* Light green for primary buttons */
   color: #fff !important;
 }
 
 html.dark .button.is-danger {
-  background-color: #0821ffa4 !important; /* Keep danger color for contrast */
+  background-color: #0821ffa4 !important;
+  /* Keep danger color for contrast */
   color: #fff !important;
 }
 
 /* Adjust cards and exercise/social lists */
-html.dark .card, html.dark .exercise-card, html.dark .social-card {
+html.dark .card,
+html.dark .exercise-card,
+html.dark .social-card {
   background-color: #1e1e1e !important;
   color: #e0e0e0 !important;
   border: 1px solid #333 !important;
@@ -60,29 +81,39 @@ html.dark .card, html.dark .exercise-card, html.dark .social-card {
   border-radius: 8px !important;
 }
 
-html.dark .exercise-card .field input, html.dark .social-card .field input {
+html.dark .exercise-card .field input,
+html.dark .social-card .field input {
   background-color: #333 !important;
   color: #e0e0e0 !important;
   border: 1px solid #444 !important;
 }
 
-html.dark .exercise-card button, html.dark .social-card button {
+html.dark .exercise-card button,
+html.dark .social-card button {
   color: #e0e0e0 !important;
 }
 
 /* Adjust text and headings for better readability in dark mode */
-html.dark h1, html.dark h2, html.dark h3, html.dark .title, html.dark .subtitle {
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark .title,
+html.dark .subtitle {
   color: #e0e0e0 !important;
 }
 
 /* Input fields and filters */
-html.dark .input, html.dark .textarea, html.dark .select select {
+html.dark .input,
+html.dark .textarea,
+html.dark .select select {
   background-color: #333 !important;
   color: #e0e0e0 !important;
   border: 1px solid #444 !important;
 }
 
-html.dark .input:focus, html.dark .textarea:focus, html.dark .select select:focus {
+html.dark .input:focus,
+html.dark .textarea:focus,
+html.dark .select select:focus {
   border-color: #00ff99da !important;
   box-shadow: 0 0 0 0.125em rgba(0, 255, 153, 0.401) !important;
 }
@@ -108,20 +139,20 @@ html.dark .progress-wrapper .progress-bar {
 
 .box:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Progress bar animation */
 .progress {
-  transition: width 0.5s ease-in-out !important;
+  transition: width 3.5s ease-in-out !important;
 }
 
 /* Apply box hover effect to all cards */
 .card {
-  transition: all 0.3s ease !important;
+  transition: all 0.4s ease !important;
 }
 
 .card:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }

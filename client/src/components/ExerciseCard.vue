@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Exercise } from '@/models/exercises.js';
+import type { Exercise } from '../models/exercises';
 
 defineProps<{
   exercise: Exercise;
@@ -19,7 +19,5 @@ defineProps<{
 <style scoped>
 .box {
   margin-bottom: 1rem;
-  padding: 1rem;
-  border: 1px solid #ccc;
 }
 </style>
