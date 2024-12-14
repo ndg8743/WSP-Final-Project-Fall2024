@@ -25,7 +25,8 @@ async function getByUserId(userId) {
     const { data, error } = await conn
       .from("Exercises")
       .select("*")
-      .eq("userId", userId);
+      .eq("userId", userId)
+      .order('date', { ascending: false });
 
     if (error) {
       console.error("Error fetching exercises:", error);
@@ -81,10 +82,19 @@ async function add(exercise) {
       .select("*")
       .single();
 
+    if (error) {
+      console.error("Error adding exercise:", error);
+      return {
+        isSuccess: false,
+        message: error.message,
+        data: null
+      };
+    }
+
     return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
+      isSuccess: true,
+      message: "Exercise added successfully",
+      data: data
     };
   } catch (err) {
     console.error("Unexpected error in add:", err);
@@ -140,22 +150,20 @@ async function remove(id) {
 
 async function getUserAndFriendsExercises(userId, requestingUser) {
   try {
-    const { data, error } = await conn.from("Exercises").select("*");
+    const { data, error } = await conn
+      .from("Exercises")
+      .select("*")
+      .eq("userId", userId)
+      .order('date', { ascending: false });
 
     if (error) {
       return { isSuccess: false, message: error.message, data: [] };
     }
 
-    const exercises = data.filter(
-      (exercise) =>
-        exercise.userId === requestingUser.id ||
-        (requestingUser.friends || []).includes(exercise.userId)
-    );
-
     return {
       isSuccess: true,
       message: "Exercises fetched successfully.",
-      data: exercises,
+      data: data || [],
     };
   } catch (err) {
     console.error("Unexpected error in getUserAndFriendsExercises:", err);

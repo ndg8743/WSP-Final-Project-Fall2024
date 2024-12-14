@@ -16,7 +16,7 @@ export async function getAll(): Promise<DataListEnvelope<Exercise>> {
 
 export async function getUserExercises(userId: number): Promise<DataListEnvelope<Exercise>> {
   console.log(`Fetching exercises for userId: ${userId}`) // Debug log
-  const response = await api<DataListEnvelope<Exercise>>(`exercises/${userId}/exercises`)
+  const response = await api<DataListEnvelope<Exercise>>(`exercises/${userId}`)
   if (!response.data) {
     response.data = []
   }

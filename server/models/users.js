@@ -28,7 +28,7 @@ async function initializeDefaultAdmin() {
         email: "admin@example.com",
         password: "admin123", // This should be changed immediately in production
         role: "admin",
-        friends: []
+        friends: null // Initialize as null instead of empty array
       };
 
       const { error: insertError } = await conn
@@ -239,7 +239,7 @@ async function add(user) {
       email: user.email.toLowerCase(),
       password: user.password,
       role: user.role || 'user',
-      friends: [],
+      friends: null, // Initialize as null instead of empty array
       image: user.image || "/assets/User.jpg"
     };
 
@@ -263,10 +263,14 @@ async function add(user) {
 
     console.log("User created successfully:", { ...insertedUser, password: '[REDACTED]' }); // Debug log
 
+    // Return the user with an empty array for friends in the response
     return { 
       isSuccess: true, 
       message: "User added successfully", 
-      data: insertedUser
+      data: {
+        ...insertedUser,
+        friends: []
+      }
     };
   } catch (err) {
     console.error("Unexpected error in add:", err);
@@ -280,15 +284,21 @@ async function add(user) {
 
 async function update(id, user) {
   try {
+    const updateData = {
+      name: user.name,
+      email: user.email.toLowerCase(),
+      role: user.role,
+      image: user.image ?? "/assets/User.jpg",
+    };
+    
+    // Only include friends if it's provided
+    if (user.friends !== undefined) {
+      updateData.friends = user.friends.length > 0 ? user.friends : null;
+    }
+
     const { data, error } = await conn
       .from("Users")
-      .update({
-        name: user.name,
-        email: user.email.toLowerCase(),
-        role: user.role,
-        image: user.image ?? "/assets/User.jpg",
-        friends: user.friends || [],
-      })
+      .update(updateData)
       .eq("id", id)
       .select("*")
       .single();

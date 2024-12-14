@@ -25,7 +25,8 @@ async function getByUserId(userId) {
     const { data, error } = await conn
       .from("Meals")
       .select("*")
-      .eq("userId", userId);
+      .eq("userId", userId)
+      .order('date', { ascending: false });
 
     if (error) {
       console.error("Error fetching meals:", error);
@@ -39,7 +40,7 @@ async function getByUserId(userId) {
     console.log("Found meals:", data); // Debug log
     return { 
       isSuccess: true, 
-      message: "Meals fetched successfully.", 
+      message: "Meals fetched successfully", 
       data: data || [] 
     };
   } catch (err) {
@@ -55,7 +56,12 @@ async function get(id) {
       .select("*")
       .eq("id", id)
       .single();
-    return { isSuccess: !error, message: error?.message, data: data || null };
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
   } catch (err) {
     console.error(`Unexpected error fetching meal with ID ${id}:`, err);
     throw err;
@@ -78,17 +84,17 @@ async function add(meal) {
 
     if (error) {
       console.error("Error adding meal:", error);
-      return { 
-        isSuccess: false, 
-        message: error.message, 
-        data: null 
+      return {
+        isSuccess: false,
+        message: error.message,
+        data: null
       };
     }
 
-    return { 
-      isSuccess: true, 
-      message: "Meal added successfully", 
-      data 
+    return {
+      isSuccess: true,
+      message: "Meal added successfully",
+      data: data
     };
   } catch (err) {
     console.error("Unexpected error in add:", err);
@@ -110,7 +116,12 @@ async function update(id, meal) {
       .eq("id", id)
       .select("*")
       .single();
-    return { isSuccess: !error, message: error?.message, data: data || null };
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
   } catch (err) {
     console.error("Unexpected error in update:", err);
     throw err;
@@ -125,7 +136,12 @@ async function remove(id) {
       .eq("id", id)
       .select("*")
       .single();
-    return { isSuccess: !error, message: error?.message, data: data || null };
+
+    return {
+      isSuccess: !error,
+      message: error?.message,
+      data: data || null,
+    };
   } catch (err) {
     console.error("Unexpected error in remove:", err);
     throw err;
@@ -134,22 +150,20 @@ async function remove(id) {
 
 async function getUserAndFriendsMeals(userId, requestingUser) {
   try {
-    const { data, error } = await conn.from("Meals").select("*");
+    const { data, error } = await conn
+      .from("Meals")
+      .select("*")
+      .eq("userId", userId)
+      .order('date', { ascending: false });
 
     if (error) {
       return { isSuccess: false, message: error.message, data: [] };
     }
 
-    const userMeals = data.filter(
-      (meal) =>
-        meal.userId === requestingUser.id ||
-        (requestingUser.friends || []).includes(meal.userId)
-    );
-
     return {
       isSuccess: true,
       message: "Meals fetched successfully.",
-      data: userMeals,
+      data: data || [],
     };
   } catch (err) {
     console.error("Unexpected error in getUserAndFriendsMeals:", err);
@@ -160,13 +174,18 @@ async function getUserAndFriendsMeals(userId, requestingUser) {
 async function updateMealForUser(id, meal, userId) {
   try {
     const existingMeal = await get(id);
-    if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
+
+    if (
+      !existingMeal.isSuccess ||
+      existingMeal.data.userId !== userId
+    ) {
       return {
         isSuccess: false,
         errorCode: 403,
         message: "You can only update your own meals.",
       };
     }
+
     return await update(id, meal);
   } catch (err) {
     console.error("Unexpected error in updateMealForUser:", err);
@@ -177,13 +196,18 @@ async function updateMealForUser(id, meal, userId) {
 async function deleteMealForUser(id, userId) {
   try {
     const existingMeal = await get(id);
-    if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
+
+    if (
+      !existingMeal.isSuccess ||
+      existingMeal.data.userId !== userId
+    ) {
       return {
         isSuccess: false,
         errorCode: 403,
         message: "You can only delete your own meals.",
       };
     }
+
     return await remove(id);
   } catch (err) {
     console.error("Unexpected error in deleteMealForUser:", err);

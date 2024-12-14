@@ -16,32 +16,20 @@ app
     }
   })
 
-  .get("/:userId/meals", requireUser, async (req, res, next) => {
-    try {
-      const response = await model.getUserAndFriendsMeals(
-        +req.params.userId,
-        req.user
-      );
-
-      if (!response.isSuccess) {
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: response.message });
-      }
-
-      res.status(200).json(response);
-    } catch (error) {
-      next(error);
-    }
-  })
-
   .get("/:id", requireUser, async (req, res, next) => {
     try {
-      const response = await model.get(+req.params.id);
-      if (!response.isSuccess) {
-        return res.status(404).json(response);
+      const id = +req.params.id;
+      let response;
+
+      // First try to get as a specific meal
+      const mealResponse = await model.get(id);
+      if (mealResponse.data) {
+        return res.status(200).json(mealResponse);
       }
-      res.status(200).json(response);
+
+      // If not found as a specific meal, try to get meals for a user ID
+      response = await model.getByUserId(id);
+      return res.status(200).json(response);
     } catch (error) {
       next(error);
     }

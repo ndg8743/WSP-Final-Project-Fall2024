@@ -15,7 +15,7 @@ export async function getAll(): Promise<DataListEnvelope<Meal>> {
 
 export async function getUserMeals(userId: number): Promise<DataListEnvelope<Meal>> {
   console.log(`Fetching meals for userId: ${userId}`) // Debug log
-  const response = await api<DataListEnvelope<Meal>>(`meals/${userId}/meals`)
+  const response = await api<DataListEnvelope<Meal>>(`meals/${userId}`)
   if (!response.data) {
     response.data = []
   }

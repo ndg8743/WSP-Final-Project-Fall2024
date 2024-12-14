@@ -13,32 +13,20 @@ app
     }
   })
 
-  .get("/:userId/exercises", requireUser, async (req, res, next) => {
-    try {
-      const requestingUser = req.user;
-      const response = await model.getUserAndFriendsExercises(
-        +req.params.userId,
-        requestingUser
-      );
-
-      if (!response.isSuccess) {
-        return res
-          .status(404)
-          .json({ isSuccess: false, message: response.message });
-      }
-
-      res.status(200).json(response);
-    } catch (error) {
-      next(error);
-    }
-  })
-
   .get("/:id", requireUser, async (req, res, next) => {
     try {
-      const response = await model.getExerciseForUser(+req.params.id, req.user);
-      res
-        .status(response.isSuccess ? 200 : response.errorCode || 403)
-        .json(response);
+      const id = +req.params.id;
+      let response;
+
+      // First try to get as a specific exercise
+      const exerciseResponse = await model.get(id);
+      if (exerciseResponse.data) {
+        return res.status(200).json(exerciseResponse);
+      }
+
+      // If not found as a specific exercise, try to get exercises for a user ID
+      response = await model.getByUserId(id);
+      return res.status(200).json(response);
     } catch (error) {
       next(error);
     }
