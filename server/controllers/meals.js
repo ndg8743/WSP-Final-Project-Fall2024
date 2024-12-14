@@ -7,10 +7,10 @@ app
   .get("/all", requireAdmin, async (req, res, next) => {
     try {
       const response = await model.getAll();
-      if (!response.isSuccess) {
-        return res.status(500).json(response);
-      }
-      res.status(200).json(response);
+      res.status(response.isSuccess ? 200 : 500).json({
+        ...response,
+        data: Array.isArray(response.data) ? response.data : []
+      });
     } catch (error) {
       next(error);
     }
@@ -21,15 +21,27 @@ app
       const id = +req.params.id;
       let response;
 
-      // First try to get as a specific meal
-      const mealResponse = await model.get(id);
-      if (mealResponse.data) {
-        return res.status(200).json(mealResponse);
+      // Try to get meals for a user ID first
+      response = await model.getByUserId(id);
+      if (response.isSuccess && Array.isArray(response.data)) {
+        return res.status(200).json(response);
       }
 
-      // If not found as a specific meal, try to get meals for a user ID
-      response = await model.getByUserId(id);
-      return res.status(200).json(response);
+      // If not found as user meals, try to get as a specific meal
+      const mealResponse = await model.get(id);
+      if (mealResponse.data) {
+        return res.status(200).json({
+          ...mealResponse,
+          data: [mealResponse.data] // Wrap single meal in array
+        });
+      }
+
+      // If nothing found, return empty array
+      return res.status(200).json({
+        isSuccess: true,
+        message: "No meals found",
+        data: []
+      });
     } catch (error) {
       next(error);
     }
@@ -40,7 +52,10 @@ app
       const newMeal = req.body;
       newMeal.userId = req.user.id; // Enforce the user ID for the authenticated user
       const response = await model.add(newMeal);
-      res.status(response.isSuccess ? 201 : 400).json(response);
+      res.status(response.isSuccess ? 201 : 400).json({
+        ...response,
+        data: response.data ? [response.data] : [] // Ensure array response
+      });
     } catch (error) {
       next(error);
     }
@@ -55,7 +70,10 @@ app
       );
       res
         .status(response.isSuccess ? 200 : response.errorCode || 403)
-        .json(response);
+        .json({
+          ...response,
+          data: response.data ? [response.data] : [] // Ensure array response
+        });
     } catch (error) {
       next(error);
     }
@@ -69,7 +87,10 @@ app
       );
       res
         .status(response.isSuccess ? 200 : response.errorCode || 403)
-        .json(response);
+        .json({
+          ...response,
+          data: response.data ? [response.data] : [] // Ensure array response
+        });
     } catch (error) {
       next(error);
     }

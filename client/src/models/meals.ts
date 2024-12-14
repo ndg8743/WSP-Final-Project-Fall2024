@@ -19,6 +19,10 @@ export async function getUserMeals(userId: number): Promise<DataListEnvelope<Mea
   if (!response.data) {
     response.data = []
   }
+  // Ensure response.data is an array
+  if (!Array.isArray(response.data)) {
+    response.data = [response.data]
+  }
   if (response.isSuccess) {
     response.data.forEach((meal: Meal) => {
       meal.mealCalories = meal.mealCalories ?? 0

@@ -147,7 +147,7 @@ onMounted(() => {
       </div>
 
       <div v-else-if="friendsActivities.length === 0" class="notification is-info">
-        No friend activities found.
+        No friends found. :(
       </div>
 
       <div v-else class="friends-grid">

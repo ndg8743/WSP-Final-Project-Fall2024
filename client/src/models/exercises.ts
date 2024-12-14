@@ -20,6 +20,10 @@ export async function getUserExercises(userId: number): Promise<DataListEnvelope
   if (!response.data) {
     response.data = []
   }
+  // Ensure response.data is an array
+  if (!Array.isArray(response.data)) {
+    response.data = [response.data]
+  }
   if (response.isSuccess) {
     response.data.forEach((exercise: Exercise) => {
       exercise.caloriesBurned = exercise.caloriesBurned ?? 0
