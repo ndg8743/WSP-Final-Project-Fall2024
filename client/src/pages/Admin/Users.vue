@@ -6,16 +6,16 @@ import { useRouter } from 'vue-router'
 import UserManagement from '../../components/UserManagement.vue'
 // @ts-ignore
 import Modal from '../../components/Modal.vue'
-import { getUsers, addUser, updateUsers, deleteUsers } from '../../models/users.js'
-import type { Users, UserResponse } from '../../models/users.js'
+import { getUsers, addUser, updateUser, deleteUser, type User, type UserResponse } from '../../models/users.js'
 import { getSession } from '../../models/login.js'
 
 const router = useRouter()
 const session = getSession()
 const users = ref<UserResponse[]>([])
-const currentUser = ref<Users | null>(null)
+const currentUser = ref<Partial<User> | null>(null)
 const showModal = ref(false)
 const isLoading = ref(false)
+const error = ref('')
 const isAddingUser = ref(false)
 
 const checkAdminAccess = () => {
@@ -48,15 +48,17 @@ const handleDelete = async (id: number) => {
 
   try {
     isLoading.value = true
-    const response = await deleteUsers(id)
+    error.value = ''
+    const response = await deleteUser(id)
     if (response.isSuccess) {
       users.value = users.value.filter((user) => user.id !== id)
     } else {
-      console.error("Error deleting user:", response.message)
+      error.value = response.message || "Error deleting user"
     }
-  } catch (error: unknown) {
-    console.error("Error deleting user:", error)
-    if (error instanceof Error && error.message === 'Session expired') {
+  } catch (err) {
+    console.error("Error deleting user:", err)
+    error.value = err instanceof Error ? err.message : "An unexpected error occurred"
+    if (err instanceof Error && err.message === 'Session expired') {
       router.push('/login')
     }
   } finally {
@@ -85,11 +87,12 @@ const saveUser = async () => {
 
   try {
     isLoading.value = true
+    error.value = ''
     let response
     if (isAddingUser.value) {
-      response = await addUser(currentUser.value)
+      response = await addUser(currentUser.value as Omit<User, 'id'>)
     } else if (currentUser.value.id) {
-      response = await updateUsers(currentUser.value.id, currentUser.value)
+      response = await updateUser(currentUser.value.id, currentUser.value)
     } else {
       throw new Error('Invalid user data')
     }
@@ -103,11 +106,12 @@ const saveUser = async () => {
       }
       closeModal()
     } else {
-      console.error("Error saving user:", response.message)
+      error.value = response.message || "Error saving user"
     }
-  } catch (error: unknown) {
-    console.error("Error saving user:", error)
-    if (error instanceof Error && error.message === 'Session expired') {
+  } catch (err) {
+    console.error("Error saving user:", err)
+    error.value = err instanceof Error ? err.message : "An unexpected error occurred"
+    if (err instanceof Error && err.message === 'Session expired') {
       router.push('/login')
     }
   } finally {
@@ -125,15 +129,17 @@ onMounted(async () => {
 
   try {
     isLoading.value = true
+    error.value = ''
     const response = await getUsers()
     if (response.isSuccess) {
       users.value = response.data
     } else {
-      console.error('Error fetching users:', response.message)
+      error.value = response.message || 'Error fetching users'
     }
-  } catch (error: unknown) {
-    console.error('Error fetching users:', error)
-    if (error instanceof Error && error.message === 'Session expired') {
+  } catch (err) {
+    console.error('Error fetching users:', err)
+    error.value = err instanceof Error ? err.message : "An unexpected error occurred"
+    if (err instanceof Error && err.message === 'Session expired') {
       router.push('/login')
     }
   } finally {
@@ -162,8 +168,13 @@ watch(() => session.user?.role, (newRole: string | undefined) => {
 <template>
   <section class="section">
     <div class="container">
+      <h1 class="title">User Management</h1>
+
+      <div v-if="error" class="notification is-danger">
+        {{ error }}
+      </div>
+
       <template v-if="session.token && session.user?.role === 'admin'">
-        <h1 class="title">User Management</h1>
         <button 
           class="button is-primary" 
           @click="handleAddUser"
@@ -176,7 +187,7 @@ watch(() => session.user?.role, (newRole: string | undefined) => {
           <progress class="progress is-small is-primary" max="100">Loading...</progress>
         </div>
 
-        <table class="table is-fullwidth mt-4" v-else>
+        <table v-else class="table is-fullwidth mt-4">
           <thead>
             <tr>
               <th>User</th>
@@ -204,16 +215,28 @@ watch(() => session.user?.role, (newRole: string | undefined) => {
             <div v-if="currentUser" class="modal-form">
               <div class="field">
                 <label class="label">Name</label>
-                <input class="input" v-model="currentUser.name" :disabled="isLoading" />
+                <input 
+                  class="input" 
+                  v-model="currentUser.name" 
+                  :disabled="isLoading"
+                />
               </div>
               <div class="field">
                 <label class="label">Email</label>
-                <input class="input" type="email" v-model="currentUser.email" :disabled="isLoading" />
+                <input 
+                  class="input" 
+                  type="email" 
+                  v-model="currentUser.email" 
+                  :disabled="isLoading"
+                />
               </div>
               <div class="field">
                 <label class="label">Role</label>
                 <div class="select">
-                  <select v-model="currentUser.role" :disabled="isLoading">
+                  <select 
+                    v-model="currentUser.role"
+                    :disabled="isLoading"
+                  >
                     <option value="admin">Admin</option>
                     <option value="user">User</option>
                   </select>
@@ -221,7 +244,12 @@ watch(() => session.user?.role, (newRole: string | undefined) => {
               </div>
               <div v-if="isAddingUser" class="field">
                 <label class="label">Password</label>
-                <input class="input" type="password" v-model="currentUser.password" :disabled="isLoading" />
+                <input 
+                  class="input" 
+                  type="password" 
+                  v-model="currentUser.password"
+                  :disabled="isLoading"
+                />
               </div>
             </div>
           </template>

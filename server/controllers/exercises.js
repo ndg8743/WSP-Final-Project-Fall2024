@@ -4,17 +4,22 @@ const { requireUser, requireAdmin } = require("../middleware/verifyJWT");
 const app = express.Router();
 
 app
-  .get("/", requireUser, async (req, res, next) => {
+  .get("/all", requireAdmin, async (req, res, next) => {
     try {
-      const { userId } = req.query;
-      const requestingUser = req.user;
+      const response = await model.getAll();
+      res.status(response.isSuccess ? 200 : 500).json(response);
+    } catch (error) {
+      next(error);
+    }
+  })
 
-      const response = userId
-        ? await model.getUserAndFriendsExercises(+userId, requestingUser)
-        : await model.getUserAndFriendsExercises(
-            requestingUser.id,
-            requestingUser
-          );
+  .get("/:userId/exercises", requireUser, async (req, res, next) => {
+    try {
+      const requestingUser = req.user;
+      const response = await model.getUserAndFriendsExercises(
+        +req.params.userId,
+        requestingUser
+      );
 
       if (!response.isSuccess) {
         return res
@@ -23,15 +28,6 @@ app
       }
 
       res.status(200).json(response);
-    } catch (error) {
-      next(error);
-    }
-  })
-
-  .get("/all", requireAdmin, async (req, res, next) => {
-    try {
-      const response = await model.getAll();
-      res.status(response.isSuccess ? 200 : 500).json(response);
     } catch (error) {
       next(error);
     }

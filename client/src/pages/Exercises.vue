@@ -22,6 +22,10 @@ const error = ref('')
 const isAddingExercise = ref(false)
 
 const filterExercises = () => {
+  if (!exercises.value) {
+    filteredExercises.value = []
+    return
+  }
   filteredExercises.value = filterDate.value
     ? exercises.value.filter(exercise => exercise.date === filterDate.value)
     : [...exercises.value]
@@ -78,6 +82,7 @@ const saveExercise = async () => {
     if (isAddingExercise.value) {
       const response = await addExercise(currentExercise.value as Omit<Exercise, 'id'>)
       if (response.isSuccess && response.data) {
+        exercises.value = exercises.value || []
         exercises.value.push(response.data)
       } else {
         error.value = response.message || 'Failed to add exercise'
@@ -116,7 +121,7 @@ onMounted(async () => {
   try {
     const response = await getUserExercises(session.user.id)
     if (response.isSuccess) {
-      exercises.value = response.data
+      exercises.value = response.data || []
       filterExercises()
     } else {
       error.value = response.message || 'Error fetching exercises'
@@ -170,7 +175,7 @@ onMounted(async () => {
 
         <div v-else>
           <div v-if="filteredExercises.length === 0" class="notification is-info mt-4">
-            No exercises found for the selected date.
+            No exercises found.
           </div>
 
           <div v-else>

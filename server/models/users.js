@@ -12,7 +12,7 @@ async function initializeDefaultAdmin() {
     // Check if any admin exists
     const { count, error: countError } = await conn
       .from("Users")
-      .select("*", { count: "exact", head: true })
+      .select("*", { count: 'exact', head: true })
       .eq("role", "admin");
 
     if (countError) {
@@ -23,11 +23,12 @@ async function initializeDefaultAdmin() {
     // If no admin exists, create one
     if (count === 0) {
       const defaultAdmin = {
+        id: Date.now(),
         name: "admin",
         email: "admin@example.com",
         password: "admin123", // This should be changed immediately in production
         role: "admin",
-        friends: [],
+        friends: []
       };
 
       const { error: insertError } = await conn
@@ -107,25 +108,28 @@ async function login(identifier, password) {
       return {
         isSuccess: false,
         message: "Email/username and password are required",
-        data: null,
+        data: null
       };
     }
 
     console.log("Login attempt for:", identifier); // Debug log
 
-    // Try to find user by email first
+    // Convert identifier to lowercase for case-insensitive comparison
+    const lowerIdentifier = identifier.toLowerCase();
+
+    // Try to find user by email first (case-insensitive)
     let { data: emailUser, error: emailError } = await conn
       .from("Users")
       .select("*")
-      .eq("email", identifier)
+      .ilike("email", lowerIdentifier)
       .maybeSingle();
 
-    // If no user found by email, try username
+    // If no user found by email, try username (case-insensitive)
     if (!emailUser && !emailError) {
       const { data: nameUser, error: nameError } = await conn
         .from("Users")
         .select("*")
-        .eq("name", identifier)
+        .ilike("name", lowerIdentifier)
         .maybeSingle();
 
       if (nameError) {
@@ -133,19 +137,19 @@ async function login(identifier, password) {
         return {
           isSuccess: false,
           message: "Database error occurred",
-          data: null,
+          data: null
         };
       }
 
       if (nameUser) {
-        emailUser = nameUser; // Use the user found by username
+        emailUser = nameUser;
       }
     } else if (emailError) {
       console.error("Error searching by email:", emailError);
       return {
         isSuccess: false,
         message: "Database error occurred",
-        data: null,
+        data: null
       };
     }
 
@@ -154,7 +158,7 @@ async function login(identifier, password) {
       return {
         isSuccess: false,
         message: "Invalid credentials",
-        data: null,
+        data: null
       };
     }
 
@@ -163,7 +167,7 @@ async function login(identifier, password) {
       return {
         isSuccess: false,
         message: "Invalid credentials",
-        data: null,
+        data: null
       };
     }
 
@@ -180,16 +184,16 @@ async function login(identifier, password) {
           email: emailUser.email,
           role: emailUser.role || "user",
           image: emailUser.image || "/assets/User.jpg",
-          friends: Array.isArray(emailUser.friends) ? emailUser.friends : [],
-        },
-      },
+          friends: Array.isArray(emailUser.friends) ? emailUser.friends : []
+        }
+      }
     };
   } catch (err) {
     console.error("Unexpected error during login:", err);
     return {
       isSuccess: false,
       message: "An unexpected error occurred",
-      data: null,
+      data: null
     };
   }
 }
@@ -200,15 +204,15 @@ async function add(user) {
       return {
         isSuccess: false,
         message: "Missing required fields.",
-        data: null,
+        data: null
       };
     }
 
-    // Check if user already exists
+    // Check if user already exists (case-insensitive)
     const { data: existingUser, error: checkError } = await conn
       .from("Users")
       .select("*")
-      .or(`email.eq.${user.email},name.eq.${user.name}`)
+      .or(`email.ilike.${user.email.toLowerCase()},name.ilike.${user.name.toLowerCase()}`)
       .maybeSingle();
 
     if (checkError) {
@@ -216,7 +220,7 @@ async function add(user) {
       return {
         isSuccess: false,
         message: "Error checking user existence",
-        data: null,
+        data: null
       };
     }
 
@@ -224,19 +228,22 @@ async function add(user) {
       return {
         isSuccess: false,
         message: "User with this email or username already exists.",
-        data: null,
+        data: null
       };
     }
 
-    // Prepare user data
+    // Add timestamp-based ID and prepare user data
     const newUser = {
+      id: Date.now(),
       name: user.name,
-      email: user.email,
+      email: user.email.toLowerCase(),
       password: user.password,
-      role: user.role || "user",
+      role: user.role || 'user',
       friends: [],
-      image: user.image || "/assets/User.jpg",
+      image: user.image || "/assets/User.jpg"
     };
+
+    console.log("Attempting to create user:", { ...newUser, password: '[REDACTED]' }); // Debug log
 
     // Insert new user
     const { data: insertedUser, error: insertError } = await conn
@@ -247,24 +254,26 @@ async function add(user) {
 
     if (insertError) {
       console.error("Error adding user:", insertError);
-      return {
-        isSuccess: false,
-        message: insertError.message || "Error adding user",
-        data: null,
+      return { 
+        isSuccess: false, 
+        message: insertError.message || "Error adding user", 
+        data: null 
       };
     }
 
-    return {
-      isSuccess: true,
-      message: "User added successfully",
-      data: insertedUser,
+    console.log("User created successfully:", { ...insertedUser, password: '[REDACTED]' }); // Debug log
+
+    return { 
+      isSuccess: true, 
+      message: "User added successfully", 
+      data: insertedUser
     };
   } catch (err) {
     console.error("Unexpected error in add:", err);
     return {
       isSuccess: false,
       message: "An unexpected error occurred",
-      data: null,
+      data: null
     };
   }
 }
@@ -275,7 +284,7 @@ async function update(id, user) {
       .from("Users")
       .update({
         name: user.name,
-        email: user.email,
+        email: user.email.toLowerCase(),
         role: user.role,
         image: user.image ?? "/assets/User.jpg",
         friends: user.friends || [],
@@ -323,9 +332,7 @@ async function addFriend(id, friendId) {
       return { isSuccess: false, message: "Friend not found." };
     }
 
-    const updatedFriends = [
-      ...new Set([...(user.data.friends || []), friendId]),
-    ];
+    const updatedFriends = [...new Set([...(user.data.friends || []), friendId])];
     const updateResult = await update(id, {
       ...user.data,
       friends: updatedFriends,
@@ -350,9 +357,7 @@ async function removeFriend(id, friendId) {
       return { isSuccess: false, message: "User not found." };
     }
 
-    const updatedFriends = (user.data.friends || []).filter(
-      (fid) => fid !== friendId
-    );
+    const updatedFriends = (user.data.friends || []).filter((fid) => fid !== friendId);
     return await update(id, { ...user.data, friends: updatedFriends });
   } catch (err) {
     console.error("Unexpected error in removeFriend:", err);
@@ -366,7 +371,7 @@ async function createToken(user, expiresIn) {
       {
         userid: user.id,
         email: user.email,
-        role: user.role || "user",
+        role: user.role || "user"
       },
       process.env.JWT_SECRET,
       { expiresIn },

@@ -23,6 +23,10 @@ const isAddingMeal = ref(false)
 
 // Filter meals based on the selected date
 const filterMeals = () => {
+  if (!meals.value) {
+    filteredMeals.value = []
+    return
+  }
   filteredMeals.value = filterDate.value
     ? meals.value.filter(meal => meal.date === filterDate.value)
     : [...meals.value]
@@ -78,6 +82,7 @@ const saveMeal = async () => {
     if (isAddingMeal.value) {
       const response = await addMeal(currentMeal.value as Omit<Meal, 'id'>)
       if (response.isSuccess && response.data) {
+        meals.value = meals.value || []
         meals.value.push(response.data)
       } else {
         error.value = response.message || 'Failed to add meal'
@@ -116,7 +121,7 @@ onMounted(async () => {
   try {
     const response = await getUserMeals(session.user.id)
     if (response.isSuccess) {
-      meals.value = response.data
+      meals.value = response.data || []
       filterMeals()
     } else {
       error.value = response.message || 'Error fetching meals'
@@ -170,7 +175,7 @@ onMounted(async () => {
 
         <div v-else>
           <div v-if="filteredMeals.length === 0" class="notification is-info mt-4">
-            No meals found for the selected date.
+            No meals found.
           </div>
 
           <div v-else>

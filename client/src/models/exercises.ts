@@ -16,7 +16,10 @@ export async function getAll(): Promise<DataListEnvelope<Exercise>> {
 
 export async function getUserExercises(userId: number): Promise<DataListEnvelope<Exercise>> {
   console.log(`Fetching exercises for userId: ${userId}`) // Debug log
-  const response = await api<DataListEnvelope<Exercise>>(`exercises?userId=${userId}`)
+  const response = await api<DataListEnvelope<Exercise>>(`exercises/${userId}/exercises`)
+  if (!response.data) {
+    response.data = []
+  }
   if (response.isSuccess) {
     response.data.forEach((exercise: Exercise) => {
       exercise.caloriesBurned = exercise.caloriesBurned ?? 0
@@ -25,6 +28,10 @@ export async function getUserExercises(userId: number): Promise<DataListEnvelope
     console.error('Error fetching exercises:', response.message)
   }
   return response
+}
+
+export async function getExercise(id: number): Promise<DataEnvelope<Exercise>> {
+  return api<DataEnvelope<Exercise>>(`exercises/${id}`)
 }
 
 export async function addExercise(exercise: Omit<Exercise, 'id'>): Promise<DataEnvelope<Exercise>> {

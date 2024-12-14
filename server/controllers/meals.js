@@ -4,13 +4,24 @@ const { requireUser, requireAdmin } = require("../middleware/verifyJWT");
 const app = express.Router();
 
 app
-  .get("/", requireUser, async (req, res, next) => {
+  .get("/all", requireAdmin, async (req, res, next) => {
     try {
-      const { userId } = req.query;
+      const response = await model.getAll();
+      if (!response.isSuccess) {
+        return res.status(500).json(response);
+      }
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  })
 
-      const response = userId
-        ? await model.getUserAndFriendsMeals(+userId, req.user)
-        : await model.getUserAndFriendsMeals(req.user.id, req.user);
+  .get("/:userId/meals", requireUser, async (req, res, next) => {
+    try {
+      const response = await model.getUserAndFriendsMeals(
+        +req.params.userId,
+        req.user
+      );
 
       if (!response.isSuccess) {
         return res
@@ -18,18 +29,6 @@ app
           .json({ isSuccess: false, message: response.message });
       }
 
-      res.status(200).json(response);
-    } catch (error) {
-      next(error);
-    }
-  })
-
-  .get("/all", requireAdmin, async (req, res, next) => {
-    try {
-      const response = await model.getAll();
-      if (!response.isSuccess) {
-        return res.status(500).json(response);
-      }
       res.status(200).json(response);
     } catch (error) {
       next(error);

@@ -1,8 +1,9 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getLogin } from '../models/login.js'
-import { addUser } from '../models/users.js'
+import { addUser, type User } from '../models/users.js'
 
 const router = useRouter()
 const name = ref('')
@@ -48,17 +49,24 @@ const handleSignup = async () => {
     signupError.value = ''
 
     // Create a new user
-    const response = await addUser({
+    const newUser: Omit<User, 'id'> = {
       name: name.value,
       email: email.value,
       password: password.value,
-      role: 'user'
-    })
+      role: 'user',
+      friends: []
+    }
+
+    console.log('Attempting to create user:', { ...newUser, password: '[REDACTED]' }) // Debug log
+
+    const response = await addUser(newUser)
 
     if (!response.isSuccess) {
       signupError.value = response.message || 'Signup failed. Please try again.'
       return
     }
+
+    console.log('User created successfully:', { ...response.data, password: '[REDACTED]' }) // Debug log
 
     // Attempt to login with the new credentials
     try {
@@ -134,6 +142,7 @@ const handleKeydown = (event: KeyboardEvent) => {
               :disabled="isLoading"
             />
           </div>
+          <p class="help">Password must be at least 6 characters long</p>
         </div>
 
         <div class="field">
@@ -193,5 +202,11 @@ const handleKeydown = (event: KeyboardEvent) => {
 .is-disabled {
   pointer-events: none;
   opacity: 0.6;
+}
+
+.help {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  color: #666;
 }
 </style>
