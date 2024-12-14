@@ -177,7 +177,7 @@ watch(() => session.token, (newToken) => {
   <section class="section">
     <div class="container">
       <h1 class="title">Dashboard</h1>
-      
+
       <div v-if="error" class="notification is-danger">
         {{ error }}
       </div>

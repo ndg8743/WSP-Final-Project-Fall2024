@@ -6,7 +6,12 @@ import { useRouter } from 'vue-router'
 import ExerciseCard from '../components/ExerciseCard.vue'
 // @ts-ignore
 import Modal from '../components/Modal.vue'
-import { getUserExercises, addExercise, type Exercise } from '../models/exercises.js'
+import {
+  getUserExercises,
+  addExercise,
+  deleteExercise,
+  type Exercise
+} from '../models/exercises.js'
 import { getSession } from '../models/login.js'
 
 const router = useRouter()
@@ -27,7 +32,7 @@ const filterExercises = () => {
     return
   }
   filteredExercises.value = filterDate.value
-    ? exercises.value.filter(exercise => exercise.date === filterDate.value)
+    ? exercises.value.filter((exercise) => exercise.date === filterDate.value)
     : [...exercises.value]
 }
 
@@ -59,14 +64,15 @@ const handleEdit = (exercise: Exercise) => {
   showModal.value = true
 }
 
-const handleDelete = (id: number) => {
+const handleDelete = async (id: number) => {
   if (!session.token || !session.user?.id) {
     router.push('/login')
     return
   }
 
-  exercises.value = exercises.value.filter(exercise => exercise.id !== id)
-  filterExercises()
+  exercises.value = exercises.value.filter((exercise) => exercise.id !== id)
+
+  await Promise.all([deleteExercise(id), filterExercises()])
 }
 
 const saveExercise = async () => {
@@ -88,7 +94,9 @@ const saveExercise = async () => {
         error.value = response.message || 'Failed to add exercise'
       }
     } else {
-      const index = exercises.value.findIndex(exercise => exercise.id === currentExercise.value!.id)
+      const index = exercises.value.findIndex(
+        (exercise) => exercise.id === currentExercise.value!.id
+      )
       if (index !== -1) exercises.value.splice(index, 1, currentExercise.value as Exercise)
     }
     closeModal()
@@ -148,21 +156,17 @@ onMounted(async () => {
       </div>
 
       <div v-if="session.token && session.user">
-        <button 
-          class="button is-primary" 
-          @click="openAddExercise"
-          :disabled="isLoading"
-        >
+        <button class="button is-primary" @click="openAddExercise" :disabled="isLoading">
           Add New Exercise
         </button>
 
         <div class="mt-4">
           <div class="field">
             <label class="label">Filter by Date</label>
-            <input 
-              type="date" 
-              class="input" 
-              v-model="filterDate" 
+            <input
+              type="date"
+              class="input"
+              v-model="filterDate"
               @change="filterExercises"
               :disabled="isLoading"
             />
@@ -203,57 +207,42 @@ onMounted(async () => {
       <template v-if="currentExercise">
         <div class="field">
           <label class="label">Exercise Name</label>
-          <input 
-            class="input" 
-            v-model="currentExercise.name"
-            :disabled="isLoading"
-          />
+          <input class="input" v-model="currentExercise.name" :disabled="isLoading" />
         </div>
         <div class="field">
           <label class="label">Duration (minutes)</label>
-          <input 
-            class="input" 
-            type="number" 
+          <input
+            class="input"
+            type="number"
             v-model="currentExercise.duration"
             :disabled="isLoading"
           />
         </div>
         <div class="field">
           <label class="label">Calories Burned</label>
-          <input 
-            class="input" 
-            type="number" 
+          <input
+            class="input"
+            type="number"
             v-model="currentExercise.caloriesBurned"
             :disabled="isLoading"
           />
         </div>
         <div class="field">
           <label class="label">Date</label>
-          <input 
-            class="input" 
-            type="date" 
-            v-model="currentExercise.date"
-            :disabled="isLoading"
-          />
+          <input class="input" type="date" v-model="currentExercise.date" :disabled="isLoading" />
         </div>
       </template>
     </template>
     <template #footer>
-      <button 
-        class="button is-success" 
+      <button
+        class="button is-success"
         @click="saveExercise"
         :class="{ 'is-loading': isLoading }"
         :disabled="isLoading"
       >
         Save
       </button>
-      <button 
-        class="button" 
-        @click="closeModal"
-        :disabled="isLoading"
-      >
-        Cancel
-      </button>
+      <button class="button" @click="closeModal" :disabled="isLoading">Cancel</button>
     </template>
   </Modal>
 </template>

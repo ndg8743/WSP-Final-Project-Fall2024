@@ -35,7 +35,7 @@ const props = defineProps({
   /* Use CSS custom property for dynamic color */
   width: var(--progress-width, 0);
   /* Dynamic width using custom property */
-  transition: width 1s ease-in-out, background-color 0.3s ease-in-out;
-  /* Smooth transition for both width and color */
+  transition: width 2.5s ease-in-out;
+  /* Smooth transition for width */
 }
 </style>

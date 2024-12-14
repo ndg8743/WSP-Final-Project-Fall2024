@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 import MealCard from '../components/MealCard.vue'
 // @ts-ignore
 import Modal from '../components/Modal.vue'
-import { getUserMeals, addMeal, type Meal } from '../models/meals.js'
+import { getUserMeals, addMeal, deleteMeal, type Meal } from '../models/meals.js'
 import { getSession } from '../models/login.js'
 
 const router = useRouter()
@@ -28,7 +28,7 @@ const filterMeals = () => {
     return
   }
   filteredMeals.value = filterDate.value
-    ? meals.value.filter(meal => meal.date === filterDate.value)
+    ? meals.value.filter((meal) => meal.date === filterDate.value)
     : [...meals.value]
 }
 
@@ -59,14 +59,15 @@ const handleEdit = (meal: Meal) => {
   showModal.value = true
 }
 
-const handleDelete = (id: number) => {
+const handleDelete = async (id: number) => {
   if (!session.token || !session.user?.id) {
     router.push('/login')
     return
   }
 
-  meals.value = meals.value.filter(meal => meal.id !== id)
-  filterMeals()
+  meals.value = meals.value.filter((meal) => meal.id !== id)
+
+  await Promise.all([deleteMeal(id), filterMeals()])
 }
 
 const saveMeal = async () => {
@@ -88,7 +89,7 @@ const saveMeal = async () => {
         error.value = response.message || 'Failed to add meal'
       }
     } else {
-      const index = meals.value.findIndex(meal => meal.id === currentMeal.value!.id)
+      const index = meals.value.findIndex((meal) => meal.id === currentMeal.value!.id)
       if (index !== -1) meals.value.splice(index, 1, currentMeal.value as Meal)
     }
     closeModal()
@@ -142,27 +143,23 @@ onMounted(async () => {
   <section class="section">
     <div class="container">
       <h1 class="title">Meal Log</h1>
-      
+
       <div v-if="error" class="notification is-danger">
         {{ error }}
       </div>
 
       <div v-if="session.token && session.user">
-        <button 
-          class="button is-primary" 
-          @click="openAddMeal"
-          :disabled="isLoading"
-        >
+        <button class="button is-primary" @click="openAddMeal" :disabled="isLoading">
           Add New Meal
         </button>
-        
+
         <div class="mt-4">
           <div class="field">
             <label class="label">Filter by Date</label>
-            <input 
-              type="date" 
-              class="input" 
-              v-model="filterDate" 
+            <input
+              type="date"
+              class="input"
+              v-model="filterDate"
               @change="filterMeals"
               :disabled="isLoading"
             />
@@ -203,48 +200,33 @@ onMounted(async () => {
       <template v-if="currentMeal">
         <div class="field">
           <label class="label">Meal Name</label>
-          <input 
-            class="input" 
-            v-model="currentMeal.name" 
-            :disabled="isLoading"
-          />
+          <input class="input" v-model="currentMeal.name" :disabled="isLoading" />
         </div>
         <div class="field">
           <label class="label">Calories</label>
-          <input 
-            class="input" 
-            type="number" 
+          <input
+            class="input"
+            type="number"
             v-model="currentMeal.mealCalories"
             :disabled="isLoading"
           />
         </div>
         <div class="field">
           <label class="label">Date</label>
-          <input 
-            class="input" 
-            type="date" 
-            v-model="currentMeal.date"
-            :disabled="isLoading"
-          />
+          <input class="input" type="date" v-model="currentMeal.date" :disabled="isLoading" />
         </div>
       </template>
     </template>
     <template #footer>
-      <button 
-        class="button is-success" 
+      <button
+        class="button is-success"
         @click="saveMeal"
         :class="{ 'is-loading': isLoading }"
         :disabled="isLoading"
       >
         Save
       </button>
-      <button 
-        class="button" 
-        @click="closeModal"
-        :disabled="isLoading"
-      >
-        Cancel
-      </button>
+      <button class="button" @click="closeModal" :disabled="isLoading">Cancel</button>
     </template>
   </Modal>
 </template>

@@ -26,22 +26,22 @@ async function getByUserId(userId) {
       .from("Meals")
       .select("*")
       .eq("userId", userId)
-      .order('date', { ascending: false });
+      .order("date", { ascending: false });
 
     if (error) {
       console.error("Error fetching meals:", error);
-      return { 
-        isSuccess: false, 
-        message: error.message, 
-        data: [] 
+      return {
+        isSuccess: false,
+        message: error.message,
+        data: [],
       };
     }
 
     console.log("Found meals:", data); // Debug log
-    return { 
-      isSuccess: true, 
-      message: "Meals fetched successfully", 
-      data: data || [] 
+    return {
+      isSuccess: true,
+      message: "Meals fetched successfully",
+      data: data || [],
     };
   } catch (err) {
     console.error(`Unexpected error fetching meals for userId ${userId}:`, err);
@@ -70,10 +70,29 @@ async function get(id) {
 
 async function add(meal) {
   try {
+    const { data: maxIdData, error: maxIdError } = await conn
+      .from("Meals")
+      .select("id")
+      .order("id", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (maxIdError && maxIdError.code !== "PGRST116") {
+      // PGRST116 means no rows found
+      throw maxIdError;
+    }
+
+    const maxId = maxIdData?.id || 0; // Default to 0 if no records
+    const newId = maxId + 1;
+
     // Ensure date is in correct format
     const formattedMeal = {
+      id: newId,
+      userId: meal.userId,
       ...meal,
-      date: meal.date ? new Date(meal.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      date: meal.date
+        ? new Date(meal.date).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
     };
 
     const { data, error } = await conn
@@ -87,14 +106,14 @@ async function add(meal) {
       return {
         isSuccess: false,
         message: error.message,
-        data: null
+        data: null,
       };
     }
 
     return {
       isSuccess: true,
       message: "Meal added successfully",
-      data: data
+      data: data,
     };
   } catch (err) {
     console.error("Unexpected error in add:", err);
@@ -107,7 +126,9 @@ async function update(id, meal) {
     // Ensure date is in correct format
     const formattedMeal = {
       ...meal,
-      date: meal.date ? new Date(meal.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      date: meal.date
+        ? new Date(meal.date).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
     };
 
     const { data, error } = await conn
@@ -154,7 +175,7 @@ async function getUserAndFriendsMeals(userId, requestingUser) {
       .from("Meals")
       .select("*")
       .eq("userId", userId)
-      .order('date', { ascending: false });
+      .order("date", { ascending: false });
 
     if (error) {
       return { isSuccess: false, message: error.message, data: [] };
@@ -175,10 +196,7 @@ async function updateMealForUser(id, meal, userId) {
   try {
     const existingMeal = await get(id);
 
-    if (
-      !existingMeal.isSuccess ||
-      existingMeal.data.userId !== userId
-    ) {
+    if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
       return {
         isSuccess: false,
         errorCode: 403,
@@ -197,10 +215,7 @@ async function deleteMealForUser(id, userId) {
   try {
     const existingMeal = await get(id);
 
-    if (
-      !existingMeal.isSuccess ||
-      existingMeal.data.userId !== userId
-    ) {
+    if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
       return {
         isSuccess: false,
         errorCode: 403,

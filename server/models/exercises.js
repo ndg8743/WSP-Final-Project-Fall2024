@@ -26,25 +26,28 @@ async function getByUserId(userId) {
       .from("Exercises")
       .select("*")
       .eq("userId", userId)
-      .order('date', { ascending: false });
+      .order("date", { ascending: false });
 
     if (error) {
       console.error("Error fetching exercises:", error);
-      return { 
-        isSuccess: false, 
-        message: error.message, 
-        data: [] 
+      return {
+        isSuccess: false,
+        message: error.message,
+        data: [],
       };
     }
 
     console.log("Found exercises:", data); // Debug log
-    return { 
-      isSuccess: true, 
-      message: "Exercises fetched successfully", 
-      data: data || [] 
+    return {
+      isSuccess: true,
+      message: "Exercises fetched successfully",
+      data: data || [],
     };
   } catch (err) {
-    console.error(`Unexpected error fetching exercises for userId ${userId}:`, err);
+    console.error(
+      `Unexpected error fetching exercises for userId ${userId}:`,
+      err
+    );
     throw err;
   }
 }
@@ -70,10 +73,31 @@ async function get(id) {
 
 async function add(exercise) {
   try {
+    const { data: maxIdData, error: maxIdError } = await conn
+      .from("Exercises")
+      .select("id")
+      .order("id", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (maxIdError && maxIdError.code !== "PGRST116") {
+      // PGRST116 means no rows found
+      throw maxIdError;
+    }
+
+    console.log(maxIdData);
+
+    const maxId = maxIdData?.id || 0; // Default to 0 if no records
+    const newId = maxId + 1;
+
     // Ensure date is in correct format
     const formattedExercise = {
+      id: newId,
+      userId: exercise.userId,
       ...exercise,
-      date: exercise.date ? new Date(exercise.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      date: exercise.date
+        ? new Date(exercise.date).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
     };
 
     const { data, error } = await conn
@@ -87,14 +111,14 @@ async function add(exercise) {
       return {
         isSuccess: false,
         message: error.message,
-        data: null
+        data: null,
       };
     }
 
     return {
       isSuccess: true,
       message: "Exercise added successfully",
-      data: data
+      data: data,
     };
   } catch (err) {
     console.error("Unexpected error in add:", err);
@@ -107,7 +131,9 @@ async function update(id, exercise) {
     // Ensure date is in correct format
     const formattedExercise = {
       ...exercise,
-      date: exercise.date ? new Date(exercise.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      date: exercise.date
+        ? new Date(exercise.date).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
     };
 
     const { data, error } = await conn
@@ -154,7 +180,7 @@ async function getUserAndFriendsExercises(userId, requestingUser) {
       .from("Exercises")
       .select("*")
       .eq("userId", userId)
-      .order('date', { ascending: false });
+      .order("date", { ascending: false });
 
     if (error) {
       return { isSuccess: false, message: error.message, data: [] };

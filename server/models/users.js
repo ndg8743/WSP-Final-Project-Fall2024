@@ -6,13 +6,18 @@ if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET must be set in environment variables");
 }
 
+// Generate a random 8-digit user ID
+function generateUserId() {
+  return Math.floor(Math.random() * 99999999) + 1;
+}
+
 // Initialize default admin user if none exists
 async function initializeDefaultAdmin() {
   try {
     // Check if any admin exists
     const { count, error: countError } = await conn
       .from("Users")
-      .select("*", { count: 'exact', head: true })
+      .select("*", { count: "exact", head: true })
       .eq("role", "admin");
 
     if (countError) {
@@ -23,12 +28,12 @@ async function initializeDefaultAdmin() {
     // If no admin exists, create one
     if (count === 0) {
       const defaultAdmin = {
-        id: Date.now(),
+        id: generateUserId(),
         name: "admin",
         email: "admin@example.com",
         password: "admin123", // This should be changed immediately in production
         role: "admin",
-        friends: null // Initialize as null instead of empty array
+        friends: null, // Initialize as null instead of empty array
       };
 
       const { error: insertError } = await conn
@@ -108,7 +113,7 @@ async function login(identifier, password) {
       return {
         isSuccess: false,
         message: "Email/username and password are required",
-        data: null
+        data: null,
       };
     }
 
@@ -137,7 +142,7 @@ async function login(identifier, password) {
         return {
           isSuccess: false,
           message: "Database error occurred",
-          data: null
+          data: null,
         };
       }
 
@@ -149,7 +154,7 @@ async function login(identifier, password) {
       return {
         isSuccess: false,
         message: "Database error occurred",
-        data: null
+        data: null,
       };
     }
 
@@ -158,7 +163,7 @@ async function login(identifier, password) {
       return {
         isSuccess: false,
         message: "Invalid credentials",
-        data: null
+        data: null,
       };
     }
 
@@ -167,7 +172,7 @@ async function login(identifier, password) {
       return {
         isSuccess: false,
         message: "Invalid credentials",
-        data: null
+        data: null,
       };
     }
 
@@ -184,16 +189,16 @@ async function login(identifier, password) {
           email: emailUser.email,
           role: emailUser.role || "user",
           image: emailUser.image || "/assets/User.jpg",
-          friends: Array.isArray(emailUser.friends) ? emailUser.friends : []
-        }
-      }
+          friends: Array.isArray(emailUser.friends) ? emailUser.friends : [],
+        },
+      },
     };
   } catch (err) {
     console.error("Unexpected error during login:", err);
     return {
       isSuccess: false,
       message: "An unexpected error occurred",
-      data: null
+      data: null,
     };
   }
 }
@@ -204,7 +209,7 @@ async function add(user) {
       return {
         isSuccess: false,
         message: "Missing required fields.",
-        data: null
+        data: null,
       };
     }
 
@@ -212,7 +217,9 @@ async function add(user) {
     const { data: existingUser, error: checkError } = await conn
       .from("Users")
       .select("*")
-      .or(`email.ilike.${user.email.toLowerCase()},name.ilike.${user.name.toLowerCase()}`)
+      .or(
+        `email.ilike.${user.email.toLowerCase()},name.ilike.${user.name.toLowerCase()}`
+      )
       .maybeSingle();
 
     if (checkError) {
@@ -220,7 +227,7 @@ async function add(user) {
       return {
         isSuccess: false,
         message: "Error checking user existence",
-        data: null
+        data: null,
       };
     }
 
@@ -228,22 +235,25 @@ async function add(user) {
       return {
         isSuccess: false,
         message: "User with this email or username already exists.",
-        data: null
+        data: null,
       };
     }
 
-    // Add timestamp-based ID and prepare user data
+    // Add random 8-digit ID and prepare user data
     const newUser = {
-      id: Date.now(),
+      id: generateUserId(),
       name: user.name,
       email: user.email.toLowerCase(),
       password: user.password,
-      role: user.role || 'user',
+      role: user.role || "user",
       friends: null, // Initialize as null instead of empty array
-      image: user.image || "/assets/User.jpg"
+      image: user.image || "/assets/User.jpg",
     };
 
-    console.log("Attempting to create user:", { ...newUser, password: '[REDACTED]' }); // Debug log
+    console.log("Attempting to create user:", {
+      ...newUser,
+      password: "[REDACTED]",
+    }); // Debug log
 
     // Insert new user
     const { data: insertedUser, error: insertError } = await conn
@@ -254,30 +264,33 @@ async function add(user) {
 
     if (insertError) {
       console.error("Error adding user:", insertError);
-      return { 
-        isSuccess: false, 
-        message: insertError.message || "Error adding user", 
-        data: null 
+      return {
+        isSuccess: false,
+        message: insertError.message || "Error adding user",
+        data: null,
       };
     }
 
-    console.log("User created successfully:", { ...insertedUser, password: '[REDACTED]' }); // Debug log
+    console.log("User created successfully:", {
+      ...insertedUser,
+      password: "[REDACTED]",
+    }); // Debug log
 
     // Return the user with an empty array for friends in the response
-    return { 
-      isSuccess: true, 
-      message: "User added successfully", 
+    return {
+      isSuccess: true,
+      message: "User added successfully",
       data: {
         ...insertedUser,
-        friends: []
-      }
+        friends: [],
+      },
     };
   } catch (err) {
     console.error("Unexpected error in add:", err);
     return {
       isSuccess: false,
       message: "An unexpected error occurred",
-      data: null
+      data: null,
     };
   }
 }
@@ -290,7 +303,7 @@ async function update(id, user) {
       role: user.role,
       image: user.image ?? "/assets/User.jpg",
     };
-    
+
     // Only include friends if it's provided
     if (user.friends !== undefined) {
       updateData.friends = user.friends.length > 0 ? user.friends : null;
@@ -342,10 +355,17 @@ async function addFriend(id, friendId) {
       return { isSuccess: false, message: "Friend not found." };
     }
 
-    const updatedFriends = [...new Set([...(user.data.friends || []), friendId])];
+    let newFriends = [];
+
+    if (user.data.friends?.length == 0) {
+      newFriends = [friendId];
+    } else {
+      newFriends = [...new Set([...(user.data.friends || []), friendId])];
+    }
+
     const updateResult = await update(id, {
       ...user.data,
-      friends: updatedFriends,
+      friends: newFriends,
     });
 
     return {
@@ -367,7 +387,17 @@ async function removeFriend(id, friendId) {
       return { isSuccess: false, message: "User not found." };
     }
 
-    const updatedFriends = (user.data.friends || []).filter((fid) => fid !== friendId);
+    if (!user.data.friends?.includes(friendId)) {
+      return { isSuccess: false, message: "User is not a friend." };
+    }
+
+    if (user.data.friends.length == 0) {
+      return { isSuccess: false, message: "You don't have any friends." };
+    }
+
+    const updatedFriends = (user.data.friends || []).filter(
+      (fid) => fid !== friendId
+    );
     return await update(id, { ...user.data, friends: updatedFriends });
   } catch (err) {
     console.error("Unexpected error in removeFriend:", err);
@@ -381,7 +411,7 @@ async function createToken(user, expiresIn) {
       {
         userid: user.id,
         email: user.email,
-        role: user.role || "user"
+        role: user.role || "user",
       },
       process.env.JWT_SECRET,
       { expiresIn },

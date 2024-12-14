@@ -9,7 +9,7 @@ app
       const response = await model.getAll();
       res.status(response.isSuccess ? 200 : 500).json({
         ...response,
-        data: Array.isArray(response.data) ? response.data : []
+        data: Array.isArray(response.data) ? response.data : [],
       });
     } catch (error) {
       next(error);
@@ -32,7 +32,7 @@ app
       if (mealResponse.data) {
         return res.status(200).json({
           ...mealResponse,
-          data: [mealResponse.data] // Wrap single meal in array
+          data: [mealResponse.data], // Wrap single meal in array
         });
       }
 
@@ -40,7 +40,7 @@ app
       return res.status(200).json({
         isSuccess: true,
         message: "No meals found",
-        data: []
+        data: [],
       });
     } catch (error) {
       next(error);
@@ -50,11 +50,11 @@ app
   .post("/", requireUser, async (req, res, next) => {
     try {
       const newMeal = req.body;
-      newMeal.userId = req.user.id; // Enforce the user ID for the authenticated user
+      newMeal.userId = req.user.userid; // Enforce the user ID for the authenticated user
       const response = await model.add(newMeal);
       res.status(response.isSuccess ? 201 : 400).json({
         ...response,
-        data: response.data ? [response.data] : [] // Ensure array response
+        data: response.data ? [response.data] : [], // Ensure array response
       });
     } catch (error) {
       next(error);
@@ -66,14 +66,12 @@ app
       const response = await model.updateMealForUser(
         +req.params.id,
         req.body,
-        req.user.id
+        req.user.userid
       );
-      res
-        .status(response.isSuccess ? 200 : response.errorCode || 403)
-        .json({
-          ...response,
-          data: response.data ? [response.data] : [] // Ensure array response
-        });
+      res.status(response.isSuccess ? 200 : response.errorCode || 403).json({
+        ...response,
+        data: response.data ? [response.data] : [], // Ensure array response
+      });
     } catch (error) {
       next(error);
     }
@@ -83,14 +81,12 @@ app
     try {
       const response = await model.deleteMealForUser(
         +req.params.id,
-        req.user.id
+        req.user.userid
       );
-      res
-        .status(response.isSuccess ? 200 : response.errorCode || 403)
-        .json({
-          ...response,
-          data: response.data ? [response.data] : [] // Ensure array response
-        });
+      res.status(response.isSuccess ? 200 : response.errorCode || 403).json({
+        ...response,
+        data: response.data ? [response.data] : [], // Ensure array response
+      });
     } catch (error) {
       next(error);
     }
