@@ -4,6 +4,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUsers, addFriend, removeFriend, type UserResponse } from '../models/users.js'
 import { getSession } from '../models/login.js'
+import defaultUserImage from '../assets/User.jpg'
 
 const router = useRouter()
 const session = getSession()
@@ -169,7 +170,7 @@ onMounted(fetchUsers)
               <div class="level-left">
                 <div class="level-item">
                   <figure class="image is-48x48 mr-3">
-                    <img :src="user.image || '/assets/User.jpg'" :alt="user.name">
+                    <img :src="user.image || defaultUserImage" :alt="user.name">
                   </figure>
                   <div>
                     <p class="title is-5">{{ user.name }}</p>

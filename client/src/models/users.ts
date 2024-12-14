@@ -6,7 +6,7 @@ export interface User {
   name: string
   email: string
   role: 'user' | 'admin'
-  image?: string
+  image?: string | null
   password: string
   friends?: number[]
 }
@@ -15,15 +15,9 @@ export interface UserResponse extends Omit<User, 'password'> {
   id: number
 }
 
-const DEFAULT_IMAGE_PATH = '../src/assets/User.jpg'
-
 export async function getUsers(): Promise<DataListEnvelope<UserResponse>> {
   const response = await api<DataListEnvelope<UserResponse>>('users')
-  if (response.isSuccess) {
-    response.data.forEach((user: UserResponse) => {
-      user.image = user.image ?? DEFAULT_IMAGE_PATH
-    })
-  } else {
+  if (!response.isSuccess) {
     console.error('Error fetching users:', response.message)
   }
   return response
@@ -33,7 +27,6 @@ export async function getUserById(id: number): Promise<DataEnvelope<UserResponse
   try {
     const response = await api<DataEnvelope<UserResponse>>(`users/${id}`)
     if (response.isSuccess && response.data) {
-      response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
       response.data.friends = response.data.friends ?? []
     } else {
       console.error(`Error fetching user ${id}:`, response.message)
@@ -49,9 +42,6 @@ export async function addUser(user: Omit<User, 'id'>): Promise<DataEnvelope<User
   try {
     console.log('Creating user:', { ...user, password: '[REDACTED]' }) // Debug log
     const response = await api<DataEnvelope<UserResponse>>('users', user, 'POST')
-    if (response.data) {
-      response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
-    }
     return response
   } catch (error) {
     console.error('Error adding user:', error)
@@ -61,9 +51,6 @@ export async function addUser(user: Omit<User, 'id'>): Promise<DataEnvelope<User
 
 export async function updateUser(id: number, user: Partial<User>): Promise<DataEnvelope<UserResponse>> {
   const response = await api<DataEnvelope<UserResponse>>(`users/${id}`, user, 'PATCH')
-  if (response.data) {
-    response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
-  }
   return response
 }
 
@@ -94,8 +81,5 @@ export async function removeFriend(id: number, friendId: number): Promise<DataEn
     {},
     'DELETE'
   )
-  if (response.data) {
-    response.data.image = response.data.image ?? DEFAULT_IMAGE_PATH
-  }
   return response
 }

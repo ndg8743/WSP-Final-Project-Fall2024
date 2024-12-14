@@ -100,3 +100,28 @@ html.dark .social-card {
 html.dark .progress-wrapper .progress-bar {
   background-color: var(--bar-color, #00ff99d4) !important;
 }
+
+/* Global box hover animation */
+.box {
+  transition: all 0.3s ease !important;
+}
+
+.box:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+/* Progress bar animation */
+.progress {
+  transition: width 0.5s ease-in-out !important;
+}
+
+/* Apply box hover effect to all cards */
+.card {
+  transition: all 0.3s ease !important;
+}
+
+.card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}

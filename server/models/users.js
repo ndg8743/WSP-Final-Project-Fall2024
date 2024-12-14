@@ -34,6 +34,7 @@ async function initializeDefaultAdmin() {
         password: "admin123", // This should be changed immediately in production
         role: "admin",
         friends: null, // Initialize as null instead of empty array
+        image: null
       };
 
       const { error: insertError } = await conn
@@ -92,7 +93,7 @@ async function get(id) {
       message: null,
       data: {
         ...data,
-        image: data.image ?? "/assets/User.jpg",
+        image: data.image,
         friends: Array.isArray(data.friends) ? data.friends : [],
         role: data.role ?? "user",
       },
@@ -188,7 +189,7 @@ async function login(identifier, password) {
           name: emailUser.name,
           email: emailUser.email,
           role: emailUser.role || "user",
-          image: emailUser.image || "/assets/User.jpg",
+          image: emailUser.image,
           friends: Array.isArray(emailUser.friends) ? emailUser.friends : [],
         },
       },
@@ -247,7 +248,7 @@ async function add(user) {
       password: user.password,
       role: user.role || "user",
       friends: null, // Initialize as null instead of empty array
-      image: user.image || "/assets/User.jpg",
+      image: user.image || null,
     };
 
     console.log("Attempting to create user:", {
@@ -301,7 +302,7 @@ async function update(id, user) {
       name: user.name,
       email: user.email.toLowerCase(),
       role: user.role,
-      image: user.image ?? "/assets/User.jpg",
+      image: user.image,
     };
 
     // Only include friends if it's provided

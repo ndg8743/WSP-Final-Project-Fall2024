@@ -1,13 +1,21 @@
-<script setup>
+<!-- eslint-disable vue/multi-word-component-names -->
+<script setup lang="ts">
 import { defineProps } from 'vue';
-import defaultUserImage from '@/assets/User.jpg'; // Import default image
+import defaultUserImage from '../assets/User.jpg';
 
-const props = defineProps({
-  friend: {
-    type: Object,
-    required: true,
-  },
-});
+interface Friend {
+  id: number;
+  name: string;
+  image: string | null;
+  exercise: string;
+  caloriesBurned: number;
+  lastMeal: string;
+  mealCalories: number;
+}
+
+const props = defineProps<{
+  friend: Friend;
+}>();
 </script>
 
 <template>
