@@ -2,20 +2,26 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-// @ts-ignore
 import ExerciseCard from '../components/ExerciseCard.vue'
-// @ts-ignore
+// @ts-expect-error: Vue component typing
 import Modal from '../components/Modal.vue'
 import {
   getUserExercises,
   addExercise,
   deleteExercise,
   type Exercise
-} from '../models/exercises.js'
-import { getSession } from '../models/login.js'
+} from '../models/exercises'
+import { getSession } from '../models/login'
+interface Session {
+  token: string
+  user: {
+    id: number
+    [key: string]: any
+  }
+}
 
 const router = useRouter()
-const session = getSession()
+const session = getSession() as Session
 
 const exercises = ref<Exercise[]>([])
 const filterDate = ref('')
@@ -43,6 +49,10 @@ const getValidationErrors = computed(() => {
     errors.push('Calories burned must be a positive number')
   }
 
+  if (!currentExercise.value?.date) {
+    errors.push('Date is required')
+  }
+
   return errors
 })
 
@@ -60,7 +70,15 @@ const filterExercises = () => {
   }
   filteredExercises.value = filterDate.value
     ? exercises.value.filter((exercise) => exercise.date === filterDate.value)
-    : [...exercises.value]
+    : [...exercises.value].sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      )
+}
+
+const handleSessionError = (message: string) => {
+  if (message === 'Session expired') {
+    router.push('/login')
+  }
 }
 
 const loadExercises = async () => {
@@ -78,13 +96,11 @@ const loadExercises = async () => {
       exercises.value = response.data || []
       filterExercises()
     } else {
-      error.value = response.message || 'Error fetching exercises'
+      throw new Error(response.message || 'Error fetching exercises')
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
-    if (err instanceof Error && err.message === 'Session expired') {
-      router.push('/login')
-    }
+    handleSessionError(error.value)
   } finally {
     isLoading.value = false
   }
@@ -126,10 +142,23 @@ const handleDelete = async (id: number) => {
     return
   }
 
-  await deleteExercise(id)
-  await loadExercises()
-  // Trigger dashboard refresh
-  router.replace(router.currentRoute.value.fullPath)
+  if (!confirm('Are you sure you want to delete this exercise?')) {
+    return
+  }
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    await deleteExercise(id)
+    await loadExercises()
+    router.replace(router.currentRoute.value.fullPath)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to delete exercise'
+    handleSessionError(error.value)
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const saveExercise = async () => {
@@ -151,11 +180,10 @@ const saveExercise = async () => {
       const response = await addExercise(currentExercise.value as Omit<Exercise, 'id'>)
       if (response.isSuccess && response.data) {
         closeModal()
-        await loadExercises() // Reload data after successful save
-        // Trigger dashboard refresh
+        await loadExercises()
         router.replace(router.currentRoute.value.fullPath)
       } else {
-        error.value = response.message || 'Failed to add exercise'
+        throw new Error(response.message || 'Failed to add exercise')
       }
     } else {
       const index = exercises.value.findIndex(
@@ -164,16 +192,13 @@ const saveExercise = async () => {
       if (index !== -1) {
         exercises.value.splice(index, 1, currentExercise.value as Exercise)
         closeModal()
-        await loadExercises() // Reload data after successful update
-        // Trigger dashboard refresh
+        await loadExercises()
         router.replace(router.currentRoute.value.fullPath)
       }
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
-    if (err instanceof Error && err.message === 'Session expired') {
-      router.push('/login')
-    }
+    handleSessionError(error.value)
   } finally {
     isLoading.value = false
   }
@@ -194,38 +219,65 @@ onMounted(loadExercises)
     <div class="container">
       <h1 class="title">Exercises</h1>
 
-      <div v-if="error" class="notification is-danger">
+      <div 
+        v-if="error" 
+        class="notification is-danger"
+        role="alert"
+      >
         {{ error }}
       </div>
 
       <div v-if="session.token && session.user">
-        <button class="button is-primary" @click="openAddExercise" :disabled="isLoading">
+        <button 
+          class="button is-primary" 
+          @click="openAddExercise" 
+          :disabled="isLoading"
+          aria-label="Add new exercise"
+        >
           Add New Exercise
         </button>
 
         <div class="mt-4">
           <div class="field">
-            <label class="label">Filter by Date</label>
+            <label class="label" for="dateFilter">Filter by Date</label>
             <input
+              id="dateFilter"
               type="date"
               class="input"
               v-model="filterDate"
               @change="filterExercises"
               :disabled="isLoading"
+              aria-label="Filter exercises by date"
             />
           </div>
         </div>
 
-        <div v-if="isLoading" class="mt-4">
-          <progress class="progress is-small is-primary" max="100">Loading...</progress>
+        <div 
+          v-if="isLoading" 
+          class="mt-4"
+          role="status"
+          aria-label="Loading exercises"
+        >
+          <progress class="progress is-small is-primary" max="100">
+            Loading...
+          </progress>
         </div>
 
         <div v-else>
-          <div v-if="filteredExercises.length === 0" class="notification is-info mt-4">
+          <div 
+            v-if="filteredExercises.length === 0" 
+            class="notification is-info mt-4"
+            role="status"
+          >
             No exercises found.
           </div>
 
-          <div v-else>
+          <div 
+            v-else
+            class="exercises-grid"
+            role="list"
+            aria-label="Exercise list"
+          >
             <ExerciseCard
               v-for="exercise in filteredExercises"
               :key="exercise.id"
@@ -236,49 +288,79 @@ onMounted(loadExercises)
           </div>
         </div>
       </div>
-      <div v-else>
-        <p class="notification is-danger">Please log in to view and manage exercises.</p>
+      <div 
+        v-else
+        class="notification is-danger"
+        role="alert"
+      >
+        Please log in to view and manage exercises.
       </div>
     </div>
   </section>
 
-  <Modal v-if="showModal" @close="closeModal">
+  <Modal 
+    v-if="showModal" 
+    @close="closeModal"
+    role="dialog"
+    aria-labelledby="modalTitle"
+  >
     <template #header>
-      <p>{{ isAddingExercise ? 'Add Exercise' : 'Edit Exercise' }}</p>
+      <p id="modalTitle">{{ isAddingExercise ? 'Add Exercise' : 'Edit Exercise' }}</p>
     </template>
     <template #body>
       <template v-if="currentExercise">
-        <div v-if="validationErrors.length > 0" class="notification is-warning">
+        <div 
+          v-if="validationErrors.length > 0" 
+          class="notification is-warning"
+          role="alert"
+        >
           <ul>
             <li v-for="error in validationErrors" :key="error">{{ error }}</li>
           </ul>
         </div>
 
         <div class="field">
-          <label class="label">Exercise Name *</label>
-          <input class="input" v-model="currentExercise.name" :disabled="isLoading" />
+          <label class="label" for="exerciseName">Exercise Name *</label>
+          <input 
+            id="exerciseName"
+            class="input" 
+            v-model="currentExercise.name" 
+            :disabled="isLoading"
+            aria-required="true"
+          />
         </div>
         <div class="field">
-          <label class="label">Duration (minutes)</label>
+          <label class="label" for="exerciseDuration">Duration (minutes)</label>
           <input
+            id="exerciseDuration"
             class="input"
             type="number"
             v-model="currentExercise.duration"
             :disabled="isLoading"
+            min="0"
           />
         </div>
         <div class="field">
-          <label class="label">Calories Burned</label>
+          <label class="label" for="exerciseCalories">Calories Burned</label>
           <input
+            id="exerciseCalories"
             class="input"
             type="number"
             v-model="currentExercise.caloriesBurned"
             :disabled="isLoading"
+            min="0"
           />
         </div>
         <div class="field">
-          <label class="label">Date</label>
-          <input class="input" type="date" v-model="currentExercise.date" :disabled="isLoading" />
+          <label class="label" for="exerciseDate">Date *</label>
+          <input 
+            id="exerciseDate"
+            class="input" 
+            type="date" 
+            v-model="currentExercise.date" 
+            :disabled="isLoading"
+            aria-required="true"
+          />
         </div>
         <p class="help">* Required fields</p>
       </template>
@@ -289,37 +371,18 @@ onMounted(loadExercises)
         @click="saveExercise"
         :class="{ 'is-loading': isLoading }"
         :disabled="isLoading || !isFormValid"
+        aria-label="Save exercise"
       >
         Save
       </button>
-      <button class="button" @click="closeModal" :disabled="isLoading">Cancel</button>
+      <button 
+        class="button" 
+        @click="closeModal" 
+        :disabled="isLoading"
+        aria-label="Cancel"
+      >
+        Cancel
+      </button>
     </template>
   </Modal>
 </template>
-
-<style scoped>
-.section {
-  padding-top: 2rem;
-}
-
-.notification {
-  margin-top: 1rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.button + .button {
-  margin-left: 0.5rem;
-}
-
-.field {
-  margin-bottom: 1rem;
-}
-
-.help {
-  font-style: italic;
-  color: #666;
-}
-</style>

@@ -1,16 +1,24 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// @ts-ignore
+// @ts-expect-error: Vue component typing
 import ProgressBar from '../components/ProgressBar.vue'
 import { getUserExercises, type Exercise } from '../models/exercises.js'
 import { getUserMeals, type Meal } from '../models/meals.js'
 import { getSession } from '../models/login.js'
 
+interface Session {
+  token: string
+  user: {
+    id: number
+    [key: string]: any
+  }
+}
+
 const router = useRouter()
 const route = useRoute()
-const session = getSession()
+const session = getSession() as Session
 
 // User-specific data
 const lastExercise = ref('')
@@ -19,7 +27,7 @@ const completedExercises = ref(0)
 const caloriesBurned = ref(0)
 const mealCalories = ref(0)
 const netCalorieBalance = ref(0)
-const isLoading = ref(true) // Start with loading true
+const isLoading = ref(true)
 const error = ref('')
 
 // Goals with proper type conversion
@@ -102,13 +110,13 @@ const resetStopwatch = () => {
 const calculateProgress = () => {
   const exercisePercent = (completedExercises.value / exerciseGoal.value) * 50
   const caloriesPercent = (caloriesBurned.value / caloriesGoal.value) * 50
-  
+
   // Update progress values with a slight delay to ensure animation
   setTimeout(() => {
     exerciseProgress.value = exercisePercent
     caloriesProgress.value = caloriesPercent
     combinedProgress.value = Math.min(exercisePercent + caloriesPercent, 100)
-  }, 100)
+  }, 300)
 }
 
 // Fetch user data
@@ -155,11 +163,10 @@ const fetchUserData = async () => {
 
     // Calculate net calorie balance
     netCalorieBalance.value = mealCalories.value - caloriesBurned.value
-    
+
     // Calculate progress after data is loaded
     calculateProgress()
   } catch (err) {
-    console.error('Error fetching user data:', err)
     error.value = err instanceof Error ? err.message : 'An error occurred while fetching data'
     if (err instanceof Error && err.message === 'Session expired') {
       router.push('/login')
@@ -204,109 +211,150 @@ watch(() => session.token, (newToken) => {
 </script>
 
 <template>
-  <section class="section">
-    <div class="container">
-      <h1 class="title">Dashboard</h1>
+  <div class="dashboard">
+    <h1 class="title is-2 px-5 py-4">Dashboard</h1>
 
-      <div v-if="error" class="notification is-danger">
-        {{ error }}
+    <div v-if="error" class="notification is-danger mx-5" role="alert">
+      {{ error }}
+    </div>
+
+    <div v-if="session.token && session.user">
+      <div v-if="isLoading" class="px-5" role="status" aria-label="Loading dashboard">
+        <progress class="progress is-small is-primary" max="100">
+          Loading...
+        </progress>
       </div>
 
-      <div v-if="session.token && session.user">
-        <div v-if="isLoading" class="mt-4">
-          <progress class="progress is-small is-primary" max="100">Loading...</progress>
+      <template v-else>
+        <div class="box">
+          <h2 class="title is-4">Quick Overview</h2>
+          <div class="overview-stats">
+            <div class="stat-item">
+              <span class="icon has-text-info">
+                <i class="fas fa-dumbbell"></i>
+              </span>
+              <p class="is-size-5">
+                <strong>Last exercise:</strong><br>
+                {{ lastExercise || 'No exercises recorded' }}
+              </p>
+            </div>
+            <div class="stat-item">
+              <span class="icon has-text-success">
+                <i class="fas fa-check-circle"></i>
+              </span>
+              <p class="is-size-5">
+                <strong>Total exercises:</strong><br>
+                {{ totalExercises }}
+              </p>
+            </div>
+            <div class="stat-item">
+              <span class="icon has-text-danger">
+                <i class="fas fa-fire-alt"></i>
+              </span>
+              <p class="is-size-5">
+                <strong>Calories burned:</strong><br>
+                {{ caloriesBurned.toLocaleString() }}
+              </p>
+            </div>
+            <div class="stat-item">
+              <span class="icon has-text-warning">
+                <i class="fas fa-utensils"></i>
+              </span>
+              <p class="is-size-5">
+                <strong>Meal calories:</strong><br>
+                {{ mealCalories.toLocaleString() }}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <template v-else>
-          <div class="box">
-            <h2 class="subtitle">Quick Overview</h2>
-            <p>Last exercise: {{ lastExercise || 'No exercises recorded' }}</p>
-            <p>Total exercises completed: {{ totalExercises }}</p>
-            <p>Total calories burned: {{ caloriesBurned }}</p>
-            <p>Total meal calories: {{ mealCalories }}</p>
-          </div>
+        <div class="box">
+          <h2 class="title is-4">Total Progress</h2>
+          <ProgressBar :value="combinedProgress" :max="100" />
+          <p class="is-size-5 mt-4">
+            <strong>{{ combinedProgress.toFixed(1) }}%</strong> of combined goal reached
+          </p>
+          <p class="is-size-5 mt-2">
+            <strong>Net Calorie Balance: </strong>
+            <span :class="netCalorieBalance > 0 ? 'has-text-danger' : 'has-text-success'">
+              {{ netCalorieBalance.toLocaleString() }}
+            </span>
+          </p>
+        </div>
 
-          <div class="box">
-            <h2 class="subtitle">Total Progress</h2>
-            <ProgressBar :value="combinedProgress" :max="100" />
-            <p>{{ combinedProgress.toFixed(2) }}% of combined goal reached</p>
-            <p>Net Calorie Balance: {{ netCalorieBalance }}</p>
+        <div class="box">
+          <h2 class="title is-4">Timer</h2>
+          <div class="timer-controls">
+            <button class="button is-info is-medium" @click="decrementTimer">
+              <span class="icon">
+                <i class="fas fa-minus"></i>
+              </span>
+            </button>
+            <p class="timer-value">{{ formatTime(timer) }}</p>
+            <button class="button is-info is-medium" @click="incrementTimer">
+              <span class="icon">
+                <i class="fas fa-plus"></i>
+              </span>
+            </button>
           </div>
+          <div class="buttons is-centered">
+            <button class="button is-primary is-medium" @click="startTimer">
+              <span class="icon">
+                <i class="fas fa-play"></i>
+              </span>
+              <span>Start</span>
+            </button>
+            <button class="button is-warning is-medium" @click="stopTimer">
+              <span class="icon">
+                <i class="fas fa-pause"></i>
+              </span>
+              <span>Stop</span>
+            </button>
+            <button class="button is-danger is-medium" @click="resetTimer">
+              <span class="icon">
+                <i class="fas fa-undo"></i>
+              </span>
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
 
-          <div class="box">
-            <h2 class="subtitle">Timer</h2>
-            <div class="timer-controls">
-              <button class="button is-info" @click="decrementTimer">-</button>
-              <p class="timer-value">{{ formatTime(timer) }}</p>
-              <button class="button is-info" @click="incrementTimer">+</button>
-            </div>
-            <div class="buttons is-centered">
-              <button class="button is-primary" @click="startTimer">Start</button>
-              <button class="button is-red is-light" @click="stopTimer">Stop</button>
-              <button class="button is-danger is-light" @click="resetTimer">Reset</button>
-            </div>
+        <div class="box">
+          <h2 class="title is-4">Stopwatch</h2>
+          <div class="timer-controls">
+            <p class="timer-value">{{ formatTime(stopwatch) }}</p>
           </div>
-
-          <div class="box">
-            <h2 class="subtitle">Stopwatch</h2>
-            <div class="timer-controls">
-              <p class="timer-value">{{ formatTime(stopwatch) }}</p>
-            </div>
-            <div class="buttons is-centered">
-              <button class="button is-primary" @click="startStopwatch">Start</button>
-              <button class="button is-danger is-red" @click="stopStopwatch">Stop</button>
-              <button class="button is-danger is-light" @click="resetStopwatch">Reset</button>
-            </div>
+          <div class="buttons is-centered">
+            <button class="button is-primary is-medium" @click="startStopwatch">
+              <span class="icon">
+                <i class="fas fa-play"></i>
+              </span>
+              <span>Start</span>
+            </button>
+            <button class="button is-warning is-medium" @click="stopStopwatch">
+              <span class="icon">
+                <i class="fas fa-pause"></i>
+              </span>
+              <span>Stop</span>
+            </button>
+            <button class="button is-danger is-medium" @click="resetStopwatch">
+              <span class="icon">
+                <i class="fas fa-undo"></i>
+              </span>
+              <span>Reset</span>
+            </button>
           </div>
-        </template>
-      </div>
-      <div v-else>
-        <p class="notification is-danger">Please log in to view your dashboard.</p>
-      </div>
+        </div>
+      </template>
     </div>
-  </section>
+    <div v-else class="notification is-danger mx-5" role="alert">
+      Please log in to view your dashboard.
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.section {
+.dashboard {
   padding-top: 2rem;
-}
-
-.notification {
-  margin-top: 1rem;
-}
-
-.timer-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.timer-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.buttons {
-  margin-top: 1rem;
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
-.button.is-danger.is-red {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-}
-
-.button.is-danger.is-light {
-  background-color: #0748ba !important;
-  color: #ffffff !important;
-}
-
-.mt-4 {
-  margin-top: 1rem;
 }
 </style>

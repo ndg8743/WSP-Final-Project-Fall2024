@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { getLogin } from '@/models/login';
+import { getLogin } from '../models/login';
 
 const isOpen = ref(false);
 const { isLoggedIn, logout } = getLogin();
@@ -11,8 +11,8 @@ const { isLoggedIn, logout } = getLogin();
   <nav class="navbar is-info" role="navigation" aria-label="main navigation">
     <div class="container">
       <div class="navbar-brand">
-        <RouterLink to="/">
-          <img alt="App logo" class="logo" src="@/assets/Logo.png" width="30" height="30" />
+        <RouterLink to="/" class="navbar-item brand-link">
+          <img alt="App logo" class="logo" src="/src/assets/Logo.png" />
         </RouterLink>
 
         <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" :class="{ 'is-active': isOpen }"
@@ -75,7 +75,7 @@ const { isLoggedIn, logout } = getLogin();
 
         <div class="navbar-end">
           <div class="navbar-item">
-            <div class="buttons">
+            <div class="auth-buttons">
               <RouterLink v-if="!isLoggedIn" to="/signup" class="button is-primary">
                 <span class="icon"><i class="fas fa-user-plus"></i></span>
                 <strong>Sign up</strong>
@@ -106,28 +106,55 @@ const { isLoggedIn, logout } = getLogin();
   cursor: pointer;
 }
 
+.brand-link {
+  padding: 0.5rem 0.75rem;
+}
+
 .logo {
-
-  margin-bottom: -35px;
-  padding: 5px;
-  width: 40px;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
 }
 
-/* Add specific margin for icons within buttons */
-.buttons .icon i {
-  margin-right: 30px;
-  /* Space between icon and text */
-
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Increase button size */
-.buttons .button {
-  font-size: 1.1rem;
-  /* Adjust font size */
-  padding: 0.75rem 1.5rem;
-  /* Increase padding */
-  margin-right: 10px;
-  /* Add margin between buttons */
-  width: 150px;
+.auth-buttons .button {
+  height: 2.5rem;
+  padding: 0 1.25rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-buttons .button .icon {
+  margin-right: 0.5rem;
+}
+
+.navbar-item {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-item .icon {
+  margin-right: 0.5rem;
+}
+
+@media screen and (max-width: 1023px) {
+  .auth-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .auth-buttons .button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
 }
 </style>

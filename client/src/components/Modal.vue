@@ -1,17 +1,34 @@
 <!-- eslint-disable vue/multi-word-component-names -->
-<script setup>
-defineEmits(['close']);
+<script setup lang="ts">
+interface Emits {
+  (event: 'close'): void
+}
+
+defineEmits<Emits>()
 </script>
 
 <template>
-  <div class="modal is-active">
-    <div class="modal-background" @click="$emit('close')"></div>
+  <div 
+    class="modal is-active"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div 
+      class="modal-background" 
+      @click="$emit('close')"
+      role="button"
+      aria-label="Close modal"
+    ></div>
     <div class="modal-card">
       <header class="modal-card-head">
         <p class="modal-card-title">
           <slot name="header"></slot>
         </p>
-        <button class="delete" aria-label="close" @click="$emit('close')"></button>
+        <button 
+          class="delete" 
+          aria-label="close" 
+          @click="$emit('close')"
+        ></button>
       </header>
       <section class="modal-card-body">
         <slot name="body"></slot>

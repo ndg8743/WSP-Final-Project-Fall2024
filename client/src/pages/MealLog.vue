@@ -182,38 +182,65 @@ onMounted(loadMeals)
     <div class="container">
       <h1 class="title">Meal Log</h1>
 
-      <div v-if="error" class="notification is-danger">
+      <div 
+        v-if="error" 
+        class="notification is-danger"
+        role="alert"
+      >
         {{ error }}
       </div>
 
       <div v-if="session.token && session.user">
-        <button class="button is-primary" @click="openAddMeal" :disabled="isLoading">
+        <button 
+          class="button is-primary" 
+          @click="openAddMeal" 
+          :disabled="isLoading"
+          aria-label="Add new meal"
+        >
           Add New Meal
         </button>
 
         <div class="mt-4">
           <div class="field">
-            <label class="label">Filter by Date</label>
+            <label class="label" for="dateFilter">Filter by Date</label>
             <input
+              id="dateFilter"
               type="date"
               class="input"
               v-model="filterDate"
               @change="filterMeals"
               :disabled="isLoading"
+              aria-label="Filter meals by date"
             />
           </div>
         </div>
 
-        <div v-if="isLoading" class="mt-4">
-          <progress class="progress is-small is-primary" max="100">Loading...</progress>
+        <div 
+          v-if="isLoading" 
+          class="mt-4"
+          role="status"
+          aria-label="Loading meals"
+        >
+          <progress class="progress is-small is-primary" max="100">
+            Loading...
+          </progress>
         </div>
 
         <div v-else>
-          <div v-if="filteredMeals.length === 0" class="notification is-info mt-4">
+          <div 
+            v-if="filteredMeals.length === 0" 
+            class="notification is-info mt-4"
+            role="status"
+          >
             No meals found.
           </div>
 
-          <div v-else>
+          <div 
+            v-else
+            class="exercises-grid"
+            role="list"
+            aria-label="Meal list"
+          >
             <MealCard
               v-for="meal in filteredMeals"
               :key="meal.id"
@@ -224,40 +251,67 @@ onMounted(loadMeals)
           </div>
         </div>
       </div>
-      <div v-else>
-        <p class="notification is-danger">Please log in to view and manage your meal log.</p>
+      <div 
+        v-else
+        class="notification is-danger"
+        role="alert"
+      >
+        Please log in to view and manage your meal log.
       </div>
     </div>
   </section>
 
-  <Modal v-if="showModal" @close="closeModal">
+  <Modal 
+    v-if="showModal" 
+    @close="closeModal"
+    role="dialog"
+    aria-labelledby="modalTitle"
+  >
     <template #header>
-      <p>{{ isAddingMeal ? 'Add Meal' : 'Edit Meal' }}</p>
+      <p id="modalTitle">{{ isAddingMeal ? 'Add Meal' : 'Edit Meal' }}</p>
     </template>
     <template #body>
       <template v-if="currentMeal">
-        <div v-if="validationErrors.length > 0" class="notification is-warning">
+        <div 
+          v-if="validationErrors.length > 0" 
+          class="notification is-warning"
+          role="alert"
+        >
           <ul>
             <li v-for="error in validationErrors" :key="error">{{ error }}</li>
           </ul>
         </div>
 
         <div class="field">
-          <label class="label">Meal Name *</label>
-          <input class="input" v-model="currentMeal.name" :disabled="isLoading" />
+          <label class="label" for="mealName">Meal Name *</label>
+          <input 
+            id="mealName"
+            class="input" 
+            v-model="currentMeal.name" 
+            :disabled="isLoading"
+            aria-required="true"
+          />
         </div>
         <div class="field">
-          <label class="label">Calories</label>
+          <label class="label" for="mealCalories">Calories</label>
           <input
+            id="mealCalories"
             class="input"
             type="number"
             v-model="currentMeal.mealCalories"
             :disabled="isLoading"
+            min="0"
           />
         </div>
         <div class="field">
-          <label class="label">Date</label>
-          <input class="input" type="date" v-model="currentMeal.date" :disabled="isLoading" />
+          <label class="label" for="mealDate">Date</label>
+          <input 
+            id="mealDate"
+            class="input" 
+            type="date" 
+            v-model="currentMeal.date" 
+            :disabled="isLoading"
+          />
         </div>
         <p class="help">* Required fields</p>
       </template>
@@ -268,37 +322,18 @@ onMounted(loadMeals)
         @click="saveMeal"
         :class="{ 'is-loading': isLoading }"
         :disabled="isLoading || !isFormValid"
+        aria-label="Save meal"
       >
         Save
       </button>
-      <button class="button" @click="closeModal" :disabled="isLoading">Cancel</button>
+      <button 
+        class="button" 
+        @click="closeModal" 
+        :disabled="isLoading"
+        aria-label="Cancel"
+      >
+        Cancel
+      </button>
     </template>
   </Modal>
 </template>
-
-<style scoped>
-.section {
-  padding-top: 2rem;
-}
-
-.notification {
-  margin-top: 1rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.button + .button {
-  margin-left: 0.5rem;
-}
-
-.field {
-  margin-bottom: 1rem;
-}
-
-.help {
-  font-style: italic;
-  color: #666;
-}
-</style>

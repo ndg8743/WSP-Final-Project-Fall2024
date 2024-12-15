@@ -1,8 +1,21 @@
+/* Root Variables for Consistent Spacing */
+:root {
+  --spacing-xs: 0.5rem;   /* 8px */
+  --spacing-sm: 1rem;     /* 16px */
+  --spacing-md: 1.5rem;   /* 24px */
+  --spacing-lg: 2rem;     /* 32px */
+  --spacing-xl: 3rem;     /* 48px */
+  --spacing-2xl: 4rem;    /* 64px */
+  
+  --container-max-width: 1400px;
+  --card-min-width: 300px;
+}
+
 /* Theme styles */
 /* Dark theme */
 html.dark body {
-  background-color: #121212 !important;
-  color: #e0e0e0 !important;
+  background-color: #121212;
+  color: #e0e0e0;
 }
 
 html.dark .container,
@@ -12,36 +25,36 @@ html.dark .card,
 html.dark .field input,
 html.dark .field select,
 html.dark .progress-bar {
-  background-color: #1e1e1e !important;
-  color: #e0e0e0 !important;
-  border-color: #333 !important;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border-color: #333;
 }
 
 html.dark .navbar-item,
 html.dark .navbar-link,
 html.dark .field label {
-  color: #e0e0e0 !important;
+  color: #e0e0e0;
 }
 
 html.dark .navbar-item:hover,
 html.dark .navbar-link:hover {
-  background-color: #333 !important;
+  background-color: #333;
 }
 
 html.dark .button.is-primary {
-  background-color: #00ff99b6 !important;
-  color: #fff !important;
+  background-color: #00ff99b6;
+  color: #fff;
 }
 
 html.dark .button.is-danger {
-  background-color: #0821ffb0 !important;
-  color: #fff !important;
+  background-color: #0821ffb0;
+  color: #fff;
 }
 
 /* Light theme */
 html.light body {
-  background-color: #f8f9fa !important;
-  color: #212529 !important;
+  background-color: #f8f9fa;
+  color: #212529;
 }
 
 html.light .container,
@@ -51,120 +64,159 @@ html.light .card,
 html.light .progress-bar,
 html.light .field input,
 html.light .field select {
-  background-color: white !important;
-  color: #212529 !important;
-  border-color: #ddd !important;
+  background-color: white;
+  color: #212529;
+  border-color: #ddd;
 }
 
-/* Dark theme components */
-html.dark .card,
-html.dark .exercise-card,
-html.dark .social-card {
-  background-color: #1e1e1e !important;
-  color: #e0e0e0 !important;
-  border: 1px solid #333 !important;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
-  padding: 15px !important;
-  border-radius: 8px !important;
-}
-
-html.dark .exercise-card .field input,
-html.dark .social-card .field input {
-  background-color: #333 !important;
-  color: #e0e0e0 !important;
-  border: 1px solid #444 !important;
-}
-
-html.dark h1,
-html.dark h2,
-html.dark h3,
-html.dark .title,
-html.dark .subtitle {
-  color: #e0e0e0 !important;
-}
-
-html.dark .input,
-html.dark .textarea,
-html.dark .select select {
-  background-color: #333 !important;
-  color: #e0e0e0 !important;
-  border: 1px solid #444 !important;
-}
-
-html.dark .input:focus,
-html.dark .textarea:focus,
-html.dark .select select:focus {
-  border-color: #00ff99da !important;
-  box-shadow: 0 0 0 0.125em rgba(0, 255, 153, 0.401) !important;
-}
-
-html.dark .progress-wrapper .progress-bar {
-  background-color: var(--bar-color, #00ff99d4) !important;
-}
-
-/* Common Layout Styles */
+/* Layout Styles */
 .section {
-  padding-top: 2rem;
+  padding: var(--spacing-lg) 0;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: var(--container-max-width);
+  padding: 0 var(--spacing-md);
   margin: 0 auto;
-  padding: 0 1rem;
 }
 
-/* Common Spacing */
-.mt-4 {
-  margin-top: 1rem;
+/* Box and Card Base Styles */
+.box,
+.card,
+.exercise-card,
+.meal-card,
+.social-card,
+.user-card,
+.statistics-box {
+  padding: var(--spacing-md);
+  margin: var(--spacing-sm);
+  border-radius: 8px;
+  border: 1px solid;
+  min-width: var(--card-min-width);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.mb-4 {
-  margin-bottom: 1rem;
+.box:hover,
+.card:hover,
+.exercise-card:hover,
+.meal-card:hover,
+.social-card:hover,
+.user-card:hover,
+.statistics-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.field {
-  margin-bottom: 1rem;
+html.dark .box:hover,
+html.dark .card:hover,
+html.dark .exercise-card:hover,
+html.dark .meal-card:hover,
+html.dark .social-card:hover,
+html.dark .user-card:hover,
+html.dark .statistics-box:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Grid Layouts */
+.friends-grid,
+.user-list,
+.exercises-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width), 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+  padding: 0 var(--spacing-md);
 }
 
 /* Form Elements */
+.field {
+  margin-bottom: var(--spacing-md);
+}
+
 .field label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--spacing-xs);
   font-weight: 600;
 }
 
 .help {
+  margin-top: var(--spacing-xs);
+  font-size: 0.875rem;
   font-style: italic;
   color: #666;
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
 }
 
-/* Button Styles */
+/* Button Spacing */
 .button + .button {
-  margin-left: 0.5rem;
+  margin-left: var(--spacing-xs);
 }
 
 .buttons {
-  margin-top: 1rem;
+  margin-top: var(--spacing-md);
+  gap: var(--spacing-xs);
 }
 
-/* Card and Box Animations */
-.box, .card {
-  transition: all 0.3s ease !important;
+/* User Info Components */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 
-.box:hover, .card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+.user-info .user-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-/* Progress Bar */
-.progress {
-  transition: width 3.5s ease-in-out !important;
+/* Activity Components */
+.activity-info {
+  margin-left: var(--spacing-sm);
 }
 
-/* User Image Styles */
+.activity-info p {
+  margin: var(--spacing-xs) 0;
+}
+
+/* Level Layout */
+.level {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+}
+
+.level-left,
+.level-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* Card Headers */
+.exercise-header,
+.meal-header,
+.friend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Progress Elements */
+.progress-wrapper {
+  margin: var(--spacing-md) 0;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 1.5s ease-in-out;
+}
+
+/* Image Styles */
 .user-image {
   width: 80px;
   height: 80px;
@@ -173,6 +225,7 @@ html.dark .progress-wrapper .progress-bar {
   overflow: hidden;
   border: 2px solid #f5f5f5;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .user-image img {
@@ -180,46 +233,95 @@ html.dark .progress-wrapper .progress-bar {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+html.dark .user-image {
+  border-color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Notification Styles */
 .notification {
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
   border-radius: 4px;
 }
 
-.notification.is-danger {
-  background-color: #ff3860;
-  color: #fff;
+/* Dashboard Layout */
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
 }
 
-.notification.is-warning {
-  background-color: #ffdd57;
-  color: rgba(0, 0, 0, 0.7);
+.stat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
 }
 
-.notification.is-info {
-  background-color: #3298dc;
-  color: #fff;
+.timer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
 }
 
-/* Modal Styles */
-.modal-card {
-  max-width: 500px;
-  margin: 0 auto;
+.timer-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  font-family: 'Roboto Mono', monospace;
+  min-width: 120px;
+  text-align: center;
 }
 
-.modal-card-body {
-  padding: 1.5rem;
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  :root {
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+  }
+  
+  .friends-grid,
+  .user-list,
+  .exercises-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .timer-controls {
+    gap: var(--spacing-md);
+  }
+  
+  .box,
+  .card {
+    margin: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
 }
 
-/* Loading State */
-.is-loading {
-  pointer-events: none;
-  opacity: 0.7;
+/* Animation */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
 }
 
-.progress.is-small {
-  height: 0.5rem;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
