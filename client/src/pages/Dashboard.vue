@@ -2,7 +2,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// @ts-expect-error: Vue component typing
 import ProgressBar from '../components/ProgressBar.vue'
 import { getUserExercises, type Exercise } from '../models/exercises.js'
 import { getUserMeals, type Meal } from '../models/meals.js'

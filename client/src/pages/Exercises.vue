@@ -3,7 +3,6 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ExerciseCard from '../components/ExerciseCard.vue'
-// @ts-expect-error: Vue component typing
 import Modal from '../components/Modal.vue'
 import {
   getUserExercises,
