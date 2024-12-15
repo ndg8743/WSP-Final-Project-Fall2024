@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 // @ts-ignore
 import ExerciseCard from '../components/ExerciseCard.vue'
@@ -24,7 +24,34 @@ const currentExercise = ref<Partial<Exercise> | null>(null)
 const showModal = ref(false)
 const isLoading = ref(false)
 const error = ref('')
+const validationErrors = ref<string[]>([])
 const isAddingExercise = ref(false)
+
+// Validation computed properties
+const getValidationErrors = computed(() => {
+  const errors: string[] = []
+  
+  if (!currentExercise.value?.name?.trim()) {
+    errors.push('Exercise name is required')
+  }
+  
+  if (currentExercise.value?.duration && currentExercise.value.duration < 0) {
+    errors.push('Duration must be a positive number')
+  }
+  
+  if (currentExercise.value?.caloriesBurned && currentExercise.value.caloriesBurned < 0) {
+    errors.push('Calories burned must be a positive number')
+  }
+
+  return errors
+})
+
+const isFormValid = computed(() => getValidationErrors.value.length === 0)
+
+// Update validation errors when they change
+watch(getValidationErrors, (newErrors) => {
+  validationErrors.value = newErrors
+})
 
 const filterExercises = () => {
   if (!exercises.value) {
@@ -36,92 +63,7 @@ const filterExercises = () => {
     : [...exercises.value]
 }
 
-const openAddExercise = () => {
-  if (!session.token || !session.user?.id) {
-    router.push('/login')
-    return
-  }
-
-  currentExercise.value = {
-    name: '',
-    duration: 0,
-    caloriesBurned: 0,
-    date: new Date().toISOString().split('T')[0],
-    userId: session.user.id
-  }
-  isAddingExercise.value = true
-  showModal.value = true
-}
-
-const handleEdit = (exercise: Exercise) => {
-  if (!session.token || !session.user?.id) {
-    router.push('/login')
-    return
-  }
-
-  currentExercise.value = { ...exercise }
-  isAddingExercise.value = false
-  showModal.value = true
-}
-
-const handleDelete = async (id: number) => {
-  if (!session.token || !session.user?.id) {
-    router.push('/login')
-    return
-  }
-
-  exercises.value = exercises.value.filter((exercise) => exercise.id !== id)
-
-  await Promise.all([deleteExercise(id), filterExercises()])
-  // Trigger dashboard refresh
-  router.replace(router.currentRoute.value.fullPath)
-}
-
-const saveExercise = async () => {
-  if (!session.token || !session.user?.id || !currentExercise.value) {
-    router.push('/login')
-    return
-  }
-
-  isLoading.value = true
-  error.value = ''
-
-  try {
-    if (isAddingExercise.value) {
-      const response = await addExercise(currentExercise.value as Omit<Exercise, 'id'>)
-      if (response.isSuccess && response.data) {
-        exercises.value = exercises.value || []
-        exercises.value.push(response.data)
-      } else {
-        error.value = response.message || 'Failed to add exercise'
-      }
-    } else {
-      const index = exercises.value.findIndex(
-        (exercise) => exercise.id === currentExercise.value!.id
-      )
-      if (index !== -1) exercises.value.splice(index, 1, currentExercise.value as Exercise)
-    }
-    closeModal()
-    filterExercises()
-    // Trigger dashboard refresh
-    router.replace(router.currentRoute.value.fullPath)
-  } catch (err) {
-    console.error('Error saving exercise:', err)
-    error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
-    if (err instanceof Error && err.message === 'Session expired') {
-      router.push('/login')
-    }
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const closeModal = () => {
-  showModal.value = false
-  currentExercise.value = null
-}
-
-onMounted(async () => {
+const loadExercises = async () => {
   if (!session.token || !session.user?.id) {
     router.push('/login')
     return
@@ -139,7 +81,6 @@ onMounted(async () => {
       error.value = response.message || 'Error fetching exercises'
     }
   } catch (err) {
-    console.error('Error fetching exercises:', err)
     error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
     if (err instanceof Error && err.message === 'Session expired') {
       router.push('/login')
@@ -147,7 +88,105 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-})
+}
+
+const openAddExercise = () => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  currentExercise.value = {
+    name: '',
+    duration: 0,
+    caloriesBurned: 0,
+    date: new Date().toISOString().split('T')[0],
+    userId: session.user.id
+  }
+  isAddingExercise.value = true
+  showModal.value = true
+  validationErrors.value = []
+}
+
+const handleEdit = (exercise: Exercise) => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  currentExercise.value = { ...exercise }
+  isAddingExercise.value = false
+  showModal.value = true
+  validationErrors.value = []
+}
+
+const handleDelete = async (id: number) => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  await deleteExercise(id)
+  await loadExercises()
+  // Trigger dashboard refresh
+  router.replace(router.currentRoute.value.fullPath)
+}
+
+const saveExercise = async () => {
+  if (!session.token || !session.user?.id || !currentExercise.value) {
+    router.push('/login')
+    return
+  }
+
+  if (!isFormValid.value) {
+    error.value = 'Please fix the validation errors before saving'
+    return
+  }
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    if (isAddingExercise.value) {
+      const response = await addExercise(currentExercise.value as Omit<Exercise, 'id'>)
+      if (response.isSuccess && response.data) {
+        closeModal()
+        await loadExercises() // Reload data after successful save
+        // Trigger dashboard refresh
+        router.replace(router.currentRoute.value.fullPath)
+      } else {
+        error.value = response.message || 'Failed to add exercise'
+      }
+    } else {
+      const index = exercises.value.findIndex(
+        (exercise) => exercise.id === currentExercise.value!.id
+      )
+      if (index !== -1) {
+        exercises.value.splice(index, 1, currentExercise.value as Exercise)
+        closeModal()
+        await loadExercises() // Reload data after successful update
+        // Trigger dashboard refresh
+        router.replace(router.currentRoute.value.fullPath)
+      }
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
+    if (err instanceof Error && err.message === 'Session expired') {
+      router.push('/login')
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const closeModal = () => {
+  showModal.value = false
+  currentExercise.value = null
+  validationErrors.value = []
+  error.value = ''
+}
+
+onMounted(loadExercises)
 </script>
 
 <template>
@@ -209,8 +248,14 @@ onMounted(async () => {
     </template>
     <template #body>
       <template v-if="currentExercise">
+        <div v-if="validationErrors.length > 0" class="notification is-warning">
+          <ul>
+            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+          </ul>
+        </div>
+
         <div class="field">
-          <label class="label">Exercise Name</label>
+          <label class="label">Exercise Name *</label>
           <input class="input" v-model="currentExercise.name" :disabled="isLoading" />
         </div>
         <div class="field">
@@ -235,6 +280,7 @@ onMounted(async () => {
           <label class="label">Date</label>
           <input class="input" type="date" v-model="currentExercise.date" :disabled="isLoading" />
         </div>
+        <p class="help">* Required fields</p>
       </template>
     </template>
     <template #footer>
@@ -242,7 +288,7 @@ onMounted(async () => {
         class="button is-success"
         @click="saveExercise"
         :class="{ 'is-loading': isLoading }"
-        :disabled="isLoading"
+        :disabled="isLoading || !isFormValid"
       >
         Save
       </button>
@@ -266,5 +312,14 @@ onMounted(async () => {
 
 .button + .button {
   margin-left: 0.5rem;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.help {
+  font-style: italic;
+  color: #666;
 }
 </style>

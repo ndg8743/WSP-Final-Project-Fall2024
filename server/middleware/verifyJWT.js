@@ -13,10 +13,13 @@ async function parseToken(req, res, next) {
 
   try {
     const payload = await verifyToken(token);
-    req.user = payload; // Attach payload to the request
+    req.user = payload;
   } catch (error) {
-    console.error("Error verifying token:", error.message);
-    return res.status(401).json({ error: "Invalid or expired token" });
+    return res.status(401).json({ 
+      error: error.name === 'TokenExpiredError' 
+        ? 'Your session has expired. Please log in again.'
+        : 'Invalid authentication token.'
+    });
   }
   next();
 }

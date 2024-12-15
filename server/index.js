@@ -14,23 +14,43 @@ const mealsController = require(
 const userController = require(path.join(__dirname, "controllers", "users.js"));
 const { parseToken } = require("./middleware/verifyJWT");
 
-console.log("Environment variables loaded:");
-console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
-console.log("SUPABASE_SECRET_KEY:", process.env.SUPABASE_SECRET_KEY);
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
+// Validate required environment variables
+const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingEnvVars.length > 0) {
+  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const VITE_API_URL = "/api/v1";
 
-// Middleware
+// Middleware setup
 app.use(cors());
 app.use(express.json());
 app.use(parseToken); // Apply parseToken globally
 
-// Debugging middleware
+/**
+ * Production-ready request logger
+ * Logs request method, path, and response time
+ */
 app.use((req, res, next) => {
-  console.log(`Received ${req.method} request for ${req.url}`);
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const log = {
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      duration: `${duration}ms`
+    };
+    // Only log errors in production
+    if (res.statusCode >= 400) {
+      console.error(JSON.stringify(log));
+    } else if (process.env.NODE_ENV !== 'production') {
+      console.log(JSON.stringify(log));
+    }
+  });
   next();
 });
 
@@ -42,30 +62,39 @@ app.use(`${VITE_API_URL}/users`, userController);
 // Serve static files for SPA
 app.use(express.static(path.resolve(__dirname, "dist")));
 
-// SPA route handling - must come after static file serving
+/**
+ * SPA route handler - serves index.html for all unmatched routes
+ * Must come after static file serving and API routes
+ */
 app.get("*", (req, res) => {
-  console.log("Serving SPA");
-  try {
-    res.sendFile(path.resolve(__dirname, "dist", "index.html"));
-  } catch (err) {
-    console.error("Error serving SPA:", err);
-    res.status(500).send("Error serving SPA");
-  }
+  res.sendFile(path.resolve(__dirname, "dist", "index.html"));
 });
 
-// Error Handling
+/**
+ * Global error handler
+ * Formats errors consistently and hides implementation details in production
+ */
 app.use((err, req, res, next) => {
-  console.error("Error details:", {
+  // Log error details for debugging
+  const errorDetails = {
     message: err.message,
-    stack: err.stack,
     code: err.code,
-    syscall: err.syscall,
     path: err.path,
+    stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined
+  };
+  console.error('Server error:', JSON.stringify(errorDetails));
+
+  // Send safe error response to client
+  res.status(err.status || 500).json({ 
+    error: process.env.NODE_ENV === 'production'
+      ? 'An unexpected error occurred'
+      : err.message || 'Server Error'
   });
-  res.status(err.status || 500).json({ error: err.message || "Server Error" });
 });
 
+// Start server
 const server = createServer(app);
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  const mode = process.env.NODE_ENV || 'development';
+  console.log(`Server running in ${mode} mode on http://localhost:${PORT}`);
 });

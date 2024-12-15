@@ -23,14 +23,36 @@ const checkAdminAccess = () => {
     router.push('/login')
     return false
   }
-  if (session.user.role !== 'admin') {
-    router.push('/unauthorized')
-    return false
-  }
-  return true
+  return session.user.role === 'admin'
 }
 
-// Handle editing a user
+const loadUsers = async () => {
+  if (!checkAdminAccess()) return
+
+  try {
+    isLoading.value = true
+    error.value = ''
+    const response = await getUsers()
+    if (response.isSuccess) {
+      users.value = response.data
+    } else {
+      error.value = response.message || 'Error fetching users'
+    }
+  } catch (err) {
+    if (err instanceof Error) {
+      if (err.message === 'Session expired') {
+        router.push('/login')
+      } else {
+        error.value = err.message
+      }
+    } else {
+      error.value = 'An unexpected error occurred'
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const handleEdit = (user: UserResponse) => {
   if (!checkAdminAccess()) return
 
@@ -39,7 +61,6 @@ const handleEdit = (user: UserResponse) => {
   showModal.value = true
 }
 
-// Handle deleting a user
 const handleDelete = async (id: number) => {
   if (!checkAdminAccess()) return
 
@@ -56,17 +77,20 @@ const handleDelete = async (id: number) => {
       error.value = response.message || "Error deleting user"
     }
   } catch (err) {
-    console.error("Error deleting user:", err)
-    error.value = err instanceof Error ? err.message : "An unexpected error occurred"
-    if (err instanceof Error && err.message === 'Session expired') {
-      router.push('/login')
+    if (err instanceof Error) {
+      if (err.message === 'Session expired') {
+        router.push('/login')
+      } else {
+        error.value = err.message
+      }
+    } else {
+      error.value = 'An unexpected error occurred'
     }
   } finally {
     isLoading.value = false
   }
 }
 
-// Handle adding a new user
 const handleAddUser = () => {
   if (!checkAdminAccess()) return
 
@@ -81,7 +105,6 @@ const handleAddUser = () => {
   showModal.value = true
 }
 
-// Save changes for editing or adding a user
 const saveUser = async () => {
   if (!checkAdminAccess() || !currentUser.value) return
 
@@ -101,7 +124,7 @@ const saveUser = async () => {
       if (isAddingUser.value) {
         users.value.push(response.data)
       } else {
-        const index = users.value.findIndex((u) => u.id === currentUser.value?.id)
+        const index = users.value.findIndex((u) => u.id === currentUser.value!.id)
         if (index !== -1) users.value[index] = response.data
       }
       closeModal()
@@ -109,10 +132,14 @@ const saveUser = async () => {
       error.value = response.message || "Error saving user"
     }
   } catch (err) {
-    console.error("Error saving user:", err)
-    error.value = err instanceof Error ? err.message : "An unexpected error occurred"
-    if (err instanceof Error && err.message === 'Session expired') {
-      router.push('/login')
+    if (err instanceof Error) {
+      if (err.message === 'Session expired') {
+        router.push('/login')
+      } else {
+        error.value = err.message
+      }
+    } else {
+      error.value = 'An unexpected error occurred'
     }
   } finally {
     isLoading.value = false
@@ -124,57 +151,32 @@ const closeModal = () => {
   currentUser.value = null
 }
 
-onMounted(async () => {
-  if (!checkAdminAccess()) return
-
-  try {
-    isLoading.value = true
-    error.value = ''
-    const response = await getUsers()
-    if (response.isSuccess) {
-      users.value = response.data
-    } else {
-      error.value = response.message || 'Error fetching users'
-    }
-  } catch (err) {
-    console.error('Error fetching users:', err)
-    error.value = err instanceof Error ? err.message : "An unexpected error occurred"
-    if (err instanceof Error && err.message === 'Session expired') {
-      router.push('/login')
-    }
-  } finally {
-    isLoading.value = false
-  }
-})
-
 // Watch for session changes
 watch(() => session.token, (newToken: string | null) => {
   if (!newToken) {
     router.push('/login')
-    return
-  }
-  if (session.user?.role !== 'admin') {
-    router.push('/unauthorized')
   }
 })
 
 watch(() => session.user?.role, (newRole: string | undefined) => {
   if (newRole !== 'admin') {
-    router.push('/unauthorized')
+    error.value = 'You do not have administrator privileges'
   }
 })
+
+onMounted(loadUsers)
 </script>
 
 <template>
   <section class="section">
     <div class="container">
-      <h1 class="title">User Management</h1>
-
-      <div v-if="error" class="notification is-danger">
-        {{ error }}
-      </div>
-
       <template v-if="session.token && session.user?.role === 'admin'">
+        <h1 class="title">User Management</h1>
+
+        <div v-if="error" class="notification is-danger">
+          {{ error }}
+        </div>
+
         <button 
           class="button is-primary" 
           @click="handleAddUser"
@@ -272,31 +274,23 @@ watch(() => session.user?.role, (newRole: string | undefined) => {
           </template>
         </Modal>
       </template>
-      <div v-else>
-        <p class="notification is-danger">You do not have permission to access this page.</p>
-      </div>
+
+      <template v-else-if="session.token">
+        <div class="box has-text-centered">
+          <h1 class="title has-text-danger">Access Denied</h1>
+          <p class="subtitle">You do not have administrator privileges to access this page.</p>
+          <div class="buttons is-centered mt-4">
+            <router-link to="/" class="button is-primary">Return to Dashboard</router-link>
+            <button @click="router.back()" class="button">Go Back</button>
+          </div>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="notification is-warning">
+          Please log in to continue.
+        </div>
+      </template>
     </div>
   </section>
 </template>
-
-<style scoped>
-.section {
-  padding-top: 2rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.modal-form {
-  padding: 1rem;
-}
-
-.field {
-  margin-bottom: 1rem;
-}
-
-.button + .button {
-  margin-left: 0.5rem;
-}
-</style>

@@ -23,9 +23,6 @@ router.beforeEach((to, from, next) => {
   
   // Check if route requires authentication
   const requiresAuth = !publicRoutes.includes(to.path)
-  
-  // Check if route requires admin role
-  const requiresAdmin = to.path.startsWith('/admin')
 
   if (requiresAuth && !session?.token) {
     // Redirect to login if authentication is required but no token exists
@@ -33,21 +30,20 @@ router.beforeEach((to, from, next) => {
       path: '/login', 
       query: { redirect: to.fullPath } 
     })
-  } else if (requiresAdmin && session?.user?.role !== 'admin') {
-    // Redirect unauthorized users trying to access admin routes
-    next({ path: '/unauthorized' })
   } else if (to.path === '/login' && session?.token) {
     // Redirect logged in users trying to access login page
     next({ path: '/dashboard' })
   } else {
-    // Allow access
+    // Allow access - admin pages will handle their own access control
     next()
   }
 })
 
 // Handle navigation errors
 router.onError((error) => {
-  console.error('Navigation error:', error)
+  if (process.env.NODE_ENV !== 'production') {
+    console.error('Navigation error:', error)
+  }
   // Redirect to error page or handle error appropriately
   router.push('/error')
 })

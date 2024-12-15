@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { getSession } from '../models/login'
 import { updateUser, type User } from '../models/users'
 
@@ -14,6 +14,19 @@ const confirmPassword = ref('')
 const isEditing = ref(false)
 const message = ref('')
 const messageType = ref('')
+const theme = ref(localStorage.getItem('theme') || 'dark')
+
+// Apply theme function
+const applyTheme = () => {
+  document.documentElement.classList.remove('light', 'dark')
+  document.documentElement.classList.add(theme.value)
+}
+
+// Watch theme changes and apply immediately
+watch(() => theme.value, () => {
+  localStorage.setItem('theme', theme.value)
+  applyTheme()
+})
 
 onMounted(() => {
   if (session.user) {
@@ -21,6 +34,7 @@ onMounted(() => {
     name.value = session.user.name
     email.value = session.user.email
   }
+  applyTheme()
 })
 
 const uploadImage = (event: Event) => {
@@ -117,6 +131,22 @@ const saveChanges = async () => {
       <!-- Alert Message -->
       <div v-if="message" :class="['notification', messageType, 'fade-in']">
         {{ message }}
+      </div>
+
+      <!-- App Settings Section -->
+      <div class="settings-section mb-5">
+        <h3 class="title is-5">App Settings</h3>
+        <div class="field">
+          <label class="label">Theme</label>
+          <div class="control">
+            <div class="select">
+              <select v-model="theme">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Profile Information Form -->
@@ -256,6 +286,7 @@ const saveChanges = async () => {
   height: 100%;
 }
 
+.settings-section,
 .password-section {
   border-top: 1px solid var(--border-color, #dbdbdb);
   padding-top: 1.5rem;
@@ -298,6 +329,7 @@ const saveChanges = async () => {
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
 }
 
+:global(html.dark) .settings-section,
 :global(html.dark) .password-section {
   border-color: #333;
 }

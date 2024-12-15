@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 // @ts-ignore
 import MealCard from '../components/MealCard.vue'
@@ -19,9 +19,31 @@ const currentMeal = ref<Partial<Meal> | null>(null)
 const showModal = ref(false)
 const isLoading = ref(false)
 const error = ref('')
+const validationErrors = ref<string[]>([])
 const isAddingMeal = ref(false)
 
-// Filter meals based on the selected date
+// Validation computed properties
+const getValidationErrors = computed(() => {
+  const errors: string[] = []
+  
+  if (!currentMeal.value?.name?.trim()) {
+    errors.push('Meal name is required')
+  }
+  
+  if (currentMeal.value?.mealCalories && currentMeal.value.mealCalories < 0) {
+    errors.push('Calories must be a positive number')
+  }
+
+  return errors
+})
+
+const isFormValid = computed(() => getValidationErrors.value.length === 0)
+
+// Update validation errors when they change
+watch(getValidationErrors, (newErrors) => {
+  validationErrors.value = newErrors
+})
+
 const filterMeals = () => {
   if (!meals.value) {
     filteredMeals.value = []
@@ -32,89 +54,7 @@ const filterMeals = () => {
     : [...meals.value]
 }
 
-const openAddMeal = () => {
-  if (!session.token || !session.user?.id) {
-    router.push('/login')
-    return
-  }
-
-  currentMeal.value = {
-    name: '',
-    mealCalories: 0,
-    date: new Date().toISOString().split('T')[0],
-    userId: session.user.id
-  }
-  isAddingMeal.value = true
-  showModal.value = true
-}
-
-const handleEdit = (meal: Meal) => {
-  if (!session.token || !session.user?.id) {
-    router.push('/login')
-    return
-  }
-
-  currentMeal.value = { ...meal }
-  isAddingMeal.value = false
-  showModal.value = true
-}
-
-const handleDelete = async (id: number) => {
-  if (!session.token || !session.user?.id) {
-    router.push('/login')
-    return
-  }
-
-  meals.value = meals.value.filter((meal) => meal.id !== id)
-
-  await Promise.all([deleteMeal(id), filterMeals()])
-  // Trigger dashboard refresh
-  router.replace(router.currentRoute.value.fullPath)
-}
-
-const saveMeal = async () => {
-  if (!session.token || !session.user?.id || !currentMeal.value) {
-    router.push('/login')
-    return
-  }
-
-  isLoading.value = true
-  error.value = ''
-
-  try {
-    if (isAddingMeal.value) {
-      const response = await addMeal(currentMeal.value as Omit<Meal, 'id'>)
-      if (response.isSuccess && response.data) {
-        meals.value = meals.value || []
-        meals.value.push(response.data)
-      } else {
-        error.value = response.message || 'Failed to add meal'
-      }
-    } else {
-      const index = meals.value.findIndex((meal) => meal.id === currentMeal.value!.id)
-      if (index !== -1) meals.value.splice(index, 1, currentMeal.value as Meal)
-    }
-    closeModal()
-    filterMeals()
-    // Trigger dashboard refresh
-    router.replace(router.currentRoute.value.fullPath)
-  } catch (err) {
-    console.error('Error saving meal:', err)
-    error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
-    if (err instanceof Error && err.message === 'Session expired') {
-      router.push('/login')
-    }
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const closeModal = () => {
-  showModal.value = false
-  currentMeal.value = null
-}
-
-onMounted(async () => {
+const loadMeals = async () => {
   if (!session.token || !session.user?.id) {
     router.push('/login')
     return
@@ -132,7 +72,6 @@ onMounted(async () => {
       error.value = response.message || 'Error fetching meals'
     }
   } catch (err) {
-    console.error('Error fetching meals:', err)
     error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
     if (err instanceof Error && err.message === 'Session expired') {
       router.push('/login')
@@ -140,7 +79,102 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-})
+}
+
+const openAddMeal = () => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  currentMeal.value = {
+    name: '',
+    mealCalories: 0,
+    date: new Date().toISOString().split('T')[0],
+    userId: session.user.id
+  }
+  isAddingMeal.value = true
+  showModal.value = true
+  validationErrors.value = []
+}
+
+const handleEdit = (meal: Meal) => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  currentMeal.value = { ...meal }
+  isAddingMeal.value = false
+  showModal.value = true
+  validationErrors.value = []
+}
+
+const handleDelete = async (id: number) => {
+  if (!session.token || !session.user?.id) {
+    router.push('/login')
+    return
+  }
+
+  await deleteMeal(id)
+  await loadMeals()
+  // Trigger dashboard refresh
+  router.replace(router.currentRoute.value.fullPath)
+}
+
+const saveMeal = async () => {
+  if (!session.token || !session.user?.id || !currentMeal.value) {
+    router.push('/login')
+    return
+  }
+
+  if (!isFormValid.value) {
+    error.value = 'Please fix the validation errors before saving'
+    return
+  }
+
+  isLoading.value = true
+  error.value = ''
+
+  try {
+    if (isAddingMeal.value) {
+      const response = await addMeal(currentMeal.value as Omit<Meal, 'id'>)
+      if (response.isSuccess && response.data) {
+        closeModal()
+        await loadMeals() // Reload data after successful save
+        // Trigger dashboard refresh
+        router.replace(router.currentRoute.value.fullPath)
+      } else {
+        error.value = response.message || 'Failed to add meal'
+      }
+    } else {
+      const index = meals.value.findIndex((meal) => meal.id === currentMeal.value!.id)
+      if (index !== -1) {
+        meals.value.splice(index, 1, currentMeal.value as Meal)
+        closeModal()
+        await loadMeals() // Reload data after successful update
+        // Trigger dashboard refresh
+        router.replace(router.currentRoute.value.fullPath)
+      }
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
+    if (err instanceof Error && err.message === 'Session expired') {
+      router.push('/login')
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const closeModal = () => {
+  showModal.value = false
+  currentMeal.value = null
+  validationErrors.value = []
+  error.value = ''
+}
+
+onMounted(loadMeals)
 </script>
 
 <template>
@@ -202,8 +236,14 @@ onMounted(async () => {
     </template>
     <template #body>
       <template v-if="currentMeal">
+        <div v-if="validationErrors.length > 0" class="notification is-warning">
+          <ul>
+            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+          </ul>
+        </div>
+
         <div class="field">
-          <label class="label">Meal Name</label>
+          <label class="label">Meal Name *</label>
           <input class="input" v-model="currentMeal.name" :disabled="isLoading" />
         </div>
         <div class="field">
@@ -219,6 +259,7 @@ onMounted(async () => {
           <label class="label">Date</label>
           <input class="input" type="date" v-model="currentMeal.date" :disabled="isLoading" />
         </div>
+        <p class="help">* Required fields</p>
       </template>
     </template>
     <template #footer>
@@ -226,7 +267,7 @@ onMounted(async () => {
         class="button is-success"
         @click="saveMeal"
         :class="{ 'is-loading': isLoading }"
-        :disabled="isLoading"
+        :disabled="isLoading || !isFormValid"
       >
         Save
       </button>
@@ -250,5 +291,14 @@ onMounted(async () => {
 
 .button + .button {
   margin-left: 0.5rem;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.help {
+  font-style: italic;
+  color: #666;
 }
 </style>

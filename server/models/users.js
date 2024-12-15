@@ -6,34 +6,29 @@ if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET must be set in environment variables");
 }
 
-// Generate a random 8-digit user ID
 function generateUserId() {
   return Math.floor(Math.random() * 99999999) + 1;
 }
 
-// Initialize default admin user if none exists
 async function initializeDefaultAdmin() {
   try {
-    // Check if any admin exists
     const { count, error: countError } = await conn
       .from("Users")
       .select("*", { count: "exact", head: true })
       .eq("role", "admin");
 
     if (countError) {
-      console.error("Error checking for admin users:", countError);
-      return;
+      throw new Error(`Error checking for admin users: ${countError.message}`);
     }
 
-    // If no admin exists, create one
     if (count === 0) {
       const defaultAdmin = {
         id: generateUserId(),
         name: "admin",
         email: "admin@example.com",
-        password: "admin123", // This should be changed immediately in production
+        password: "admin123",
         role: "admin",
-        friends: null, // Initialize as null instead of empty array
+        friends: null,
         image: null
       };
 
@@ -42,17 +37,14 @@ async function initializeDefaultAdmin() {
         .insert([defaultAdmin]);
 
       if (insertError) {
-        console.error("Error creating default admin:", insertError);
-      } else {
-        console.log("Default admin user created");
+        throw new Error(`Error creating default admin: ${insertError.message}`);
       }
     }
   } catch (err) {
-    console.error("Error initializing default admin:", err);
+    throw new Error(`Error initializing default admin: ${err.message}`);
   }
 }
 
-// Call initialization on module load
 initializeDefaultAdmin();
 
 async function getAll() {
@@ -67,8 +59,7 @@ async function getAll() {
       total: count ?? 0,
     };
   } catch (err) {
-    console.error("Unexpected error in getAll:", err);
-    throw err;
+    throw new Error(`Error fetching all users: ${err.message}`);
   }
 }
 
@@ -99,12 +90,7 @@ async function get(id) {
       },
     };
   } catch (err) {
-    console.error(`Unexpected error fetching user with ID ${id}:`, err);
-    return {
-      isSuccess: false,
-      message: err.message,
-      data: null,
-    };
+    throw new Error(`Error fetching user ${id}: ${err.message}`);
   }
 }
 
@@ -118,19 +104,14 @@ async function login(identifier, password) {
       };
     }
 
-    console.log("Login attempt for:", identifier); // Debug log
-
-    // Convert identifier to lowercase for case-insensitive comparison
     const lowerIdentifier = identifier.toLowerCase();
 
-    // Try to find user by email first (case-insensitive)
     let { data: emailUser, error: emailError } = await conn
       .from("Users")
       .select("*")
       .ilike("email", lowerIdentifier)
       .maybeSingle();
 
-    // If no user found by email, try username (case-insensitive)
     if (!emailUser && !emailError) {
       const { data: nameUser, error: nameError } = await conn
         .from("Users")
@@ -139,27 +120,16 @@ async function login(identifier, password) {
         .maybeSingle();
 
       if (nameError) {
-        console.error("Error searching by username:", nameError);
-        return {
-          isSuccess: false,
-          message: "Database error occurred",
-          data: null,
-        };
+        throw new Error(`Error searching by username: ${nameError.message}`);
       }
 
       if (nameUser) {
         emailUser = nameUser;
       }
     } else if (emailError) {
-      console.error("Error searching by email:", emailError);
-      return {
-        isSuccess: false,
-        message: "Database error occurred",
-        data: null,
-      };
+      throw new Error(`Error searching by email: ${emailError.message}`);
     }
 
-    // If no user found at all
     if (!emailUser) {
       return {
         isSuccess: false,
@@ -168,7 +138,6 @@ async function login(identifier, password) {
       };
     }
 
-    // Check password
     if (emailUser.password !== password) {
       return {
         isSuccess: false,
@@ -179,7 +148,6 @@ async function login(identifier, password) {
 
     const token = await createToken(emailUser, "1h");
 
-    // Structure the response to match client expectations
     return {
       isSuccess: true,
       data: {
@@ -195,12 +163,7 @@ async function login(identifier, password) {
       },
     };
   } catch (err) {
-    console.error("Unexpected error during login:", err);
-    return {
-      isSuccess: false,
-      message: "An unexpected error occurred",
-      data: null,
-    };
+    throw new Error(`Error during login: ${err.message}`);
   }
 }
 
@@ -214,7 +177,6 @@ async function add(user) {
       };
     }
 
-    // Check if user already exists (case-insensitive)
     const { data: existingUser, error: checkError } = await conn
       .from("Users")
       .select("*")
@@ -224,12 +186,7 @@ async function add(user) {
       .maybeSingle();
 
     if (checkError) {
-      console.error("Error checking existing user:", checkError);
-      return {
-        isSuccess: false,
-        message: "Error checking user existence",
-        data: null,
-      };
+      throw new Error(`Error checking existing user: ${checkError.message}`);
     }
 
     if (existingUser) {
@@ -240,23 +197,16 @@ async function add(user) {
       };
     }
 
-    // Add random 8-digit ID and prepare user data
     const newUser = {
       id: generateUserId(),
       name: user.name,
       email: user.email.toLowerCase(),
       password: user.password,
       role: user.role || "user",
-      friends: [], // Initialize as empty array
+      friends: [],
       image: user.image || null,
     };
 
-    console.log("Attempting to create user:", {
-      ...newUser,
-      password: "[REDACTED]",
-    }); // Debug log
-
-    // Insert new user
     const { data: insertedUser, error: insertError } = await conn
       .from("Users")
       .insert([newUser])
@@ -264,20 +214,9 @@ async function add(user) {
       .single();
 
     if (insertError) {
-      console.error("Error adding user:", insertError);
-      return {
-        isSuccess: false,
-        message: insertError.message || "Error adding user",
-        data: null,
-      };
+      throw new Error(`Error adding user: ${insertError.message}`);
     }
 
-    console.log("User created successfully:", {
-      ...insertedUser,
-      password: "[REDACTED]",
-    }); // Debug log
-
-    // Return the user with an empty array for friends in the response
     return {
       isSuccess: true,
       message: "User added successfully",
@@ -287,12 +226,7 @@ async function add(user) {
       },
     };
   } catch (err) {
-    console.error("Unexpected error in add:", err);
-    return {
-      isSuccess: false,
-      message: "An unexpected error occurred",
-      data: null,
-    };
+    throw new Error(`Error adding user: ${err.message}`);
   }
 }
 
@@ -305,7 +239,6 @@ async function update(id, user) {
       image: user.image,
     };
 
-    // Only include friends if it's provided
     if (user.friends !== undefined) {
       updateData.friends = user.friends.length > 0 ? user.friends : null;
     }
@@ -319,8 +252,7 @@ async function update(id, user) {
 
     return { isSuccess: !error, message: error?.message || null, data };
   } catch (err) {
-    console.error("Unexpected error in update:", err);
-    throw err;
+    throw new Error(`Error updating user ${id}: ${err.message}`);
   }
 }
 
@@ -339,8 +271,7 @@ async function remove(id) {
       data: data || null,
     };
   } catch (err) {
-    console.error("Unexpected error in remove:", err);
-    throw err;
+    throw new Error(`Error removing user ${id}: ${err.message}`);
   }
 }
 
@@ -376,8 +307,7 @@ async function addFriend(id, friendId) {
         : updateResult.message,
     };
   } catch (err) {
-    console.error("Unexpected error in addFriend:", err);
-    return { isSuccess: false, message: "Server error." };
+    throw new Error(`Error adding friend: ${err.message}`);
   }
 }
 
@@ -401,8 +331,7 @@ async function removeFriend(id, friendId) {
     );
     return await update(id, { ...user.data, friends: updatedFriends });
   } catch (err) {
-    console.error("Unexpected error in removeFriend:", err);
-    throw err;
+    throw new Error(`Error removing friend: ${err.message}`);
   }
 }
 

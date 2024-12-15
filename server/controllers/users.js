@@ -36,7 +36,6 @@ app
     try {
       const id = parseInt(req.params.id);
       
-      // Defensive check for req.user
       if (!req.user) {
         return res.status(401).json({ 
           isSuccess: false, 
@@ -44,7 +43,6 @@ app
         });
       }
 
-      // First get the requesting user's data to check their friends list
       const userResponse = await get(req.user.userid);
       if (!userResponse.isSuccess) {
         return res.status(404).json({ isSuccess: false, message: "Requesting user not found." });
@@ -52,12 +50,7 @@ app
 
       const response = await get(id);
       
-      // More explicit access control
       if (response.isSuccess) {
-        // Allow access if:
-        // 1. User is requesting their own data
-        // 2. User is an admin
-        // 3. The requested user is in the requesting user's friends list
         if (req.user.userid === id || 
             req.user.role === "admin" || 
             (userResponse.data.friends && userResponse.data.friends.includes(id))) {
@@ -68,7 +61,6 @@ app
       
       res.status(404).json({ isSuccess: false, message: "User not found." });
     } catch (error) {
-      console.error('Error in user get route:', error);
       next(error);
     }
   })

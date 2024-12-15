@@ -1,233 +1,231 @@
 const { getConnection } = require("./supabase");
 const conn = getConnection();
 
+/**
+ * Custom error class for meal-related operations
+ */
+class MealError extends Error {
+  constructor(message, code = 500) {
+    super(message);
+    this.name = 'MealError';
+    this.code = code;
+  }
+}
+
+/**
+ * Formats a date to ISO date string (YYYY-MM-DD)
+ * @param {Date|string} date - Date to format
+ * @returns {string} Formatted date string
+ */
+function formatDate(date) {
+  return date
+    ? new Date(date).toISOString().split("T")[0]
+    : new Date().toISOString().split("T")[0];
+}
+
+/**
+ * Retrieves all meals
+ */
 async function getAll() {
-  try {
-    const { data, error, count } = await conn
-      .from("Meals")
-      .select("*", { count: "estimated" });
+  const { data, error, count } = await conn
+    .from("Meals")
+    .select("*", { count: "estimated" });
 
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || [],
-      total: count || 0,
-    };
-  } catch (err) {
-    console.error("Unexpected error in getAll:", err);
-    throw err;
-  }
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data ?? [],
+    total: count ?? 0,
+  };
 }
 
+/**
+ * Retrieves meals for a specific user
+ * @param {number} userId - User ID
+ */
 async function getByUserId(userId) {
-  try {
-    console.log("Fetching meals for userId:", userId); // Debug log
-    const { data, error } = await conn
-      .from("Meals")
-      .select("*")
-      .eq("userId", userId)
-      .order("date", { ascending: false });
+  const { data, error } = await conn
+    .from("Meals")
+    .select("*")
+    .eq("userId", userId)
+    .order("date", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching meals:", error);
-      return {
-        isSuccess: false,
-        message: error.message,
-        data: [],
-      };
-    }
-
-    console.log("Found meals:", data); // Debug log
-    return {
-      isSuccess: true,
-      message: "Meals fetched successfully",
-      data: data || [],
-    };
-  } catch (err) {
-    console.error(`Unexpected error fetching meals for userId ${userId}:`, err);
-    throw err;
+  if (error) {
+    throw new MealError(`Failed to fetch meals: ${error.message}`);
   }
+
+  return {
+    isSuccess: true,
+    message: "Meals fetched successfully",
+    data: data ?? [],
+  };
 }
 
+/**
+ * Retrieves a specific meal by ID
+ * @param {number} id - Meal ID
+ */
 async function get(id) {
-  try {
-    const { data, error } = await conn
-      .from("Meals")
-      .select("*")
-      .eq("id", id)
-      .single();
+  const { data, error } = await conn
+    .from("Meals")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
-  } catch (err) {
-    console.error(`Unexpected error fetching meal with ID ${id}:`, err);
-    throw err;
-  }
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data ?? null,
+  };
 }
 
+/**
+ * Adds a new meal
+ * @param {Object} meal - Meal data
+ */
 async function add(meal) {
-  try {
-    const { data: maxIdData, error: maxIdError } = await conn
-      .from("Meals")
-      .select("id")
-      .order("id", { ascending: false })
-      .limit(1)
-      .single();
+  const { data: maxIdData, error: maxIdError } = await conn
+    .from("Meals")
+    .select("id")
+    .order("id", { ascending: false })
+    .limit(1)
+    .single();
 
-    if (maxIdError && maxIdError.code !== "PGRST116") {
-      // PGRST116 means no rows found
-      throw maxIdError;
-    }
-
-    const maxId = maxIdData?.id || 0; // Default to 0 if no records
-    const newId = maxId + 1;
-
-    // Ensure date is in correct format
-    const formattedMeal = {
-      id: newId,
-      userId: meal.userId,
-      ...meal,
-      date: meal.date
-        ? new Date(meal.date).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
-    };
-
-    const { data, error } = await conn
-      .from("Meals")
-      .insert([formattedMeal])
-      .select("*")
-      .single();
-
-    if (error) {
-      console.error("Error adding meal:", error);
-      return {
-        isSuccess: false,
-        message: error.message,
-        data: null,
-      };
-    }
-
-    return {
-      isSuccess: true,
-      message: "Meal added successfully",
-      data: data,
-    };
-  } catch (err) {
-    console.error("Unexpected error in add:", err);
-    throw err;
+  if (maxIdError && maxIdError.code !== "PGRST116") {
+    throw new MealError(`Failed to generate ID: ${maxIdError.message}`);
   }
+
+  const maxId = maxIdData?.id ?? 0;
+  const newId = maxId + 1;
+
+  const formattedMeal = {
+    id: newId,
+    userId: meal.userId,
+    ...meal,
+    date: formatDate(meal.date),
+  };
+
+  const { data, error } = await conn
+    .from("Meals")
+    .insert([formattedMeal])
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new MealError(`Failed to add meal: ${error.message}`);
+  }
+
+  return {
+    isSuccess: true,
+    message: "Meal added successfully",
+    data,
+  };
 }
 
+/**
+ * Updates an existing meal
+ * @param {number} id - Meal ID
+ * @param {Object} meal - Updated meal data
+ */
 async function update(id, meal) {
-  try {
-    // Ensure date is in correct format
-    const formattedMeal = {
-      ...meal,
-      date: meal.date
-        ? new Date(meal.date).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
-    };
+  const formattedMeal = {
+    ...meal,
+    date: formatDate(meal.date),
+  };
 
-    const { data, error } = await conn
-      .from("Meals")
-      .update(formattedMeal)
-      .eq("id", id)
-      .select("*")
-      .single();
+  const { data, error } = await conn
+    .from("Meals")
+    .update(formattedMeal)
+    .eq("id", id)
+    .select("*")
+    .single();
 
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
-  } catch (err) {
-    console.error("Unexpected error in update:", err);
-    throw err;
-  }
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data ?? null,
+  };
 }
 
+/**
+ * Removes a meal
+ * @param {number} id - Meal ID
+ */
 async function remove(id) {
-  try {
-    const { data, error } = await conn
-      .from("Meals")
-      .delete()
-      .eq("id", id)
-      .select("*")
-      .single();
+  const { data, error } = await conn
+    .from("Meals")
+    .delete()
+    .eq("id", id)
+    .select("*")
+    .single();
 
-    return {
-      isSuccess: !error,
-      message: error?.message,
-      data: data || null,
-    };
-  } catch (err) {
-    console.error("Unexpected error in remove:", err);
-    throw err;
-  }
+  return {
+    isSuccess: !error,
+    message: error?.message,
+    data: data ?? null,
+  };
 }
 
+/**
+ * Retrieves meals for a user and their friends
+ * @param {number} userId - User ID
+ * @param {Object} requestingUser - User making the request
+ */
 async function getUserAndFriendsMeals(userId, requestingUser) {
-  try {
-    const { data, error } = await conn
-      .from("Meals")
-      .select("*")
-      .eq("userId", userId)
-      .order("date", { ascending: false });
+  const { data, error } = await conn
+    .from("Meals")
+    .select("*")
+    .eq("userId", userId)
+    .order("date", { ascending: false });
 
-    if (error) {
-      return { isSuccess: false, message: error.message, data: [] };
-    }
-
-    return {
-      isSuccess: true,
-      message: "Meals fetched successfully.",
-      data: data || [],
-    };
-  } catch (err) {
-    console.error("Unexpected error in getUserAndFriendsMeals:", err);
-    throw err;
+  if (error) {
+    throw new MealError(`Failed to fetch meals: ${error.message}`);
   }
+
+  return {
+    isSuccess: true,
+    message: "Meals fetched successfully.",
+    data: data ?? [],
+  };
 }
 
+/**
+ * Updates a meal for a specific user with authorization check
+ * @param {number} id - Meal ID
+ * @param {Object} meal - Updated meal data
+ * @param {number} userId - User ID making the request
+ */
 async function updateMealForUser(id, meal, userId) {
-  try {
-    const existingMeal = await get(id);
+  const existingMeal = await get(id);
 
-    if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
-      return {
-        isSuccess: false,
-        errorCode: 403,
-        message: "You can only update your own meals.",
-      };
-    }
-
-    return await update(id, meal);
-  } catch (err) {
-    console.error("Unexpected error in updateMealForUser:", err);
-    throw err;
+  if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
+    return {
+      isSuccess: false,
+      errorCode: 403,
+      message: "You can only update your own meals.",
+    };
   }
+
+  return await update(id, meal);
 }
 
+/**
+ * Deletes a meal for a specific user with authorization check
+ * @param {number} id - Meal ID
+ * @param {number} userId - User ID making the request
+ */
 async function deleteMealForUser(id, userId) {
-  try {
-    const existingMeal = await get(id);
+  const existingMeal = await get(id);
 
-    if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
-      return {
-        isSuccess: false,
-        errorCode: 403,
-        message: "You can only delete your own meals.",
-      };
-    }
-
-    return await remove(id);
-  } catch (err) {
-    console.error("Unexpected error in deleteMealForUser:", err);
-    throw err;
+  if (!existingMeal.isSuccess || existingMeal.data.userId !== userId) {
+    return {
+      isSuccess: false,
+      errorCode: 403,
+      message: "You can only delete your own meals.",
+    };
   }
+
+  return await remove(id);
 }
 
 module.exports = {
@@ -240,4 +238,5 @@ module.exports = {
   getUserAndFriendsMeals,
   updateMealForUser,
   deleteMealForUser,
+  MealError,
 };

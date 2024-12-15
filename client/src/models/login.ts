@@ -1,104 +1,135 @@
-import { ref, reactive } from 'vue';
-import { api } from './myFetch.js';
-import { type DataEnvelope } from './dataEnvelope.js';
+import { ref, reactive } from 'vue'
+import { api } from './myFetch.js'
+import { type DataEnvelope } from './dataEnvelope.js'
 
-interface LoginResponse {
-  token: string;
-  users: {
-    id: number;
-    name: string;
-    email: string;
-    role: 'user' | 'admin';
-    image?: string;
-    friends?: number[];
-  };
+export interface User {
+  id: number
+  name: string
+  email: string
+  role: 'user' | 'admin'
+  image?: string
+  friends?: number[]
 }
 
-const session = reactive({
-  user: null as any, // User information
-  token: null as string | null, // JWT token
-});
+interface LoginResponse {
+  token: string
+  users: User
+}
 
-// Reactive state for login status
-const isLoggedIn = ref(false);
+interface Session {
+  user: User | null
+  token: string | null
+}
 
+const session = reactive<Session>({
+  user: null,
+  token: null,
+})
+
+const isLoggedIn = ref(false)
+
+/**
+ * Custom error for authentication-related issues
+ */
+export class AuthenticationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AuthenticationError'
+  }
+}
+
+/**
+ * Provides login-related functionality and session management
+ */
 export function getLogin() {
-  // Load session data from localStorage
+  /**
+   * Loads session data from localStorage
+   * @throws AuthenticationError if session data is corrupted
+   */
   const loadSession = () => {
     try {
-      const storedSession = localStorage.getItem('session');
+      const storedSession = localStorage.getItem('session')
       if (storedSession) {
-        const parsedSession = JSON.parse(storedSession);
+        const parsedSession = JSON.parse(storedSession) as Session
         if (parsedSession.token && parsedSession.user) {
-          session.user = parsedSession.user;
-          session.token = parsedSession.token;
-          isLoggedIn.value = true;
+          session.user = parsedSession.user
+          session.token = parsedSession.token
+          isLoggedIn.value = true
         }
       }
     } catch (error) {
-      console.error('Error loading session:', error);
-      // Clear potentially corrupted session
-      localStorage.removeItem('session');
-      session.user = null;
-      session.token = null;
-      isLoggedIn.value = false;
+      localStorage.removeItem('session')
+      session.user = null
+      session.token = null
+      isLoggedIn.value = false
+      throw new AuthenticationError('Failed to load session data')
     }
   }
 
-  // Initialize session on module load
-  loadSession();
+  loadSession()
 
-  // Logout function to clear session
+  /**
+   * Logs out the current user and clears the session
+   */
   const logout = () => {
-    localStorage.removeItem('session');
-    session.user = null;
-    session.token = null;
-    isLoggedIn.value = false;
-    window.location.href = '/'; // Use window.location for navigation instead of router
-  };
+    localStorage.removeItem('session')
+    session.user = null
+    session.token = null
+    isLoggedIn.value = false
+    window.location.href = '/'
+  }
 
-  // Login function to authenticate the user
+  /**
+   * Authenticates a user with their credentials
+   * @param loginIdentifier Email or username
+   * @param password User's password
+   * @throws AuthenticationError if login fails
+   */
   const login = async (loginIdentifier: string, password: string): Promise<void> => {
     try {
-      // Call the `users/login` REST endpoint
       const response = await api<DataEnvelope<LoginResponse>>(
         'users/login',
         { identifier: loginIdentifier, password: password },
         'POST'
-      );
+      )
 
       if (!response || !response.isSuccess || !response.data) {
-        throw new Error(response?.message || 'Login failed');
+        throw new AuthenticationError(response?.message || 'Login failed')
       }
 
-      const { token, users: userData } = response.data;
+      const { token, users: userData } = response.data
 
       if (!token || !userData) {
-        throw new Error('Invalid server response');
+        throw new AuthenticationError('Invalid server response')
       }
 
-      const newSession = {
+      const newSession: Session = {
         token,
         user: userData,
-      };
+      }
 
-      // Save session in localStorage
-      localStorage.setItem('session', JSON.stringify(newSession));
-      session.user = userData;
-      session.token = token;
-      isLoggedIn.value = true;
+      localStorage.setItem('session', JSON.stringify(newSession))
+      session.user = userData
+      session.token = token
+      isLoggedIn.value = true
 
-      // Use window.location for navigation instead of router
-      window.location.href = '/dashboard';
+      window.location.href = '/dashboard'
     } catch (error) {
-      console.error('Login error:', error);
-      throw new Error(error instanceof Error ? error.message : 'Login failed. Please check your credentials.');
+      if (error instanceof AuthenticationError) {
+        throw error
+      }
+      throw new AuthenticationError(
+        error instanceof Error ? error.message : 'Login failed. Please check your credentials.'
+      )
     }
-  };
+  }
 
-  return { isLoggedIn, session, logout, login };
+  return { isLoggedIn, session, logout, login }
 }
 
-export function getSession() {
-  return session;
+/**
+ * Returns the current session state
+ */
+export function getSession(): Session {
+  return session
 }
