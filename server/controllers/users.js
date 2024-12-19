@@ -9,7 +9,8 @@ const {
   remove,
   addFriend,
   removeFriend,
-  createToken
+  createToken,
+  searchUsers
 } = require("../models/users");
 const {
   requireUser,
@@ -21,6 +22,18 @@ const {
 app.use(parseToken);
 
 app
+  // Search users
+  .get("/search", requireUser, async (req, res, next) => {
+    try {
+      const query = req.query.q;
+      const limit = parseInt(req.query.limit) || 5;
+      const response = await searchUsers(query, limit);
+      res.status(response.isSuccess ? 200 : 400).json(response);
+    } catch (error) {
+      next(error);
+    }
+  })
+
   // Get all users (Admin only)
   .get("/", async (req, res, next) => {
     try {

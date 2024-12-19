@@ -1,32 +1,23 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getUsers, addFriend, removeFriend, type UserResponse } from '../models/users'
+import { addFriend, removeFriend, searchUsers, type UserSearchResult } from '../models/users'
 import { getSession } from '../models/login'
-
-interface Session {
-  token: string
-  user: {
-    id: number
-    friends: number[]
-    [key: string]: any
-  }
-}
+import AutocompleteSearch from '../components/AutocompleteSearch.vue'
 
 const router = useRouter()
-const session = getSession() as Session
+const session = getSession()
 
 // Validate session before proceeding
 if (!session.token || !session.user?.id) {
   router.push('/login')
 }
 
-const searchQuery = ref('')
+const selectedUser = ref<UserSearchResult | null>(null)
 const friends = ref<number[]>(
   Array.isArray(session.user?.friends) ? session.user.friends : []
 )
-const users = ref<UserResponse[]>([])
 const isLoading = ref(false)
 const error = ref('')
 
@@ -45,40 +36,6 @@ const handleSessionError = (message: string) => {
     router.push('/login')
   }
 }
-
-const fetchUsers = async () => {
-  if (!session.token || !session.user?.id) {
-    router.push('/login')
-    return
-  }
-
-  isLoading.value = true
-  error.value = ''
-  
-  try {
-    const response = await getUsers()
-    if (response.isSuccess) {
-      // Filter out the current user from the list
-      users.value = response.data.filter(user => user.id !== session.user?.id)
-    } else {
-      throw new Error(response.message || 'Error fetching users')
-    }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'An error occurred'
-    error.value = message
-    handleSessionError(message)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// Filtered users based on search query
-const filteredUsers = computed(() => {
-  const query = searchQuery.value.toLowerCase().trim()
-  return users.value.filter((user) =>
-    user.name.toLowerCase().includes(query)
-  )
-})
 
 // Add a user to the friend list
 const handleAddFriend = async (friendId: number) => {
@@ -145,8 +102,6 @@ const handleRemoveFriend = async (friendId: number) => {
     isLoading.value = false
   }
 }
-
-onMounted(fetchUsers)
 </script>
 
 <template>
@@ -157,13 +112,10 @@ onMounted(fetchUsers)
       <div v-if="session.token && session.user">
         <div class="field">
           <div class="control">
-            <input 
-              class="input is-large" 
-              type="text" 
-              placeholder="Search by name" 
-              v-model="searchQuery"
-              :disabled="isLoading"
-              aria-label="Search users by name"
+            <AutocompleteSearch
+              v-model="selectedUser"
+              type="user"
+              placeholder="Search for users..."
             />
           </div>
         </div>
@@ -188,62 +140,46 @@ onMounted(fetchUsers)
         </div>
 
         <div 
-          v-else-if="filteredUsers.length === 0" 
-          class="notification is-info mt-4"
-          role="status"
+          v-else-if="selectedUser" 
+          class="box user-card has-background-dark has-text-light mt-4"
+          role="listitem"
         >
-          No users found.
-        </div>
-
-        <div 
-          v-else 
-          class="search-results"
-          role="list"
-          aria-label="User search results"
-        >
-          <div 
-            v-for="user in filteredUsers" 
-            :key="user.id" 
-            class="box user-card"
-            role="listitem"
-          >
-            <div class="user-info">
-              <div 
-                class="user-image"
-                role="img"
-                :aria-label="`${user.name}'s profile picture`"
+          <div class="user-info">
+            <div 
+              class="user-image"
+              role="img"
+              :aria-label="`${selectedUser.name}'s profile picture`"
+            >
+              <img 
+                :src="selectedUser.image || '/src/assets/User.jpg'" 
+                :alt="`${selectedUser.name}'s profile picture`"
               >
-                <img 
-                  :src="user.image || '/src/assets/User.jpg'" 
-                  :alt="`${user.name}'s profile picture`"
-                >
-              </div>
-              <div class="user-details">
-                <p class="title is-4">{{ user.name }}</p>
-                <p class="subtitle is-5">{{ user.email }}</p>
-              </div>
-              <div class="user-actions">
-                <button 
-                  v-if="!friends.includes(user.id)" 
-                  class="button is-primary is-medium"
-                  :class="{ 'is-loading': isLoading }"
-                  :disabled="isLoading"
-                  @click="handleAddFriend(user.id)"
-                  :aria-label="`Add ${user.name} as friend`"
-                >
-                  Add Friend
-                </button>
-                <button 
-                  v-else 
-                  class="button is-danger is-medium"
-                  :class="{ 'is-loading': isLoading }"
-                  :disabled="isLoading"
-                  @click="handleRemoveFriend(user.id)"
-                  :aria-label="`Remove ${user.name} from friends`"
-                >
-                  Remove Friend
-                </button>
-              </div>
+            </div>
+            <div class="user-details">
+              <p class="title is-4 has-text-light">{{ selectedUser.name }}</p>
+              <p class="subtitle is-5 has-text-grey-light">{{ selectedUser.email }}</p>
+            </div>
+            <div class="user-actions">
+              <button 
+                v-if="!friends.includes(selectedUser.id)" 
+                class="button is-primary is-medium"
+                :class="{ 'is-loading': isLoading }"
+                :disabled="isLoading"
+                @click="handleAddFriend(selectedUser.id)"
+                :aria-label="`Add ${selectedUser.name} as friend`"
+              >
+                Add Friend
+              </button>
+              <button 
+                v-else 
+                class="button is-danger is-medium"
+                :class="{ 'is-loading': isLoading }"
+                :disabled="isLoading"
+                @click="handleRemoveFriend(selectedUser.id)"
+                :aria-label="`Remove ${selectedUser.name} from friends`"
+              >
+                Remove Friend
+              </button>
             </div>
           </div>
         </div>
@@ -261,17 +197,11 @@ onMounted(fetchUsers)
 </template>
 
 <style scoped>
-.search-results {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
 .user-card {
   width: 100%;
   margin: 0;
   padding: 2rem;
+  border: 1px solid #4a4a4a;
 }
 
 .user-info {
@@ -288,6 +218,13 @@ onMounted(fetchUsers)
   width: 100px;
   height: 100px;
   min-width: 100px;
+}
+
+.user-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .user-actions {

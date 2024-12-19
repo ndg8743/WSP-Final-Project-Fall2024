@@ -29,7 +29,8 @@ function formatDate(date) {
 async function getAll() {
   const { data, error, count } = await conn
     .from("Meals")
-    .select("*", { count: "estimated" });
+    .select("*, taggedFriends")
+    .order("date", { ascending: false });
 
   return {
     isSuccess: !error,
@@ -46,7 +47,7 @@ async function getAll() {
 async function getByUserId(userId) {
   const { data, error } = await conn
     .from("Meals")
-    .select("*")
+    .select("*, taggedFriends")
     .eq("userId", userId)
     .order("date", { ascending: false });
 
@@ -68,7 +69,7 @@ async function getByUserId(userId) {
 async function get(id) {
   const { data, error } = await conn
     .from("Meals")
-    .select("*")
+    .select("*, taggedFriends")
     .eq("id", id)
     .single();
 
@@ -103,12 +104,13 @@ async function add(meal) {
     userId: meal.userId,
     ...meal,
     date: formatDate(meal.date),
+    taggedFriends: meal.taggedFriends || []
   };
 
   const { data, error } = await conn
     .from("Meals")
     .insert([formattedMeal])
-    .select("*")
+    .select("*, taggedFriends")
     .single();
 
   if (error) {
@@ -131,13 +133,14 @@ async function update(id, meal) {
   const formattedMeal = {
     ...meal,
     date: formatDate(meal.date),
+    taggedFriends: meal.taggedFriends || []
   };
 
   const { data, error } = await conn
     .from("Meals")
     .update(formattedMeal)
     .eq("id", id)
-    .select("*")
+    .select("*, taggedFriends")
     .single();
 
   return {
@@ -174,8 +177,8 @@ async function remove(id) {
 async function getUserAndFriendsMeals(userId, requestingUser) {
   const { data, error } = await conn
     .from("Meals")
-    .select("*")
-    .eq("userId", userId)
+    .select("*, taggedFriends")
+    .or(`userId.eq.${userId},taggedFriends.cs.{${userId}}`)
     .order("date", { ascending: false });
 
   if (error) {

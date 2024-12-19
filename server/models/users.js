@@ -63,6 +63,34 @@ async function getAll() {
   }
 }
 
+async function searchUsers(query, limit = 5) {
+  try {
+    if (!query) {
+      return {
+        isSuccess: true,
+        data: [],
+        total: 0
+      };
+    }
+
+    const searchQuery = query.toLowerCase();
+    const { data, error, count } = await conn
+      .from("Users")
+      .select("id, name, email, image")
+      .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+      .limit(limit);
+
+    return {
+      isSuccess: !error,
+      message: error?.message || null,
+      data: data ?? [],
+      total: count ?? 0
+    };
+  } catch (err) {
+    throw new Error(`Error searching users: ${err.message}`);
+  }
+}
+
 async function get(id) {
   try {
     const { data, error } = await conn
@@ -373,4 +401,5 @@ module.exports = {
   removeFriend,
   createToken,
   verifyToken,
+  searchUsers,
 };

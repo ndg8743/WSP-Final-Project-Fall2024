@@ -29,7 +29,7 @@ function formatDate(date) {
 async function getAll() {
   const { data, error, count } = await conn
     .from("Exercises")
-    .select("*", { count: "estimated" });
+    .select("*, taggedFriends", { count: "estimated" });
 
   return {
     isSuccess: !error,
@@ -46,7 +46,7 @@ async function getAll() {
 async function getByUserId(userId) {
   const { data, error } = await conn
     .from("Exercises")
-    .select("*")
+    .select("*, taggedFriends")
     .eq("userId", userId)
     .order("date", { ascending: false });
 
@@ -68,7 +68,7 @@ async function getByUserId(userId) {
 async function get(id) {
   const { data, error } = await conn
     .from("Exercises")
-    .select("*")
+    .select("*, taggedFriends")
     .eq("id", id)
     .single();
 
@@ -103,12 +103,13 @@ async function add(exercise) {
     userId: exercise.userId,
     ...exercise,
     date: formatDate(exercise.date),
+    taggedFriends: exercise.taggedFriends || []
   };
 
   const { data, error } = await conn
     .from("Exercises")
     .insert([formattedExercise])
-    .select("*")
+    .select("*, taggedFriends")
     .single();
 
   if (error) {
@@ -131,13 +132,14 @@ async function update(id, exercise) {
   const formattedExercise = {
     ...exercise,
     date: formatDate(exercise.date),
+    taggedFriends: exercise.taggedFriends || []
   };
 
   const { data, error } = await conn
     .from("Exercises")
     .update(formattedExercise)
     .eq("id", id)
-    .select("*")
+    .select("*, taggedFriends")
     .single();
 
   return {
@@ -174,8 +176,8 @@ async function remove(id) {
 async function getUserAndFriendsExercises(userId, requestingUser) {
   const { data, error } = await conn
     .from("Exercises")
-    .select("*")
-    .eq("userId", userId)
+    .select("*, taggedFriends")
+    .or(`userId.eq.${userId},taggedFriends.cs.{${userId}}`)
     .order("date", { ascending: false });
 
   if (error) {
@@ -200,7 +202,8 @@ async function getExerciseForUser(id, user) {
   if (
     !exercise.isSuccess ||
     (exercise.data.userId !== user.id &&
-      !(user.friends ?? []).includes(exercise.data.userId))
+      !(user.friends ?? []).includes(exercise.data.userId) &&
+      !(exercise.data.taggedFriends ?? []).includes(user.id))
   ) {
     return {
       isSuccess: false,

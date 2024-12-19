@@ -7,6 +7,7 @@ export interface Meal {
   name: string
   mealCalories: number
   date: string
+  taggedFriends?: number[] // IDs of tagged friends
 }
 
 export async function getAll(): Promise<DataListEnvelope<Meal>> {
@@ -25,6 +26,7 @@ export async function getUserMeals(userId: number): Promise<DataListEnvelope<Mea
   if (response.isSuccess) {
     response.data.forEach((meal: Meal) => {
       meal.mealCalories = meal.mealCalories ?? 0
+      meal.taggedFriends = meal.taggedFriends ?? []
     })
   }
   return response
@@ -32,6 +34,10 @@ export async function getUserMeals(userId: number): Promise<DataListEnvelope<Mea
 
 export async function getMeal(id: number): Promise<DataEnvelope<Meal>> {
   return api<DataEnvelope<Meal>>(`meals/${id}`)
+}
+
+export async function searchMeals(query: string, limit: number = 5): Promise<DataListEnvelope<Meal>> {
+  return api<DataListEnvelope<Meal>>(`meals/search?q=${encodeURIComponent(query)}&limit=${limit}`)
 }
 
 export async function addMeal(meal: Omit<Meal, 'id'>): Promise<DataEnvelope<Meal>> {

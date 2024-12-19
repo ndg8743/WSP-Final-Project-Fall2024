@@ -8,6 +8,7 @@ export interface Exercise {
   duration: number
   caloriesBurned: number
   date: string
+  taggedFriends?: number[] // IDs of tagged friends
 }
 
 export async function getAll(): Promise<DataListEnvelope<Exercise>> {
@@ -26,6 +27,7 @@ export async function getUserExercises(userId: number): Promise<DataListEnvelope
   if (response.isSuccess) {
     response.data.forEach((exercise: Exercise) => {
       exercise.caloriesBurned = exercise.caloriesBurned ?? 0
+      exercise.taggedFriends = exercise.taggedFriends ?? []
     })
   }
   return response
@@ -33,6 +35,10 @@ export async function getUserExercises(userId: number): Promise<DataListEnvelope
 
 export async function getExercise(id: number): Promise<DataEnvelope<Exercise>> {
   return api<DataEnvelope<Exercise>>(`exercises/${id}`)
+}
+
+export async function searchExercises(query: string, limit: number = 5): Promise<DataListEnvelope<Exercise>> {
+  return api<DataListEnvelope<Exercise>>(`exercises/search?q=${encodeURIComponent(query)}&limit=${limit}`)
 }
 
 export async function addExercise(exercise: Omit<Exercise, 'id'>): Promise<DataEnvelope<Exercise>> {

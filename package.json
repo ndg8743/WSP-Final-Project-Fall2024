@@ -12,6 +12,7 @@
     "dev:client": "npm run dev -w client"
   },
   "dependencies": {
+    "@oruga-ui/oruga-next": "^0.9.3",
     "@supabase/supabase-js": "^2.47.2",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",

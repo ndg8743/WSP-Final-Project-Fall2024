@@ -2,12 +2,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-// @ts-ignore
 import MealCard from '../components/MealCard.vue'
-// @ts-ignore
 import Modal from '../components/Modal.vue'
+import FriendTagger from '../components/FriendTagger.vue'
 import { getUserMeals, addMeal, deleteMeal, type Meal } from '../models/meals.js'
 import { getSession } from '../models/login.js'
+import type { UserSearchResult } from '../models/users.js'
 
 const router = useRouter()
 const session = getSession()
@@ -21,6 +21,7 @@ const isLoading = ref(false)
 const error = ref('')
 const validationErrors = ref<string[]>([])
 const isAddingMeal = ref(false)
+const selectedFriends = ref<UserSearchResult[]>([])
 
 // Validation computed properties
 const getValidationErrors = computed(() => {
@@ -91,8 +92,10 @@ const openAddMeal = () => {
     name: '',
     mealCalories: 0,
     date: new Date().toISOString().split('T')[0],
-    userId: session.user.id
+    userId: session.user.id,
+    taggedFriends: []
   }
+  selectedFriends.value = []
   isAddingMeal.value = true
   showModal.value = true
   validationErrors.value = []
@@ -105,6 +108,7 @@ const handleEdit = (meal: Meal) => {
   }
 
   currentMeal.value = { ...meal }
+  selectedFriends.value = []
   isAddingMeal.value = false
   showModal.value = true
   validationErrors.value = []
@@ -137,8 +141,14 @@ const saveMeal = async () => {
   error.value = ''
 
   try {
+    // Add tagged friends to the meal data
+    const mealWithFriends = {
+      ...currentMeal.value,
+      taggedFriends: selectedFriends.value.map(friend => friend.id)
+    }
+
     if (isAddingMeal.value) {
-      const response = await addMeal(currentMeal.value as Omit<Meal, 'id'>)
+      const response = await addMeal(mealWithFriends as Omit<Meal, 'id'>)
       if (response.isSuccess && response.data) {
         closeModal()
         await loadMeals() // Reload data after successful save
@@ -150,7 +160,7 @@ const saveMeal = async () => {
     } else {
       const index = meals.value.findIndex((meal) => meal.id === currentMeal.value!.id)
       if (index !== -1) {
-        meals.value.splice(index, 1, currentMeal.value as Meal)
+        meals.value.splice(index, 1, mealWithFriends as Meal)
         closeModal()
         await loadMeals() // Reload data after successful update
         // Trigger dashboard refresh
@@ -170,6 +180,7 @@ const saveMeal = async () => {
 const closeModal = () => {
   showModal.value = false
   currentMeal.value = null
+  selectedFriends.value = []
   validationErrors.value = []
   error.value = ''
 }
@@ -268,7 +279,7 @@ onMounted(loadMeals)
     aria-labelledby="modalTitle"
   >
     <template #header>
-      <p id="modalTitle">{{ isAddingMeal ? 'Add Meal' : 'Edit Meal' }}</p>
+      <p id="modalTitle" class="has-text-light">{{ isAddingMeal ? 'Add Meal' : 'Edit Meal' }}</p>
     </template>
     <template #body>
       <template v-if="currentMeal">
@@ -283,20 +294,20 @@ onMounted(loadMeals)
         </div>
 
         <div class="field">
-          <label class="label" for="mealName">Meal Name *</label>
+          <label class="label has-text-light" for="mealName">Meal Name *</label>
           <input 
             id="mealName"
-            class="input" 
+            class="input has-background-dark has-text-light" 
             v-model="currentMeal.name" 
             :disabled="isLoading"
             aria-required="true"
           />
         </div>
         <div class="field">
-          <label class="label" for="mealCalories">Calories</label>
+          <label class="label has-text-light" for="mealCalories">Calories</label>
           <input
             id="mealCalories"
-            class="input"
+            class="input has-background-dark has-text-light"
             type="number"
             v-model="currentMeal.mealCalories"
             :disabled="isLoading"
@@ -304,16 +315,23 @@ onMounted(loadMeals)
           />
         </div>
         <div class="field">
-          <label class="label" for="mealDate">Date</label>
+          <label class="label has-text-light" for="mealDate">Date</label>
           <input 
             id="mealDate"
-            class="input" 
+            class="input has-background-dark has-text-light" 
             type="date" 
             v-model="currentMeal.date" 
             :disabled="isLoading"
           />
         </div>
-        <p class="help">* Required fields</p>
+        <div class="field">
+          <label class="label has-text-light">Tag Friends</label>
+          <FriendTagger
+            v-model="selectedFriends"
+            :disabled="isLoading"
+          />
+        </div>
+        <p class="help has-text-grey-light">* Required fields</p>
       </template>
     </template>
     <template #footer>
@@ -337,3 +355,35 @@ onMounted(loadMeals)
     </template>
   </Modal>
 </template>
+
+<style scoped>
+.exercises-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media screen and (min-width: 768px) {
+  .exercises-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .exercises-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+:deep(.input.has-background-dark::placeholder) {
+  color: #b5b5b5;
+}
+
+:deep(.input.has-background-dark) {
+  border-color: #4a4a4a;
+}
+
+:deep(.input.has-background-dark:focus) {
+  border-color: #485fc7;
+}
+</style>

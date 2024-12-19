@@ -15,6 +15,13 @@ export interface UserResponse extends Omit<User, 'password'> {
   id: number
 }
 
+export interface UserSearchResult {
+  id: number
+  name: string
+  email: string
+  image?: string | null
+}
+
 /**
  * Fetches all users from the API
  * @returns Promise containing the list of users
@@ -24,6 +31,20 @@ export async function getUsers(): Promise<DataListEnvelope<UserResponse>> {
   const response = await api<DataListEnvelope<UserResponse>>('users')
   if (!response.isSuccess) {
     throw new Error(`Failed to fetch users: ${response.message}`)
+  }
+  return response
+}
+
+/**
+ * Searches users by name or email
+ * @param query The search query
+ * @param limit Maximum number of results to return
+ * @returns Promise containing the search results
+ */
+export async function searchUsers(query: string, limit: number = 5): Promise<DataListEnvelope<UserSearchResult>> {
+  const response = await api<DataListEnvelope<UserSearchResult>>(`users/search?q=${encodeURIComponent(query)}&limit=${limit}`)
+  if (!response.isSuccess) {
+    throw new Error(`Failed to search users: ${response.message}`)
   }
   return response
 }
