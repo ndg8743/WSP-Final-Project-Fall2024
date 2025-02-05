@@ -23,6 +23,12 @@ A full-stack web app for logging exercises, tracking meals, setting fitness goal
 - **Statistics**: Track progress toward fitness goals.
 - **Profile Settings**: Update profile and toggle themes.
 - **Admin Panel**: Manage users and roles.
+![image222](https://github.com/user-attachments/assets/c95b7640-75af-48c0-9d7d-2269e241a9bb)
+![image001](https://github.com/user-attachments/assets/18b45b7f-c88c-441e-bfa3-bc5a563d7a65)
+![image](https://github.com/user-attachments/assets/b3002a24-5c96-4780-b211-4b518795c033)
+![sadfa](https://github.com/user-attachments/assets/bb74c6c0-033b-4ed7-9598-68e2ba927831)
+![asfas](https://github.com/user-attachments/assets/df416a2e-9766-43be-bc5c-8f3bf455194f)
+![2323232](https://github.com/user-attachments/assets/27085396-48dd-4764-b0a6-ee7c210cd015)
 
 ---
 
